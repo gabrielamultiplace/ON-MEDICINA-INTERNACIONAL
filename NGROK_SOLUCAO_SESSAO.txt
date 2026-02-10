@@ -1,0 +1,100 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NGROK - SOLUÇÃO PARA SESSÃO PRESA (ERR_NGROK_334)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ PROGRESSO ALCANÇADO:
+  ✅ Token válido: 39J4jnJjAOik38Et76Mme7ox4ht_66vygPmBY1MUU8Jkfwpbm
+  ✅ Flask rodando em localhost:5000
+  ✅ Nginx rodando em localhost:8080  
+  ✅ Pública URL atribuída: https://unlevelled-wanetta-actively.ngrok-free.dev
+
+✗ PROBLEMA ATUAL:
+  Erro ERR_NGROK_334: A sessão anterior está presa no servidor ngrok
+  Causa: Sessão fantasma no cloud ngrok impedindo nova conexão
+  Status: Sessão não está aceita ndo tráfego (endpoint não responde)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OPÇÃO 1: LIMPAR A SESSÃO PELO DASHBOARD (RECOMENDADO)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Passo 1: Abra o dashboard
+  URL: https://dashboard.ngrok.com
+
+Passo 2: Faça login com sua conta
+  Email: (sua conta)
+  Senha: (sua senha)
+
+Passo 3: Vá para "Cloud Endpoints" ou "Tunnels"
+  Procure pela URL: https://unlevelled-wanetta-actively.ngrok-free.dev
+
+Passo 4: Desconecte/Delete o endpoint
+  Clique no botão de desconectar ou delete (X ou desligar)
+
+Passo 5: Aguarde 10-20 segundos
+
+Passo 6: Volte ao terminal e execute:
+  C:\ngrok-app\ngrok.exe http 8080
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OPÇÃO 2: AGUARDAR TIMEOUT (Automático - 10-20 minutos)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Se você não conseguir acessar o dashboard:
+  1. Aguarde 10-20 minutos
+  2. Ngrok auto-desconectará a sessão antiga
+  3. Tente executar: C:\ngrok-app\ngrok.exe http 8080
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OPÇÃO 3: USAR CONTA DIFERENTE (Se necessário)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Crie nova conta ngrok:
+  1. Vá para: https://ngrok.com/signup
+  2. Use email diferente
+  3. Crie conta nova (gratuita)
+  4. Copie o token de autenticação
+  5. Execute: C:\ngrok-app\ngrok.exe config add-authtoken [NOVO_TOKEN]
+  6. Execute: C:\ngrok-app\ngrok.exe http 8080
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFICAÇÃO DE STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Quando ngrok conectar com sucesso, você verá (no terminal):
+
+  ngrok                                                                           
+  
+  Session Status                online
+  Account                       gabrielamultiplace (Free Plan)
+  Version                       3.36.0
+  Region                        South America (sa)
+  Latency                       10ms
+  Web Interface                 http://127.0.0.1:4040
+  Forwarding                    https://[NOVA-URL].ngrok-free.dev -> http://localhost:8080
+  
+Seu app estará acessível em: https://[NOVA-URL].ngrok-free.dev
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMANDO RÁPIDO - DEPOIS DE RESOLVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Abra PowerShell e execute:
+
+C:\ngrok-app\ngrok.exe http 8080
+
+Sua app ficará disponível em um URL público tipo:
+https://abc1234-ef56.ngrok-free.dev
+
+Compartilhe esse URL com qualquer pessoa acessar o app!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRÓXIMAS ETAPAS APÓS NGROK FUNCIONAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Quando o ngrok estiver rodando:
+  1. Copie a URL pública (ex: https://abc1234-ef56.ngrok-free.dev)
+  2. Acesse em qualquer navegador
+  3. App ficará acessível 24/7 (enquanto ngrok estiver rodando)
+  4. Para domínio personalizado, configure DNS para apontar para a URL ngrok
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,272 @@
+
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Receita - João Silva</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    background: white;
+                }
+                .header {
+                    background-color: #1b7c4a;
+                    color: white;
+                    padding: 15px;
+                    text-align: center;
+                    margin-bottom: 20px;
+                    border-radius: 5px;
+                }
+                .header h1 {
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    border: 1px solid #ddd;
+                    padding: 20px;
+                }
+                .patient-info {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    margin-bottom: 20px;
+                }
+                .info-block {
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 10px;
+                }
+                .info-block label {
+                    font-weight: bold;
+                    color: #333;
+                    font-size: 12px;
+                    text-transform: uppercase;
+                }
+                .info-block p {
+                    margin: 5px 0;
+                    font-size: 14px;
+                }
+                .prescription-section {
+                    margin: 20px 0;
+                    padding: 15px;
+                    background-color: #f9f9f9;
+                    border-left: 4px solid #1b7c4a;
+                }
+                .prescription-section h2 {
+                    margin: 0 0 15px 0;
+                    font-size: 16px;
+                    color: #1b7c4a;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                }
+                th {
+                    background-color: #1b7c4a;
+                    color: white;
+                    padding: 10px;
+                    text-align: left;
+                    font-size: 12px;
+                }
+                td {
+                    border: 1px solid #ddd;
+                    padding: 10px;
+                    font-size: 13px;
+                }
+                .titulation-note {
+                    color: #d9534f;
+                    font-weight: bold;
+                    margin: 10px 0;
+                    padding: 10px;
+                    background-color: #fcf8f8;
+                    border-left: 3px solid #d9534f;
+                }
+                .footer {
+                    margin-top: 30px;
+                    text-align: center;
+                    border-top: 1px solid #ddd;
+                    padding-top: 20px;
+                    font-size: 12px;
+                }
+                .signature-area {
+                    display: flex;
+                    justify-content: space-around;
+                    margin-top: 30px;
+                }
+                .signature-block {
+                    text-align: center;
+                    width: 40%;
+                }
+                .signature-line {
+                    border-top: 1px solid #000;
+                    width: 100%;
+                    margin: 50px 0 5px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🏥 ON Medicina Internacional</h1>
+                <p>RECEITUÁRIO MÉDICO - CANNABIS MEDICINAL</p>
+            </div>
+            
+            <div class="container">
+                <!-- PATIENT INFORMATION -->
+                <div class="patient-info">
+                    <div class="info-block">
+                        <label>Paciente</label>
+                        <p>João Silva</p>
+                    </div>
+                    <div class="info-block">
+                        <label>Data</label>
+                        <p>2026-02-04</p>
+                    </div>
+                    <div class="info-block">
+                        <label>Diagnóstico</label>
+                        <p>Epilepsia</p>
+                    </div>
+                    <div class="info-block">
+                        <label>Indicação Médica</label>
+                        <p>Controle de crises</p>
+                    </div>
+                </div>
+                
+                <!-- PRESCRIPTION HEADER -->
+                <div style="border-bottom: 3px solid #1b7c4a; margin-bottom: 20px; padding-bottom: 10px;">
+                    <h3 style="margin: 0; color: #333;">Prescrição</h3>
+                </div>
+                
+                <!-- MEDICATION TABLE -->
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Medicamento/Produto</th>
+                            <th>Posologia/Instruções</th>
+                            <th>Qtd.</th>
+                            <th>Duração</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <strong>CBD Isolate USA Hemp</strong><br>
+                                CBD: 10.0 mg/mL<br>
+                                Concentração: 30mL
+                            </td>
+                            <td>
+                                <strong>TITULAÇÃO (ESCADINHA DE DOSAGEM):</strong><br><br>
+                                <table style='width:100%; font-size:11px; margin:5px 0;'>
+        <tr>
+            <td style='padding:3px; border-bottom:1px solid #ddd;'>
+                <strong>SEMANA 1</strong> - 2 GOTAS DE 4 EM 4 HORAS
+            </td>
+            <td style='padding:3px; border-bottom:1px solid #ddd; text-align:right;'>
+                3.0mg CBD/dia
+            </td>
+        </tr>
+        
+        <tr>
+            <td style='padding:3px; border-bottom:1px solid #ddd;'>
+                <strong>SEMANA 2</strong> - 4 GOTAS DE 4 EM 4 HORAS
+            </td>
+            <td style='padding:3px; border-bottom:1px solid #ddd; text-align:right;'>
+                6.0mg CBD/dia
+            </td>
+        </tr>
+        
+        <tr>
+            <td style='padding:3px; border-bottom:1px solid #ddd;'>
+                <strong>SEMANA 3</strong> - 6 GOTAS DE 4 EM 4 HORAS
+            </td>
+            <td style='padding:3px; border-bottom:1px solid #ddd; text-align:right;'>
+                9.0mg CBD/dia
+            </td>
+        </tr>
+        
+        <tr>
+            <td style='padding:3px; border-bottom:1px solid #ddd;'>
+                <strong>SEMANA 4</strong> - 8 GOTAS DE 4 EM 4 HORAS
+            </td>
+            <td style='padding:3px; border-bottom:1px solid #ddd; text-align:right;'>
+                12.0mg CBD/dia
+            </td>
+        </tr>
+        
+        <tr>
+            <td style='padding:3px; border-bottom:1px solid #ddd;'>
+                <strong>SEMANA 5</strong> - 10 GOTAS DE 4 EM 4 HORAS
+            </td>
+            <td style='padding:3px; border-bottom:1px solid #ddd; text-align:right;'>
+                15.0mg CBD/dia
+            </td>
+        </tr>
+        
+        <tr>
+            <td style='padding:3px; border-bottom:1px solid #ddd;'>
+                <strong>SEMANA 6</strong> - 12 GOTAS DE 4 EM 4 HORAS
+            </td>
+            <td style='padding:3px; border-bottom:1px solid #ddd; text-align:right;'>
+                18.0mg CBD/dia
+            </td>
+        </tr>
+        </table>
+                            </td>
+                            <td>6 frascos</td>
+                            <td>6 meses</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <!-- IMPORTANT NOTES -->
+                <div class="titulation-note">
+                    ⚠️ ATENÇÃO: Cannabis Medicinal requer TITULAÇÃO progressiva (escadinha de dosagem).
+                    Não é uma dose fixa. Aumentar gradualmente conforme tolerância. 
+                    Avaliar resposta clínica a cada semana.
+                </div>
+                
+                <!-- CLINICAL NOTES -->
+                <div class="prescription-section">
+                    <h2>Observações Gerais</h2>
+                    <p>• Uso exclusivamente medicinal</p>
+                    <p>• Armazenar em local fresco e escuro</p>
+                    <p>• Proteger de luz e calor</p>
+                    <p>• Validade: 24 meses conforme projeção judicial</p>
+                    <p>• Paciente deve reportar qualquer efeito colateral</p>
+                    <p>• Consultas de acompanhamento: a cada 2 semanas durante titulação, depois mensais</p>
+                </div>
+                
+                <!-- LEGAL REQUIREMENT -->
+                <div class="prescription-section" style="border-left-color: #d9534f;">
+                    <h2 style="color: #d9534f;">Requisito Judicial</h2>
+                    <p><strong>Projeção de 24 meses:</strong> Esta prescrição é válida por até 24 meses, 
+                    com prorrogação sujeita a reavalições clínicas. Calculado para fins de defesa judicial 
+                    conforme protocolos ANVISA.</p>
+                </div>
+                
+                <!-- DOCTOR SIGNATURE AREA -->
+                <div class="signature-area">
+                    <div class="signature-block">
+                        <div class="signature-line"></div>
+                        <p>Assinatura do Médico</p>
+                        <p style="font-size: 11px; margin-top: 10px;">CRM</p>
+                    </div>
+                    <div class="signature-block">
+                        <p style="margin-top: 0;">🔒 Assinado Digitalmente</p>
+                        <p style="font-size: 11px;">Via VidaaS ou DocuSign</p>
+                    </div>
+                </div>
+                
+                <!-- FOOTER -->
+                <div class="footer">
+                    <p>Receita Eletrônica | Prescrição ID: RX-20260204185742</p>
+                    <p style="color: #999;">Gerada automaticamente pelo Sistema ON - Cannabis Medicinal</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        

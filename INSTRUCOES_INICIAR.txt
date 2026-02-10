@@ -1,0 +1,59 @@
+================================================================================
+              COMO INICIAR O NGINX COM PRIVILÉGIOS DE ADMINISTRADOR
+================================================================================
+
+IMPORTANTE: Flask já está rodando na porta 5000!
+
+Faltou apenas iniciar o Nginx na porta 80.
+
+SIGA OS PASSOS ABAIXO:
+================================================================================
+
+1. FECHE este PowerShell (você pode digitar 'exit' e pressionar Enter)
+
+2. LOCALIZE O PowerShell no menu Iniciar do Windows
+
+3. CLIQUE COM O BOTÃO DIREITO do mouse no PowerShell
+
+4. SELECIONE "Run as Administrator" (Executar como Administrador)
+
+5. COPIE E COLE ESTE COMANDO EXATO NO NOVO TERMINAL ADMIN:
+
+   powershell -ExecutionPolicy Bypass -File "C:\Users\Gabriela Resende\Documents\Plataforma ON\INICIAR_TUDO.ps1"
+
+   OU execute este comando para apenas o Nginx:
+
+   cd C:\nginx && taskkill /F /IM nginx.exe 2>nul; .\nginx.exe
+
+6. PRONTO! Os serviços devem iniciar.
+
+================================================================================
+
+VERIFICAÇÃO:
+================================================================================
+
+No terminal, você deve ver mensagens como:
+
+   ✓ Flask ja esta rodando
+   ✓ NGINX rodando
+
+E poderá acessar:
+   
+   http://app.onmedicinainternacional.com
+
+================================================================================
+
+PROBLEMAS?
+================================================================================
+
+Se der erro "bind() failed (10013: Foi feita uma tentativa de acesso...":
+
+   -> Você NÃO abriu o PowerShell como ADMINISTRADOR
+   -> Siga os passos 1-4 acima corretamente
+
+Se a porta 80 está ocupada:
+
+   -> Verifique: netstat -ano | Select-String ":80"
+   -> Se for IIS, pare com: net stop w3svc
+
+================================================================================

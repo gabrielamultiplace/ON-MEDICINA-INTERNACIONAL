@@ -1,0 +1,165 @@
+================================================================================
+    CONFIGURAR PORT-FORWARDING NO ROUTER (192.168.1.1)
+================================================================================
+
+INFORMACOES DO SEU AMBIENTE:
+  - Router IP: 192.168.1.1
+  - Seu PC: 192.168.1.16
+  - IP Publico: 186.232.133.253
+  - Dominio: app.onmedicinainternacional.com
+
+================================================================================
+PASSO 1: ACESSE O ROUTER
+================================================================================
+
+1. Abra seu navegador (Chrome, Firefox, Edge, etc)
+
+2. Na barra de enderecos, digite:
+   
+   192.168.1.1
+   
+   E pressione Enter
+
+3. Voce vera uma tela de LOGIN. Insira:
+   
+   Usuario: admin
+   Senha: admin
+   
+   (Se nao funcionar, procure a etiqueta no fundo do router)
+
+4. Clique em "Login" ou "Entrar"
+
+================================================================================
+PASSO 2: LOCALIZE PORT FORWARDING
+================================================================================
+
+Agora voce esta DENTRO do router. Procure por:
+
+  Opcoes que podem aparecer:
+  - "Port Forwarding" (em inglês)
+  - "Encaminhamento de Porta" (em português)
+  - "NAT"
+  - "Advanced" → "Port Forwarding"
+  - "Avancado" → "Encaminhamento de Porta"
+
+Pode estar em um menu como:
+  - Setup
+  - Advanced
+  - Configuracoes Avancadas
+  - Network
+  - Admin
+  - Firewall
+
+================================================================================
+PASSO 3: ADICIONE NOVA REGRA DE PORT FORWARDING
+================================================================================
+
+Procure por um botao como "Add" ou "Adicionar" e preencha assim:
+
+CONFIGURACAO 1 (Para acessar via :8080):
+┌─────────────────────────────────────┐
+│ Service/Nome:     Flask App         │
+│ External Port:    8080              │
+│ Internal IP:      192.168.1.16      │
+│ Internal Port:    8080              │
+│ Protocol:         TCP               │
+└─────────────────────────────────────┘
+
+  OU SE TIVER CAMPOS DIFERENTES:
+  - WAN Port = 8080
+  - LAN IP = 192.168.1.16
+  - LAN Port = 8080
+  - Protocol = TCP
+
+Clique em "Apply" ou "Salvar"
+
+================================================================================
+PASSO 4: (OPCIONAL) CONFIGURAR PORTA 80 (padrao)
+================================================================================
+
+Se quiser acessar SEM :8080, adicione OUTRA regra:
+
+┌─────────────────────────────────────┐
+│ Service/Nome:     Flask App HTTP    │
+│ External Port:    80                │
+│ Internal IP:      192.168.1.16      │
+│ Internal Port:    8080              │
+│ Protocol:         TCP               │
+└─────────────────────────────────────┘
+
+Clique em "Apply" ou "Salvar"
+
+Depois podes acessar:
+  http://app.onmedicinainternacional.com (sem :8080)
+
+================================================================================
+PASSO 5: SALVE E REINICIE (se necessario)
+================================================================================
+
+Alguns routers pedem para "Reboot" ou "Reiniciar". Se pedir, clique em sim.
+
+Se nao pedir, ja esta pronto!
+
+================================================================================
+PASSO 6: TESTE IMEDIATAMENTE
+================================================================================
+
+Após 1-2 minutos, abra seu navegador e teste:
+
+  http://app.onmedicinainternacional.com:8080
+
+Se VER SUA APLICACAO = FUNCIONOU!
+
+Se der erro de conexao = Algo deu errado (veja "TROUBLESHOOTING" abaixo)
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+ERRO 1: "Nao consigo acessar 192.168.1.1"
+
+  Solucao:
+  1. Certifique-se que esta conectado ao Wi-Fi do router
+  2. Tente: http://routerlogin.com (alguns routers usam isso)
+  3. Reinicie o router (desligue por 30 segundos)
+  4. Procure a etiqueta no fundo do router para o IP correto
+
+ERRO 2: "Nao vejo "Port Forwarding" no router"
+
+  Solucao:
+  1. Procure em "Advanced Settings" ou "Configuracoes Avancadas"
+  2. Procure "NAT" ou "Virtual Server"
+  3. Seu router pode ter outro nome para isso
+  4. Tente procurar no manual do router (marca+modelo ou logo)
+
+ERRO 3: "Configurei mas ainda nao funciona"
+
+  Solucao:
+  1. Aguarde 5-10 minutos (demora para propagar)
+  2. Limpe cache do navegador: Ctrl+Shift+Del
+  3. Tente em outra rede (celular 4G) para testar
+  4. Verifique se Flask/Nginx ainda estao rodando:
+     No terminal: netstat -ano | Select-String ":5000|:8080"
+
+ERRO 4: "Flask/Nginx pararam de rodar"
+
+  Solucao:
+  1. Reinicie ambos:
+     cd C:\nginx && C:\nginx\nginx.exe -c conf/nginx.conf (em novo terminal)
+     cd "C:\Users\Gabriela Resende\Documents\Plataforma ON" && python app.py
+  2. Verifique os logs
+
+================================================================================
+SE AINDA TIVER DUVIDA
+================================================================================
+
+Mande uma print da tela do router que vê e ajudo a encontrar a opcao!
+
+Mas 99% das vezes está em:
+  - Advanced → Port Forwarding
+  - NAT
+  - Virtual Server
+
+Boa sorte! 🚀
+
+================================================================================

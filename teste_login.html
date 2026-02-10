@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Diagnóstico de Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .status {
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #007bff;
+            background: #e7f3ff;
+            color: #004085;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+            color: #856404;
+        }
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-box .error-log {
+            color: #f48771;
+        }
+        .log-box .success-log {
+            color: #89d185;
+        }
+        .log-box .info-log {
+            color: #75beff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Diagnóstico de Login - Plataforma ON</h1>
+        
+        <div class="section">
+            <h3>1️⃣ Teste de Login</h3>
+            <form id="login-form">
+                <input type="email" id="email" value="gabrielamultiplace@gmail.com" placeholder="E-mail" required>
+                <input type="password" id="password" value="@On2025@" placeholder="Senha" required>
+                <button type="submit">🔓 Fazer Login</button>
+            </form>
+            <div id="login-result"></div>
+            <div class="log-box" id="login-log"></div>
+        </div>
+        
+        <div class="section">
+            <h3>2️⃣ Verificar Sessão</h3>
+            <button onclick="testSession()">✅ Verificar /api/me</button>
+            <div id="session-result"></div>
+            <div class="log-box" id="session-log"></div>
+        </div>
+        
+        <div class="section">
+            <h3>3️⃣ Teste de Logout</h3>
+            <button onclick="testLogout()">🚪 Fazer Logout</button>
+            <div id="logout-result"></div>
+            <div class="log-box" id="logout-log"></div>
+        </div>
+
+        <div class="section">
+            <h3>🔍 Informações de Debug</h3>
+            <button onclick="showDebugInfo()">Mostrar Info de Debug</button>
+            <div id="debug-info"></div>
+        </div>
+    </div>
+
+    <script>
+        let logs = {
+            login: [],
+            session: [],
+            logout: [],
+        };
+
+        function addLog(category, type, message) {
+            if (!logs[category]) logs[category] = [];
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            logs[category].push({ timestamp, type, message });
+            console.log(`[${category.toUpperCase()}] ${message}`);
+            updateLogDisplay(category);
+        }
+
+        function updateLogDisplay(category) {
+            const logBox = document.getElementById(`${category}-log`);
+            if (!logBox) return;
+            
+            logBox.innerHTML = logs[category].map(log => {
+                let className = 'info-log';
+                if (log.type === 'error') className = 'error-log';
+                if (log.type === 'success') className = 'success-log';
+                return `<span class="${className}">[${log.timestamp}] ${log.type.toUpperCase()}: ${log.message}</span>`;
+            }).join('\n');
+        }
+
+        async function apiRequest(path, options = {}) {
+            addLog('login', 'info', `Requisição para ${path}`);
+            const response = await fetch(path, {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            addLog('login', 'info', `Resposta: ${response.status}`);
+            return response;
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            logs.login = [];
+            const resultDiv = document.getElementById('login-result');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            addLog('login', 'info', `Tentando login com ${email}`);
+            resultDiv.innerHTML = '<div class="status warning">⏳ Fazendo login...</div>';
+            
+            try {
+                addLog('login', 'info', 'Enviando requisição POST para /api/login');
+                const response = await apiRequest('/api/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                addLog('login', 'info', `Resposta recebida com status ${response.status}`);
+                const data = await response.json();
+                addLog('login', 'info', `Dados da resposta: ${JSON.stringify(data)}`);
+                
+                if (response.ok) {
+                    addLog('login', 'success', `Login bem-sucedido para ${data.user.name}`);
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ <strong>Login bem-sucedido!</strong><br>
+                            👤 Usuário: ${data.user.name}<br>
+                            ✉️ Email: ${data.user.email}<br>
+                            🏢 Role: ${data.user.role}
+                        </div>
+                    `;
+                } else {
+                    addLog('login', 'error', `Login falhou: ${data.message}`);
+                    resultDiv.innerHTML = `<div class="status error">❌ <strong>Erro:</strong> ${data.message}</div>`;
+                }
+            } catch (error) {
+                addLog('login', 'error', `Exceção: ${error.message}`);
+                resultDiv.innerHTML = `<div class="status error">❌ <strong>Erro:</strong> ${error.message}</div>`;
+            }
+        });
+
+        async function testSession() {
+            logs.session = [];
+            const resultDiv = document.getElementById('session-result');
+            resultDiv.innerHTML = '<div class="status warning">⏳ Verificando sessão...</div>';
+            
+            addLog('session', 'info', 'Checando autenticação com /api/me');
+            
+            try {
+                const response = await fetch('/api/me', { credentials: 'include' });
+                addLog('session', 'info', `Resposta: ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addLog('session', 'success', `Sessão válida para ${data.user.name}`);
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ <strong>Sessão válida!</strong><br>
+                            👤 Usuário: ${data.user.name}<br>
+                            ✉️ Email: ${data.user.email}
+                        </div>
+                    `;
+                } else {
+                    addLog('session', 'error', `Sessão inválida: ${data.message}`);
+                    resultDiv.innerHTML = `<div class="status error">❌ <strong>Não autenticado:</strong> ${data.message}</div>`;
+                }
+            } catch (error) {
+                addLog('session', 'error', `Exceção: ${error.message}`);
+                resultDiv.innerHTML = `<div class="status error">❌ <strong>Erro:</strong> ${error.message}</div>`;
+            }
+        }
+
+        async function testLogout() {
+            logs.logout = [];
+            const resultDiv = document.getElementById('logout-result');
+            resultDiv.innerHTML = '<div class="status warning">⏳ Fazendo logout...</div>';
+            
+            addLog('logout', 'info', 'Enviando POST para /api/logout');
+            
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                addLog('logout', 'info', `Resposta: ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addLog('logout', 'success', 'Logout bem-sucedido');
+                    resultDiv.innerHTML = '<div class="status success">✅ <strong>Logout bem-sucedido!</strong></div>';
+                } else {
+                    addLog('logout', 'error', `Falha no logout: ${data.message}`);
+                    resultDiv.innerHTML = `<div class="status error">❌ <strong>Erro:</strong> ${data.message}</div>`;
+                }
+            } catch (error) {
+                addLog('logout', 'error', `Exceção: ${error.message}`);
+                resultDiv.innerHTML = `<div class="status error">❌ <strong>Erro:</strong> ${error.message}</div>`;
+            }
+        }
+
+        function showDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            const info = {
+                'URL Atual': window.location.href,
+                'UserAgent': navigator.userAgent,
+                'Cookies Habilitados': navigator.cookieEnabled ? '✅ Sim' : '❌ Não',
+                'LocalStorage Disponível': (typeof localStorage !== 'undefined') ? '✅ Sim' : '❌ Não',
+                'SessionStorage Disponível': (typeof sessionStorage !== 'undefined') ? '✅ Sim' : '❌ Não',
+            };
+            
+            let html = '<pre>';
+            for (const [key, value] of Object.entries(info)) {
+                html += `${key}: ${value}\n`;
+            }
+            html += '</pre>';
+            
+            debugDiv.innerHTML = html;
+        }
+
+        // Verificar sessão ao carregar
+        console.log('🔄 Verificando sessão ao carregar a página...');
+        setTimeout(() => testSession(), 500);
+    </script>
+</body>
+</html>

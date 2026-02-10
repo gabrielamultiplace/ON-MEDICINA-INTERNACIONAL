@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Medico - ON Medicina Internacional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #333; }
+
+        /* ===== LOGIN ===== */
+        .login-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-card {
+            background: #fff; border-radius: 16px; padding: 48px 40px; width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;
+        }
+        .login-card .logo { font-size: 28px; font-weight: 800; color: #667eea; margin-bottom: 8px; }
+        .login-card .subtitle { color: #888; font-size: 14px; margin-bottom: 32px; }
+        .login-card input {
+            width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 10px;
+            font-size: 15px; margin-bottom: 16px; transition: border-color .3s;
+        }
+        .login-card input:focus { outline: none; border-color: #667eea; }
+        .login-card .btn-login {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: transform .2s, box-shadow .2s;
+        }
+        .login-card .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+        .login-feedback { color: #e74c3c; font-size: 13px; margin-top: 12px; min-height: 20px; }
+        .login-pending { color: #ff9800; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: #fff; z-index: 100; display: flex; flex-direction: column;
+            transition: transform .3s;
+        }
+        .sidebar.hidden { transform: translateX(-100%); }
+        .sidebar-header { padding: 24px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.15); }
+        .sidebar-header .logo-text { font-size: 18px; font-weight: 800; line-height: 1.2; }
+        .sidebar-header .doc-name { font-size: 12px; opacity: 0.8; margin-top: 6px; }
+        .sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+        .sidebar-nav .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 24px;
+            color: rgba(255,255,255,0.75); text-decoration: none; font-size: 14px;
+            transition: all .2s; cursor: pointer; border-left: 3px solid transparent;
+        }
+        .sidebar-nav .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .sidebar-nav .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; border-left-color: #fff; font-weight: 600; }
+        .sidebar-nav .nav-item i { width: 20px; text-align: center; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.15); }
+        .sidebar-footer .nav-item { padding: 10px 4px; }
+
+        /* ===== MAIN ===== */
+        .main-content {
+            margin-left: 240px; padding: 24px 32px; min-height: 100vh; transition: margin .3s;
+        }
+        .main-content.full { margin-left: 0; }
+        .page-header { margin-bottom: 24px; }
+        .page-header h1 { font-size: 24px; color: #333; font-weight: 700; }
+        .page-header p { color: #888; font-size: 14px; }
+
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+
+        /* ===== STATS CARDS ===== */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 28px; }
+        .stat-card {
+            background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            display: flex; align-items: center; gap: 16px; transition: transform .2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-card .stat-icon {
+            width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 22px; color: #fff;
+        }
+        .stat-card .stat-icon.blue { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stat-card .stat-icon.green { background: linear-gradient(135deg, #4caf50, #66bb6a); }
+        .stat-card .stat-icon.orange { background: linear-gradient(135deg, #ff9800, #ffa726); }
+        .stat-card .stat-icon.teal { background: linear-gradient(135deg, #00bcd4, #26c6da); }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; color: #333; }
+        .stat-card .stat-label { font-size: 13px; color: #888; }
+
+        /* ===== CARDS / TABLES ===== */
+        .content-card {
+            background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            margin-bottom: 24px; overflow: hidden;
+        }
+        .content-card .card-header {
+            padding: 16px 24px; border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .content-card .card-header h3 { font-size: 16px; font-weight: 600; color: #333; }
+        .content-card .card-body { padding: 20px 24px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        table th { text-align: left; padding: 12px 16px; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f0f0f0; }
+        table td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f5f5f5; }
+        table tr:hover td { background: #fafbfe; }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .badge-confirmado, .badge-concluida { background: #e8f5e9; color: #2e7d32; }
+        .badge-aguardando, .badge-agendada { background: #fff3e0; color: #ef6c00; }
+        .badge-em_andamento { background: #e3f2fd; color: #1565c0; }
+        .badge-cancelada { background: #fce4ec; color: #c62828; }
+        .badge-videochamada { background: #e8eaf6; color: #283593; }
+        .badge-chat { background: #f3e5f5; color: #6a1b9a; }
+        .badge-presencial { background: #e0f2f1; color: #00695c; }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(102,126,234,0.3); }
+        .btn-secondary { background: #f0f0f0; color: #555; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-success { background: #4caf50; color: #fff; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: #fff; border-radius: 16px; max-width: 700px; width: 95%;
+            max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            padding: 20px 24px; border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-header h2 { font-size: 18px; color: #333; }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; gap: 12px; justify-content: flex-end; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 14px; transition: border-color .3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #667eea;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* ===== STARS ===== */
+        .stars { color: #ffc107; font-size: 16px; }
+
+        /* ===== CID SEARCH ===== */
+        .cid-results { max-height: 300px; overflow-y: auto; }
+        .cid-item { padding: 10px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+        .cid-item:hover { background: #f5f7ff; }
+        .cid-item .cid-code { font-weight: 700; color: #667eea; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state { text-align: center; padding: 48px 24px; color: #aaa; }
+        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state p { font-size: 15px; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0 !important; }
+            .form-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ===== PROGRESS BAR (Registration) ===== */
+        .progress-bar-container { margin-bottom: 24px; }
+        .progress-steps { display: flex; justify-content: space-between; position: relative; margin-bottom: 8px; }
+        .progress-step {
+            width: 36px; height: 36px; border-radius: 50%; background: #e0e0e0; color: #999;
+            display: flex; align-items: center; justify-content: center; font-weight: 700;
+            font-size: 14px; position: relative; z-index: 2; transition: all .3s;
+        }
+        .progress-step.active { background: #667eea; color: #fff; }
+        .progress-step.done { background: #4caf50; color: #fff; }
+        .progress-track {
+            position: absolute; top: 18px; left: 18px; right: 18px; height: 3px;
+            background: #e0e0e0; z-index: 1;
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #4caf50, #667eea);
+            transition: width .5s; width: 0%;
+        }
+
+        /* Profile section */
+        .profile-photo {
+            width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+            border: 4px solid #667eea; margin: 0 auto 16px; display: block;
+        }
+        .profile-placeholder {
+            width: 120px; height: 120px; border-radius: 50%; background: #e8eaf6;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; color: #667eea; margin: 0 auto 16px;
+        }
+
+        /* ===== AGENDA MEDICA ===== */
+        .agenda-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid #e0e0e0; }
+        .agenda-tab {
+            padding: 12px 24px; font-size: 14px; font-weight: 600; color: #888;
+            cursor: pointer; border-bottom: 3px solid transparent; transition: all .2s;
+            background: none; border-top: none; border-left: none; border-right: none;
+        }
+        .agenda-tab:hover { color: #667eea; }
+        .agenda-tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .agenda-tab-content { display: none; }
+        .agenda-tab-content.active { display: block; }
+
+        .day-schedule {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0; transition: background .2s;
+        }
+        .day-schedule:hover { background: #fafbfe; }
+        .day-schedule .day-name {
+            width: 120px; font-weight: 600; font-size: 14px; color: #333;
+        }
+        .day-schedule .day-toggle {
+            width: 44px; height: 24px; border-radius: 12px; background: #ccc;
+            position: relative; cursor: pointer; transition: background .3s; border: none;
+        }
+        .day-schedule .day-toggle.on { background: #4caf50; }
+        .day-schedule .day-toggle::after {
+            content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%;
+            background: #fff; top: 2px; left: 2px; transition: transform .3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .day-schedule .day-toggle.on::after { transform: translateX(20px); }
+        .day-schedule .time-inputs { display: flex; gap: 8px; align-items: center; flex: 1; flex-wrap: wrap; }
+        .day-schedule .time-inputs input {
+            width: 90px; padding: 6px 10px; border: 2px solid #e0e0e0; border-radius: 6px;
+            font-size: 13px; text-align: center;
+        }
+        .day-schedule .time-inputs input:focus { border-color: #667eea; outline: none; }
+        .day-schedule .time-inputs span { color: #888; font-size: 13px; }
+
+        .integracao-card {
+            display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+            background: #fff; border-radius: 12px; border: 2px solid #e8e8e8;
+            margin-bottom: 12px; transition: all .2s;
+        }
+        .integracao-card:hover { border-color: #667eea; }
+        .integracao-card.connected { border-color: #4caf50; background: #f0fff4; }
+        .integracao-card .integ-icon {
+            width: 48px; height: 48px; border-radius: 10px; display: flex;
+            align-items: center; justify-content: center; font-size: 22px;
+        }
+        .integracao-card .integ-info { flex: 1; }
+        .integracao-card .integ-info h4 { font-size: 15px; color: #333; margin: 0 0 4px; }
+        .integracao-card .integ-info p { font-size: 12px; color: #888; margin: 0; }
+        .integracao-card .integ-status { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+        .integ-connected { background: #e8f5e9; color: #2e7d32; }
+        .integ-disconnected { background: #f5f5f5; color: #999; }
+
+        .bloqueio-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; border-bottom: 1px solid #f0f0f0;
+        }
+        .bloqueio-item:hover { background: #fafbfe; }
+
+        /* ===== EXTRATO FINANCEIRO ===== */
+        .extrato-filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; padding: 16px 20px; background: #f8f9fe; border-radius: 12px; }
+        .extrato-filters .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .extrato-filters label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; }
+        .extrato-filters input, .extrato-filters select { padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; }
+        .extrato-filters input:focus, .extrato-filters select:focus { border-color: #667eea; outline: none; }
+        .extrato-filters .btn-filter { padding: 8px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; align-self: flex-end; }
+        .extrato-filters .btn-filter:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.3); }
+        .extrato-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #e8e8e8; }
+        .extrato-tab { padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: #888; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+        .extrato-tab:hover { color: #667eea; }
+        .extrato-tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .extrato-tab-content { display: none; }
+        .extrato-tab-content.active { display: block; }
+        .extrato-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .extrato-table th { text-align: left; padding: 10px 12px; background: #f8f9fe; color: #667eea; font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #e8e8e8; }
+        .extrato-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+        .extrato-table tr:hover { background: #fafbfe; }
+        .badge-pago { background: #e8f5e9; color: #2e7d32; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-pendente { background: #fff3e0; color: #e65100; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-a_receber { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-cancelado { background: #fce4ec; color: #c62828; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-decoration: line-through; }
+        .taxa-config { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff8e1; border-radius: 10px; margin-bottom: 16px; }
+        .taxa-config label { font-size: 13px; font-weight: 600; color: #f57f17; }
+        .taxa-config input { width: 70px; padding: 6px 10px; border: 2px solid #ffcc02; border-radius: 6px; font-size: 13px; text-align: center; }
+        .taxa-config .btn-save-taxa { padding: 6px 16px; background: #f57f17; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <!-- LOGIN OVERLAY -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-card">
+            <div class="logo"><i class="fas fa-user-md"></i> Portal Medico</div>
+            <div class="subtitle">ON Medicina Internacional</div>
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="E-mail" required>
+                <input type="password" id="login-password" placeholder="Senha" required>
+                <button type="submit" class="btn-login">Entrar</button>
+            </form>
+            <div class="login-feedback" id="login-feedback"></div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar hidden" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-text">ON Medicina<br>Internacional</div>
+            <div class="doc-name" id="sidebar-doc-name"></div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i><span>Painel</span></a>
+            <a class="nav-item" data-page="agenda"><i class="fas fa-clock"></i><span>Agenda Medica</span></a>
+            <a class="nav-item" data-page="pacientes"><i class="fas fa-users"></i><span>Meus Pacientes</span></a>
+            <a class="nav-item" data-page="consultas"><i class="fas fa-stethoscope"></i><span>Consultas</span></a>
+            <a class="nav-item" data-page="agendamentos"><i class="fas fa-calendar-alt"></i><span>Agendamentos</span></a>
+            <a class="nav-item" data-page="prescricoes"><i class="fas fa-prescription"></i><span>Prescricoes</span></a>
+            <a class="nav-item" data-page="cid"><i class="fas fa-search"></i><span>Buscar CIDs</span></a>
+            <a class="nav-item" data-page="videochamada"><i class="fas fa-video"></i><span>Videochamada</span></a>
+            <a class="nav-item" data-page="extrato"><i class="fas fa-file-invoice-dollar"></i><span>Extrato Financeiro</span></a>
+            <a class="nav-item" data-page="perfil"><i class="fas fa-user-cog"></i><span>Meu Perfil</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a class="nav-item" id="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Sair</span></a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content full" id="main-content">
+
+        <!-- PAINEL -->
+        <div class="page-section active" id="page-dashboard">
+            <div class="page-header">
+                <h1>Painel</h1>
+                <p>Bem-vindo ao seu painel medico</p>
+            </div>
+            <div class="stats-grid" id="dashboard-stats"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                <div class="content-card">
+                    <div class="card-header"><h3>Consultas Recentes</h3></div>
+                    <div class="card-body" id="dashboard-consultas-recentes">
+                        <div class="empty-state"><i class="fas fa-clipboard-list"></i><p>Nenhuma consulta recente</p></div>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-header"><h3>Proximos Agendamentos</h3></div>
+                    <div class="card-body" id="dashboard-agendamentos">
+                        <div class="empty-state"><i class="fas fa-calendar"></i><p>Nenhum agendamento futuro</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AGENDA MEDICA -->
+        <div class="page-section" id="page-agenda">
+            <div class="page-header">
+                <h1>Agenda Medica</h1>
+                <p>Configure seus horarios de atendimento e integracoes com calendarios</p>
+            </div>
+
+            <div class="agenda-tabs">
+                <button class="agenda-tab active" data-tab="horarios">Horarios de Atendimento</button>
+                <button class="agenda-tab" data-tab="config">Configuracoes</button>
+                <button class="agenda-tab" data-tab="bloqueios">Bloqueios</button>
+                <button class="agenda-tab" data-tab="integracoes">Integracoes</button>
+            </div>
+
+            <!-- TAB: Horarios -->
+            <div class="agenda-tab-content active" id="tab-horarios">
+                <div class="content-card">
+                    <div class="card-header"><h3><i class="fas fa-calendar-week" style="color:#667eea;margin-right:8px;"></i> Horarios Semanais</h3></div>
+                    <div class="card-body" id="horarios-grid"></div>
+                </div>
+                <div style="text-align:right;">
+                    <button class="btn btn-primary" onclick="salvarHorarios()"><i class="fas fa-save"></i> Salvar Horarios</button>
+                </div>
+            </div>
+
+            <!-- TAB: Configuracoes -->
+            <div class="agenda-tab-content" id="tab-config">
+                <div class="content-card">
+                    <div class="card-header"><h3><i class="fas fa-cog" style="color:#667eea;margin-right:8px;"></i> Parametros da Agenda</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Duracao da Consulta (minutos)</label>
+                                <select id="cfg-duracao">
+                                    <option value="15">15 min</option>
+                                    <option value="20">20 min</option>
+                                    <option value="30" selected>30 min</option>
+                                    <option value="40">40 min</option>
+                                    <option value="45">45 min</option>
+                                    <option value="50">50 min</option>
+                                    <option value="60">60 min</option>
+                                    <option value="90">90 min</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Intervalo entre Consultas (minutos)</label>
+                                <select id="cfg-intervalo">
+                                    <option value="0">Sem intervalo</option>
+                                    <option value="5">5 min</option>
+                                    <option value="10" selected>10 min</option>
+                                    <option value="15">15 min</option>
+                                    <option value="20">20 min</option>
+                                    <option value="30">30 min</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Antecedencia Minima para Agendar (horas)</label>
+                                <select id="cfg-antecedencia-min">
+                                    <option value="1">1 hora</option>
+                                    <option value="2" selected>2 horas</option>
+                                    <option value="4">4 horas</option>
+                                    <option value="12">12 horas</option>
+                                    <option value="24">24 horas</option>
+                                    <option value="48">48 horas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Antecedencia Maxima (dias)</label>
+                                <select id="cfg-antecedencia-max">
+                                    <option value="7">7 dias</option>
+                                    <option value="14">14 dias</option>
+                                    <option value="30">30 dias</option>
+                                    <option value="60" selected>60 dias</option>
+                                    <option value="90">90 dias</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="text-align:right;margin-top:8px;">
+                            <button class="btn btn-primary" onclick="salvarConfigAgenda()"><i class="fas fa-save"></i> Salvar Configuracoes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Bloqueios -->
+            <div class="agenda-tab-content" id="tab-bloqueios">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-ban" style="color:#e74c3c;margin-right:8px;"></i> Bloqueios de Horario</h3>
+                        <button class="btn btn-sm btn-primary" onclick="openNovoBloqueioModal()"><i class="fas fa-plus"></i> Novo Bloqueio</button>
+                    </div>
+                    <div class="card-body" id="bloqueios-list">
+                        <div class="empty-state"><i class="fas fa-calendar-check"></i><p>Nenhum bloqueio cadastrado</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Integracoes -->
+            <div class="agenda-tab-content" id="tab-integracoes">
+                <div class="content-card">
+                    <div class="card-header"><h3><i class="fas fa-plug" style="color:#667eea;margin-right:8px;"></i> Integracoes com Calendarios</h3></div>
+                    <div class="card-body">
+                        <p style="color:#888;font-size:13px;margin-bottom:20px;">Conecte sua agenda com servicos externos para sincronizar automaticamente seus horarios.</p>
+
+                        <div class="integracao-card" id="integ-google">
+                            <div class="integ-icon" style="background:#e8f0fe;color:#4285f4;"><i class="fab fa-google"></i></div>
+                            <div class="integ-info">
+                                <h4>Google Calendar</h4>
+                                <p>Sincronize seus horarios com o Google Agenda</p>
+                            </div>
+                            <div>
+                                <span class="integ-status integ-disconnected" id="integ-google-status">Desconectado</span>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="configIntegracao('google')"><i class="fas fa-cog"></i></button>
+                        </div>
+
+                        <div class="integracao-card" id="integ-calendly">
+                            <div class="integ-icon" style="background:#e8f4fd;color:#006bff;"><i class="fas fa-calendar-check"></i></div>
+                            <div class="integ-info">
+                                <h4>Calendly</h4>
+                                <p>Integre com Calendly para agendamentos automaticos</p>
+                            </div>
+                            <div>
+                                <span class="integ-status integ-disconnected" id="integ-calendly-status">Desconectado</span>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="configIntegracao('calendly')"><i class="fas fa-cog"></i></button>
+                        </div>
+
+                        <div class="integracao-card" id="integ-outlook">
+                            <div class="integ-icon" style="background:#e8f0fe;color:#0078d4;"><i class="fab fa-microsoft"></i></div>
+                            <div class="integ-info">
+                                <h4>Outlook / Microsoft 365</h4>
+                                <p>Sincronize com Microsoft Outlook Calendar</p>
+                            </div>
+                            <div>
+                                <span class="integ-status integ-disconnected" id="integ-outlook-status">Desconectado</span>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="configIntegracao('outlook')"><i class="fas fa-cog"></i></button>
+                        </div>
+
+                        <div class="integracao-card" id="integ-ical">
+                            <div class="integ-icon" style="background:#f3e5f5;color:#9c27b0;"><i class="fas fa-link"></i></div>
+                            <div class="integ-info">
+                                <h4>iCal / URL Externa</h4>
+                                <p>Sincronize via link iCal (Apple Calendar, KalendMe, etc.)</p>
+                            </div>
+                            <div>
+                                <span class="integ-status integ-disconnected" id="integ-ical-status">Desconectado</span>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="configIntegracao('ical')"><i class="fas fa-cog"></i></button>
+                        </div>
+
+                        <div style="margin-top:20px;padding:16px;background:#fff9e6;border-radius:8px;border:1px solid #ffe082;">
+                            <p style="font-size:13px;color:#795548;margin:0;"><i class="fas fa-info-circle" style="color:#ff9800;"></i> <strong>Como funciona:</strong> Ao conectar um calendario externo, seus horarios serao sincronizados automaticamente. Consultas agendadas na plataforma serao refletidas no calendario externo e vice-versa.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PACIENTES (continuacao) -->
+        <div class="page-section" id="page-pacientes">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <div><h1>Meus Pacientes</h1><p>Pacientes atendidos</p></div>
+                <div style="display:flex;gap:12px;">
+                    <input type="text" id="buscar-paciente" placeholder="Buscar paciente..." style="padding:10px 16px;border:2px solid #e0e0e0;border-radius:8px;font-size:14px;width:280px;">
+                </div>
+            </div>
+            <div class="content-card">
+                <div class="card-body" id="pacientes-list">
+                    <div class="empty-state"><i class="fas fa-users"></i><p>Nenhum paciente encontrado</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONSULTAS -->
+        <div class="page-section" id="page-consultas">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <div><h1>Consultas</h1><p>Historico de consultas realizadas</p></div>
+                <button class="btn btn-primary" onclick="openNovaConsultaModal()"><i class="fas fa-plus"></i> Nova Consulta</button>
+            </div>
+            <div class="content-card">
+                <div class="card-body" id="consultas-list">
+                    <div class="empty-state"><i class="fas fa-stethoscope"></i><p>Nenhuma consulta registrada</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AGENDAMENTOS -->
+        <div class="page-section" id="page-agendamentos">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <div><h1>Agendamentos</h1><p>Agenda de consultas futuras</p></div>
+                <button class="btn btn-primary" onclick="openNovoAgendamentoModal()"><i class="fas fa-plus"></i> Novo Agendamento</button>
+            </div>
+            <div class="content-card">
+                <div class="card-body" id="agendamentos-list">
+                    <div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Nenhum agendamento futuro</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRESCRICOES -->
+        <div class="page-section" id="page-prescricoes">
+            <div class="page-header"><h1>Prescricoes</h1><p>Prescricoes vinculadas a consultas</p></div>
+            <div class="content-card">
+                <div class="card-body" id="prescricoes-list">
+                    <div class="empty-state"><i class="fas fa-prescription"></i><p>As prescricoes aparecem nas consultas concluidas</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BUSCAR CIDs -->
+        <div class="page-section" id="page-cid">
+            <div class="page-header"><h1>Buscar CIDs</h1><p>Classificacao Internacional de Doencas</p></div>
+            <div class="content-card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" id="cid-search-input" placeholder="Digite o codigo ou descricao do CID..." style="font-size:16px;padding:14px;">
+                    </div>
+                    <div class="cid-results" id="cid-results"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIDEOCHAMADA -->
+        <div class="page-section" id="page-videochamada">
+            <div class="page-header"><h1>Videochamada</h1><p>Iniciar consulta por video</p></div>
+            <div class="content-card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <i class="fas fa-video"></i>
+                        <p>A funcionalidade de videochamada sera integrada em breve.</p>
+                        <p style="margin-top:8px;font-size:13px;color:#aaa;">As consultas por video podem ser realizadas pelo link cadastrado em cada agendamento.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXTRATO FINANCEIRO -->
+        <div class="page-section" id="page-extrato">
+            <div class="page-header"><h1>Extrato Financeiro</h1><p>Repasses, faturamento e previsao de receitas</p></div>
+
+            <!-- Taxa da plataforma -->
+            <div class="taxa-config">
+                <label><i class="fas fa-percentage"></i> Taxa da Plataforma:</label>
+                <input type="number" id="taxa-percentual" min="0" max="100" step="0.5" value="15">
+                <span style="font-size:13px;color:#666;">%</span>
+                <button class="btn-save-taxa" onclick="salvarTaxa()"><i class="fas fa-save"></i> Salvar</button>
+                <span id="taxa-feedback" style="font-size:12px;margin-left:8px;"></span>
+            </div>
+
+            <!-- Filtros -->
+            <div class="extrato-filters">
+                <div class="filter-group">
+                    <label>Data Inicio</label>
+                    <input type="date" id="extrato-data-inicio">
+                </div>
+                <div class="filter-group">
+                    <label>Data Fim</label>
+                    <input type="date" id="extrato-data-fim">
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="extrato-status-filter">
+                        <option value="todas">Todas</option>
+                        <option value="concluida">Concluidas</option>
+                        <option value="agendada">Agendadas</option>
+                        <option value="pago">Pagas</option>
+                        <option value="a_receber">A Receber</option>
+                    </select>
+                </div>
+                <button class="btn-filter" onclick="loadExtrato()"><i class="fas fa-search"></i> Filtrar</button>
+            </div>
+
+            <!-- Cards de resumo -->
+            <div class="stats-grid" id="extrato-stats"></div>
+
+            <!-- Tabs -->
+            <div class="extrato-tabs">
+                <div class="extrato-tab active" data-tab="detalhado">Detalhado</div>
+                <div class="extrato-tab" data-tab="mensal">Resumo Mensal</div>
+            </div>
+
+            <!-- Tab: Detalhado -->
+            <div class="extrato-tab-content active" id="extrato-tab-detalhado">
+                <div class="content-card">
+                    <div class="card-body" id="extrato-items">
+                        <div class="empty-state"><i class="fas fa-file-invoice-dollar"></i><p>Nenhum dado financeiro disponivel</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Mensal -->
+            <div class="extrato-tab-content" id="extrato-tab-mensal">
+                <div class="content-card">
+                    <div class="card-header"><h3>Detalhamento Mensal</h3></div>
+                    <div class="card-body" id="extrato-meses">
+                        <div class="empty-state"><i class="fas fa-file-invoice-dollar"></i><p>Nenhum dado financeiro disponivel</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERFIL -->
+        <div class="page-section" id="page-perfil">
+            <div class="page-header"><h1>Meu Perfil</h1><p>Dados cadastrados</p></div>
+            <div class="content-card">
+                <div class="card-body" id="perfil-content"></div>
+            </div>
+            <div class="content-card" style="margin-top:24px;">
+                <div class="card-header"><h3>Alterar Senha</h3></div>
+                <div class="card-body">
+                    <div class="form-group"><label>Senha Atual</label><input type="password" id="senha-atual"></div>
+                    <div class="form-group"><label>Nova Senha</label><input type="password" id="nova-senha" placeholder="Minimo 8 caracteres"></div>
+                    <div class="form-group"><label>Confirmar Nova Senha</label><input type="password" id="confirm-nova-senha"></div>
+                    <button class="btn btn-primary" onclick="alterarSenha()"><i class="fas fa-key"></i> Alterar Senha</button>
+                    <div id="senha-feedback" style="margin-top:8px;font-size:13px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = window.location.origin;
+        let currentDoctor = null;
+
+        // ===== API Helper =====
+        async function api(path, options = {}) {
+            const res = await fetch(BASE_URL + path, {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true',
+                    ...options.headers
+                },
+                ...options
+            });
+            return res;
+        }
+
+        // ===== LOGIN =====
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fb = document.getElementById('login-feedback');
+            fb.textContent = '';
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            try {
+                const res = await api('/api/medico/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentDoctor = data.doctor;
+                    showApp();
+                } else {
+                    fb.textContent = data.message || 'Erro ao fazer login.';
+                    if (res.status === 403) fb.classList.add('login-pending');
+                }
+            } catch (err) {
+                fb.textContent = 'Erro de conexao com o servidor.';
+            }
+        });
+
+        // ===== CHECK SESSION =====
+        async function checkSession() {
+            try {
+                const res = await api('/api/medico/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    currentDoctor = data.doctor;
+                    showApp();
+                    return;
+                }
+            } catch (e) {
+                console.log('checkSession error:', e);
+            }
+
+            // Auto-login via URL params ?email=xxx&senha=yyy
+            const params = new URLSearchParams(window.location.search);
+            const autoEmail = params.get('email');
+            const autoSenha = params.get('senha');
+            if (autoEmail && autoSenha) {
+                try {
+                    const res = await api('/api/medico/login', {
+                        method: 'POST',
+                        body: JSON.stringify({ email: autoEmail, password: autoSenha })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        currentDoctor = data.doctor;
+                        showApp();
+                    } else {
+                        document.getElementById('login-feedback').textContent = data.message || 'Erro no auto-login.';
+                    }
+                } catch (e) {
+                    console.log('Auto-login error:', e);
+                }
+            }
+        }
+        checkSession();
+
+        // ===== SHOW APP =====
+        function showApp() {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('sidebar').classList.remove('hidden');
+            document.getElementById('main-content').classList.remove('full');
+            document.getElementById('sidebar-doc-name').textContent = 'Dr(a). ' + (currentDoctor.nome || currentDoctor.name || '');
+            loadDashboard();
+        }
+
+        // ===== NAVIGATION =====
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                const page = item.dataset.page;
+                document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('page-' + page).classList.add('active');
+                // Load data for page
+                if (page === 'dashboard') loadDashboard();
+                else if (page === 'agenda') loadAgenda();
+                else if (page === 'pacientes') loadPacientes();
+                else if (page === 'consultas') loadConsultas();
+                else if (page === 'agendamentos') loadAgendamentos();
+                else if (page === 'prescricoes') loadPrescricoes();
+                else if (page === 'extrato') loadExtrato();
+                else if (page === 'perfil') loadPerfil();
+            });
+        });
+
+        // ===== LOGOUT =====
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await api('/api/medico/logout', { method: 'POST' });
+            currentDoctor = null;
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('sidebar').classList.add('hidden');
+            document.getElementById('main-content').classList.add('full');
+        });
+
+        // ===== DASHBOARD =====
+        async function loadDashboard() {
+            try {
+                const res = await api('/api/medico/dashboard');
+                if (!res.ok) return;
+                const d = await res.json();
+                document.getElementById('dashboard-stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                        <div><div class="stat-value">${d.total_pacientes}</div><div class="stat-label">Total de Pacientes</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                        <div><div class="stat-value">${d.consultas_realizadas}</div><div class="stat-label">Consultas Realizadas</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fas fa-star"></i></div>
+                        <div><div class="stat-value">${d.avaliacao_media}</div><div class="stat-label">Avaliacao Media</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon teal"><i class="fas fa-calendar-check"></i></div>
+                        <div><div class="stat-value">${d.proximos_agendamentos}</div><div class="stat-label">Proximos Agendamentos</div></div>
+                    </div>
+                `;
+                // Consultas recentes
+                const crEl = document.getElementById('dashboard-consultas-recentes');
+                if (d.consultas_recentes && d.consultas_recentes.length > 0) {
+                    crEl.innerHTML = '<table><thead><tr><th>Paciente</th><th>Data</th><th>Tipo</th><th>Status</th></tr></thead><tbody>' +
+                        d.consultas_recentes.map(c => `<tr><td>${c.paciente_nome||'-'}</td><td>${c.data||'-'}</td><td><span class="badge badge-${c.tipo}">${c.tipo}</span></td><td><span class="badge badge-${c.status}">${c.status}</span></td></tr>`).join('') +
+                        '</tbody></table>';
+                } else {
+                    crEl.innerHTML = '<div class="empty-state"><i class="fas fa-clipboard-list"></i><p>Nenhuma consulta recente</p></div>';
+                }
+                // Agendamentos futuros
+                const agEl = document.getElementById('dashboard-agendamentos');
+                if (d.agendamentos_futuros && d.agendamentos_futuros.length > 0) {
+                    agEl.innerHTML = '<table><thead><tr><th>Paciente</th><th>Data</th><th>Hora</th><th>Tipo</th></tr></thead><tbody>' +
+                        d.agendamentos_futuros.map(a => `<tr><td>${a.paciente_nome||'-'}</td><td>${a.data||'-'}</td><td>${a.hora||'-'}</td><td><span class="badge badge-${a.tipo}">${a.tipo}</span></td></tr>`).join('') +
+                        '</tbody></table>';
+                } else {
+                    agEl.innerHTML = '<div class="empty-state"><i class="fas fa-calendar"></i><p>Nenhum agendamento futuro</p></div>';
+                }
+            } catch (e) { console.error('Dashboard error:', e); }
+        }
+
+        // ===== PACIENTES =====
+        async function loadPacientes() {
+            try {
+                const res = await api('/api/medico/pacientes');
+                if (!res.ok) return;
+                const pacientes = await res.json();
+                const el = document.getElementById('pacientes-list');
+                if (pacientes.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>Nenhum paciente encontrado</p></div>';
+                    return;
+                }
+                el.innerHTML = '<table><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Ultima Consulta</th><th>Total Consultas</th></tr></thead><tbody>' +
+                    pacientes.map(p => `<tr><td><strong>${p.nome||'-'}</strong></td><td>${p.email||'-'}</td><td>${p.telefone||'-'}</td><td>${p.ultima_consulta||'-'}</td><td>${p.total_consultas||0}</td></tr>`).join('') +
+                    '</tbody></table>';
+            } catch (e) {}
+        }
+
+        // Search patients
+        let searchTimeout;
+        document.getElementById('buscar-paciente').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const q = this.value.trim();
+            if (q.length < 2) { loadPacientes(); return; }
+            searchTimeout = setTimeout(async () => {
+                const res = await api('/api/medico/pacientes/buscar?q=' + encodeURIComponent(q));
+                if (!res.ok) return;
+                const results = await res.json();
+                const el = document.getElementById('pacientes-list');
+                if (results.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>Nenhum resultado para "' + q + '"</p></div>';
+                    return;
+                }
+                el.innerHTML = '<table><thead><tr><th>Nome</th><th>Email</th><th>Telefone</th></tr></thead><tbody>' +
+                    results.map(p => `<tr><td><strong>${p.nome||'-'}</strong></td><td>${p.email||'-'}</td><td>${p.telefone||'-'}</td></tr>`).join('') +
+                    '</tbody></table>';
+            }, 400);
+        });
+
+        // ===== CONSULTAS =====
+        async function loadConsultas() {
+            try {
+                const res = await api('/api/medico/consultas');
+                if (!res.ok) return;
+                const consultas = await res.json();
+                const el = document.getElementById('consultas-list');
+                if (consultas.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><i class="fas fa-stethoscope"></i><p>Nenhuma consulta registrada</p></div>';
+                    return;
+                }
+                el.innerHTML = '<table><thead><tr><th>Paciente</th><th>Data</th><th>Tipo</th><th>Diagnostico</th><th>Status</th><th>Acoes</th></tr></thead><tbody>' +
+                    consultas.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||'')).map(c => `
+                        <tr>
+                            <td><strong>${c.paciente_nome||'-'}</strong></td>
+                            <td>${c.data||'-'} ${c.hora||''}</td>
+                            <td><span class="badge badge-${c.tipo}">${c.tipo}</span></td>
+                            <td>${c.diagnostico||'-'}</td>
+                            <td><span class="badge badge-${c.status}">${c.status}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary" onclick="openEditConsultaModal('${c.id}')"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteConsulta('${c.id}')"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `).join('') +
+                    '</tbody></table>';
+            } catch (e) {}
+        }
+
+        function openNovaConsultaModal(prefill = {}) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:640px;">
+                    <div class="modal-header"><h2><i class="fas fa-stethoscope"></i> ${prefill.id ? 'Editar' : 'Nova'} Consulta</h2><button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button></div>
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Nome do Paciente</label><input id="c-paciente" value="${prefill.paciente_nome||''}"></div>
+                            <div class="form-group"><label>ID do Paciente</label><input id="c-paciente-id" value="${prefill.paciente_id||''}"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Data</label><input type="date" id="c-data" value="${prefill.data||''}"></div>
+                            <div class="form-group"><label>Hora</label><input type="time" id="c-hora" value="${prefill.hora||''}"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Tipo</label>
+                                <select id="c-tipo">
+                                    <option value="videochamada" ${prefill.tipo==='videochamada'?'selected':''}>Videochamada</option>
+                                    <option value="chat" ${prefill.tipo==='chat'?'selected':''}>Chat</option>
+                                    <option value="presencial" ${prefill.tipo==='presencial'?'selected':''}>Presencial</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Duracao (min)</label><input type="number" id="c-duracao" value="${prefill.duracao||30}"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Status</label>
+                                <select id="c-status">
+                                    <option value="agendada" ${prefill.status==='agendada'?'selected':''}>Agendada</option>
+                                    <option value="em_andamento" ${prefill.status==='em_andamento'?'selected':''}>Em Andamento</option>
+                                    <option value="concluida" ${prefill.status==='concluida'?'selected':''}>Concluida</option>
+                                    <option value="cancelada" ${prefill.status==='cancelada'?'selected':''}>Cancelada</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>CID</label><input id="c-cid" value="${prefill.cid||''}" placeholder="Ex: F32, G43..."></div>
+                        </div>
+                        <div class="form-group"><label>Diagnostico</label><textarea id="c-diagnostico" rows="2">${prefill.diagnostico||''}</textarea></div>
+                        <div class="form-group"><label>Prescricao</label><textarea id="c-prescricao" rows="2">${prefill.prescricao||''}</textarea></div>
+                        <div class="form-group"><label>Notas</label><textarea id="c-notas" rows="2">${prefill.notas||''}</textarea></div>
+                        <div class="form-group"><label>Link Videochamada</label><input id="c-link" value="${prefill.link_videochamada||''}"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                        <button class="btn btn-primary" id="btn-save-consulta">Salvar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.querySelector('#btn-save-consulta').addEventListener('click', async () => {
+                const body = {
+                    paciente_nome: modal.querySelector('#c-paciente').value.trim(),
+                    paciente_id: modal.querySelector('#c-paciente-id').value.trim(),
+                    data: modal.querySelector('#c-data').value,
+                    hora: modal.querySelector('#c-hora').value,
+                    tipo: modal.querySelector('#c-tipo').value,
+                    duracao: parseInt(modal.querySelector('#c-duracao').value) || 30,
+                    status: modal.querySelector('#c-status').value,
+                    cid: modal.querySelector('#c-cid').value.trim(),
+                    diagnostico: modal.querySelector('#c-diagnostico').value.trim(),
+                    prescricao: modal.querySelector('#c-prescricao').value.trim(),
+                    notas: modal.querySelector('#c-notas').value.trim(),
+                    link_videochamada: modal.querySelector('#c-link').value.trim()
+                };
+                const url = prefill.id ? '/api/medico/consultas/' + prefill.id : '/api/medico/consultas';
+                const method = prefill.id ? 'PUT' : 'POST';
+                const res = await api(url, { method, body: JSON.stringify(body) });
+                if (res.ok) { modal.remove(); loadConsultas(); }
+                else { const d = await res.json(); alert(d.message || 'Erro'); }
+            });
+        }
+
+        async function openEditConsultaModal(id) {
+            const res = await api('/api/medico/consultas');
+            if (!res.ok) return;
+            const all = await res.json();
+            const c = all.find(x => x.id === id);
+            if (c) openNovaConsultaModal(c);
+        }
+
+        async function deleteConsulta(id) {
+            if (!confirm('Excluir esta consulta?')) return;
+            await api('/api/medico/consultas/' + id, { method: 'DELETE' });
+            loadConsultas();
+        }
+
+        // ===== AGENDAMENTOS =====
+        async function loadAgendamentos() {
+            try {
+                const res = await api('/api/medico/agendamentos');
+                if (!res.ok) return;
+                const ags = await res.json();
+                const el = document.getElementById('agendamentos-list');
+                if (ags.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Nenhum agendamento</p></div>';
+                    return;
+                }
+                el.innerHTML = '<table><thead><tr><th>Paciente</th><th>Data</th><th>Hora</th><th>Tipo</th><th>Duracao</th><th>Status</th><th>Acoes</th></tr></thead><tbody>' +
+                    ags.sort((a,b) => ((a.data||'')+(a.hora||'')).localeCompare((b.data||'')+(b.hora||''))).map(a => `
+                        <tr>
+                            <td><strong>${a.paciente_nome||'-'}</strong></td>
+                            <td>${a.data||'-'}</td>
+                            <td>${a.hora||'-'}</td>
+                            <td><span class="badge badge-${a.tipo}">${a.tipo||'videochamada'}</span></td>
+                            <td>${a.duracao||30} min</td>
+                            <td><span class="badge badge-${a.status}">${a.status||'confirmado'}</span></td>
+                            <td>
+                                ${a.link_videochamada ? `<a href="${a.link_videochamada}" target="_blank" class="btn btn-sm btn-primary"><i class="fas fa-video"></i></a>` : ''}
+                                <button class="btn btn-sm btn-danger" onclick="deleteAgendamento('${a.id}')"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `).join('') +
+                    '</tbody></table>';
+            } catch (e) {}
+        }
+
+        function openNovoAgendamentoModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:540px;">
+                    <div class="modal-header"><h2><i class="fas fa-calendar-plus"></i> Novo Agendamento</h2><button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button></div>
+                    <div class="modal-body">
+                        <div class="form-group"><label>Nome do Paciente</label><input id="ag-paciente"></div>
+                        <div class="form-group"><label>ID do Paciente</label><input id="ag-paciente-id"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Data</label><input type="date" id="ag-data"></div>
+                            <div class="form-group"><label>Hora</label><input type="time" id="ag-hora"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Tipo</label>
+                                <select id="ag-tipo">
+                                    <option value="videochamada">Videochamada</option>
+                                    <option value="chat">Chat</option>
+                                    <option value="presencial">Presencial</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Duracao (min)</label><input type="number" id="ag-duracao" value="30"></div>
+                        </div>
+                        <div class="form-group"><label>Link Videochamada (opcional)</label><input id="ag-link" placeholder="https://meet.google.com/..."></div>
+                        <div class="form-group"><label>Notas</label><textarea id="ag-notas" rows="2"></textarea></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                        <button class="btn btn-primary" id="btn-save-ag">Salvar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.querySelector('#btn-save-ag').addEventListener('click', async () => {
+                const body = {
+                    paciente_nome: modal.querySelector('#ag-paciente').value.trim(),
+                    paciente_id: modal.querySelector('#ag-paciente-id').value.trim(),
+                    data: modal.querySelector('#ag-data').value,
+                    hora: modal.querySelector('#ag-hora').value,
+                    tipo: modal.querySelector('#ag-tipo').value,
+                    duracao: parseInt(modal.querySelector('#ag-duracao').value) || 30,
+                    link_videochamada: modal.querySelector('#ag-link').value.trim(),
+                    notas: modal.querySelector('#ag-notas').value.trim()
+                };
+                const res = await api('/api/medico/agendamentos', { method: 'POST', body: JSON.stringify(body) });
+                if (res.ok) { modal.remove(); loadAgendamentos(); }
+                else { const d = await res.json(); alert(d.message || 'Erro'); }
+            });
+        }
+
+        async function deleteAgendamento(id) {
+            if (!confirm('Excluir este agendamento?')) return;
+            await api('/api/medico/agendamentos/' + id, { method: 'DELETE' });
+            loadAgendamentos();
+        }
+
+        // ===== PRESCRICOES (from consultas with prescricao) =====
+        async function loadPrescricoes() {
+            const res = await api('/api/medico/consultas');
+            if (!res.ok) return;
+            const consultas = await res.json();
+            const comPrescricao = consultas.filter(c => c.prescricao && c.prescricao.trim());
+            const el = document.getElementById('prescricoes-list');
+            if (comPrescricao.length === 0) {
+                el.innerHTML = '<div class="empty-state"><i class="fas fa-prescription"></i><p>Nenhuma prescricao registrada ainda.</p><p style="font-size:13px;color:#aaa;">Adicione prescricoes ao concluir consultas.</p></div>';
+                return;
+            }
+            el.innerHTML = '<table><thead><tr><th>Paciente</th><th>Data</th><th>CID</th><th>Prescricao</th></tr></thead><tbody>' +
+                comPrescricao.map(c => `<tr><td><strong>${c.paciente_nome||'-'}</strong></td><td>${c.data||'-'}</td><td>${c.cid||'-'}</td><td>${c.prescricao}</td></tr>`).join('') +
+                '</tbody></table>';
+        }
+
+        // ===== CID SEARCH =====
+        let cidTimeout;
+        document.getElementById('cid-search-input').addEventListener('input', function() {
+            clearTimeout(cidTimeout);
+            const q = this.value.trim();
+            if (q.length < 2) { document.getElementById('cid-results').innerHTML = ''; return; }
+            cidTimeout = setTimeout(async () => {
+                const res = await api('/api/medico/cid/buscar?q=' + encodeURIComponent(q));
+                if (!res.ok) return;
+                const results = await res.json();
+                const el = document.getElementById('cid-results');
+                if (results.length === 0) {
+                    el.innerHTML = '<div class="empty-state"><p>Nenhum CID encontrado para "' + q + '"</p></div>';
+                    return;
+                }
+                el.innerHTML = results.map(c => `<div class="cid-item"><span class="cid-code">${c.codigo}</span> - ${c.descricao}</div>`).join('');
+            }, 300);
+        });
+
+        // ===== EXTRATO FINANCEIRO =====
+        // Extrato tabs
+        document.querySelectorAll('.extrato-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.extrato-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.extrato-tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('extrato-tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        async function loadTaxa() {
+            try {
+                const res = await api('/api/medico/taxa');
+                if (res.ok) {
+                    const d = await res.json();
+                    document.getElementById('taxa-percentual').value = d.taxa_percentual || 15;
+                }
+            } catch(e) {}
+        }
+
+        async function salvarTaxa() {
+            const taxa = parseFloat(document.getElementById('taxa-percentual').value);
+            const fb = document.getElementById('taxa-feedback');
+            if (isNaN(taxa) || taxa < 0 || taxa > 100) {
+                fb.innerHTML = '<span style="color:#e74c3c">Valor invalido (0-100)</span>';
+                return;
+            }
+            try {
+                const res = await api('/api/medico/taxa', {
+                    method: 'PUT',
+                    body: JSON.stringify({ taxa_percentual: taxa })
+                });
+                if (res.ok) {
+                    fb.innerHTML = '<span style="color:#4caf50">Salvo!</span>';
+                    setTimeout(() => fb.textContent = '', 2000);
+                    loadExtrato();
+                }
+            } catch(e) {
+                fb.innerHTML = '<span style="color:#e74c3c">Erro ao salvar</span>';
+            }
+        }
+
+        function statusPagLabel(s) {
+            const labels = { pago: 'Pago', pendente: 'Pendente', a_receber: 'A Receber', cancelado: 'Cancelado' };
+            return labels[s] || s;
+        }
+
+        function statusConsultaLabel(s) {
+            const labels = { concluida: 'Concluida', agendada: 'Agendada', confirmada: 'Confirmada', pendente: 'Pendente', cancelada: 'Cancelada', agendado: 'Agendado' };
+            return labels[s] || s;
+        }
+
+        async function loadExtrato() {
+            const dataInicio = document.getElementById('extrato-data-inicio').value;
+            const dataFim = document.getElementById('extrato-data-fim').value;
+            const statusFilter = document.getElementById('extrato-status-filter').value;
+
+            let url = '/api/medico/extrato?status=' + statusFilter;
+            if (dataInicio) url += '&data_inicio=' + dataInicio;
+            if (dataFim) url += '&data_fim=' + dataFim;
+
+            loadTaxa();
+
+            try {
+                const res = await api(url);
+                if (!res.ok) return;
+                const d = await res.json();
+
+                // Stats cards
+                document.getElementById('extrato-stats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-file-invoice-dollar"></i></div>
+                        <div><div class="stat-value">R$ ${(d.total_bruto||0).toFixed(2)}</div><div class="stat-label">Total Bruto</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-hand-holding-usd"></i></div>
+                        <div><div class="stat-value">R$ ${(d.total_pago||0).toFixed(2)}</div><div class="stat-label">Pago</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                        <div><div class="stat-value">R$ ${(d.total_pendente||0).toFixed(2)}</div><div class="stat-label">Pendente</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon teal"><i class="fas fa-calendar-check"></i></div>
+                        <div><div class="stat-value">R$ ${(d.total_a_receber||0).toFixed(2)}</div><div class="stat-label">A Receber</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="fas fa-wallet"></i></div>
+                        <div><div class="stat-value">R$ ${(d.total_liquido||0).toFixed(2)}</div><div class="stat-label">Liquido (taxa ${d.taxa_percentual||0}%)</div></div>
+                    </div>
+                `;
+
+                // Items table (detailed)
+                const itemsEl = document.getElementById('extrato-items');
+                if (d.items && d.items.length > 0) {
+                    itemsEl.innerHTML = `
+                        <table class="extrato-table">
+                            <thead><tr>
+                                <th>Data</th><th>Tipo</th><th>Paciente</th><th>Descricao</th>
+                                <th>Valor Bruto</th><th>Taxa</th><th>Valor Liquido</th>
+                                <th>Status</th><th>Pagamento</th>
+                            </tr></thead>
+                            <tbody>
+                                ${d.items.map(i => `<tr>
+                                    <td>${i.data ? new Date(i.data+'T00:00:00').toLocaleDateString('pt-BR') : '-'}</td>
+                                    <td>${i.tipo === 'consulta' ? '<i class="fas fa-stethoscope"></i> Consulta' : '<i class="fas fa-calendar"></i> Agendamento'}</td>
+                                    <td>${i.paciente || '-'}</td>
+                                    <td>${i.descricao || '-'}</td>
+                                    <td>R$ ${i.valor_bruto.toFixed(2)}</td>
+                                    <td>${i.taxa_pct}%</td>
+                                    <td><strong>R$ ${i.valor_liquido.toFixed(2)}</strong></td>
+                                    <td>${statusConsultaLabel(i.status_consulta)}</td>
+                                    <td><span class="badge-${i.status_pagamento}">${statusPagLabel(i.status_pagamento)}</span></td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>
+                        <div style="padding:12px 16px;font-size:12px;color:#888;border-top:1px solid #f0f0f0;">
+                            ${d.total_items} registro(s) encontrado(s)
+                        </div>`;
+                } else {
+                    itemsEl.innerHTML = '<div class="empty-state"><i class="fas fa-file-invoice-dollar"></i><p>Nenhum registro encontrado para o filtro selecionado</p></div>';
+                }
+
+                // Monthly summary table
+                const mEl = document.getElementById('extrato-meses');
+                if (d.meses && d.meses.length > 0) {
+                    mEl.innerHTML = `
+                        <table class="extrato-table">
+                            <thead><tr>
+                                <th>Mes</th><th>Consultas</th><th>Agendamentos</th>
+                                <th>Bruto</th><th>Liquido</th>
+                                <th>Pago</th><th>Pendente</th><th>A Receber</th>
+                            </tr></thead>
+                            <tbody>
+                                ${d.meses.map(m => `<tr>
+                                    <td><strong>${m.mes}</strong></td>
+                                    <td>${m.consultas}</td>
+                                    <td>${m.agendamentos}</td>
+                                    <td>R$ ${m.valor_bruto.toFixed(2)}</td>
+                                    <td><strong>R$ ${m.valor_liquido.toFixed(2)}</strong></td>
+                                    <td><span class="badge-pago">R$ ${m.pago.toFixed(2)}</span></td>
+                                    <td><span class="badge-pendente">R$ ${m.pendente.toFixed(2)}</span></td>
+                                    <td><span class="badge-a_receber">R$ ${m.a_receber.toFixed(2)}</span></td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>`;
+                } else {
+                    mEl.innerHTML = '<div class="empty-state"><i class="fas fa-file-invoice-dollar"></i><p>Nenhum dado financeiro disponivel</p></div>';
+                }
+            } catch (e) {
+                console.log('Erro ao carregar extrato:', e);
+            }
+        }
+
+        // ===== PERFIL =====
+        async function loadPerfil() {
+            if (!currentDoctor) return;
+            const d = currentDoctor;
+            const photoHtml = d.photo_url
+                ? `<img src="${d.photo_url}" class="profile-photo" alt="Foto">`
+                : `<div class="profile-placeholder"><i class="fas fa-user-md"></i></div>`;
+            document.getElementById('perfil-content').innerHTML = `
+                <div style="text-align:center;margin-bottom:24px;">
+                    ${photoHtml}
+                    <h2 style="margin:0;">Dr(a). ${d.name||''}</h2>
+                    <p style="color:#667eea;font-weight:600;">${d.specialty||''}</p>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div><strong>CRM:</strong> ${d.crm||'-'} / ${d.crm_uf||'-'}</div>
+                    <div><strong>RQE:</strong> ${d.rqe||'-'}</div>
+                    <div><strong>CPF:</strong> ${d.cpf||'-'}</div>
+                    <div><strong>Email:</strong> ${d.email||'-'}</div>
+                    <div><strong>Telefone:</strong> ${d.phone||'-'}</div>
+                    <div><strong>Tipo Pessoa:</strong> ${d.person_type==='pj'?'Pessoa Juridica':'Pessoa Fisica'}</div>
+                    <div style="grid-column:1/-1;"><strong>Bio:</strong> ${d.bio||'-'}</div>
+                    <div style="grid-column:1/-1;"><strong>Endereco:</strong> ${d.address||'-'}</div>
+                    <div><strong>Banco:</strong> ${d.bank||'-'}</div>
+                    <div><strong>Agencia:</strong> ${d.agency||'-'}</div>
+                    <div><strong>Conta:</strong> ${d.account||'-'}</div>
+                    <div><strong>PIX:</strong> ${d.pix||'-'}</div>
+                    ${d.person_type==='pj'?`
+                        <div><strong>Razao Social:</strong> ${d.company_name||'-'}</div>
+                        <div><strong>CNPJ:</strong> ${d.cnpj||'-'}</div>
+                        <div style="grid-column:1/-1;"><strong>Endereco Empresa:</strong> ${d.company_address||'-'}</div>
+                    `:''}
+                    <div><strong>Status:</strong> <span class="badge badge-${d.status==='aprovado'?'confirmado':'aguardando'}">${d.status||'pendente'}</span></div>
+                    <div><strong>Cadastrado em:</strong> ${d.created_at ? new Date(d.created_at).toLocaleDateString('pt-BR') : '-'}</div>
+                </div>
+            `;
+        }
+
+        // ===== AGENDA MEDICA =====
+        const DIAS_SEMANA = [
+            { key: 'seg', label: 'Segunda-feira' },
+            { key: 'ter', label: 'Terca-feira' },
+            { key: 'qua', label: 'Quarta-feira' },
+            { key: 'qui', label: 'Quinta-feira' },
+            { key: 'sex', label: 'Sexta-feira' },
+            { key: 'sab', label: 'Sabado' },
+            { key: 'dom', label: 'Domingo' }
+        ];
+        let agendaData = null;
+
+        // Agenda tabs
+        document.querySelectorAll('.agenda-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.agenda-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.agenda-tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        async function loadAgenda() {
+            try {
+                const res = await api('/api/medico/agenda');
+                if (!res.ok) return;
+                agendaData = await res.json();
+                renderHorariosGrid();
+                renderConfigFields();
+                renderBloqueios();
+                renderIntegracoes();
+            } catch (e) { console.error('Agenda error:', e); }
+        }
+
+        function renderHorariosGrid() {
+            const horarios = agendaData.horarios || {};
+            const el = document.getElementById('horarios-grid');
+            el.innerHTML = DIAS_SEMANA.map(dia => {
+                const h = horarios[dia.key] || {};
+                const ativo = h.ativo !== false && h.inicio;
+                return `
+                    <div class="day-schedule" data-dia="${dia.key}">
+                        <div class="day-name">${dia.label}</div>
+                        <button class="day-toggle ${ativo ? 'on' : ''}" onclick="toggleDia(this, '${dia.key}')"></button>
+                        <div class="time-inputs">
+                            <input type="time" class="hora-inicio" value="${h.inicio || '08:00'}" ${!ativo ? 'disabled' : ''}>
+                            <span>ate</span>
+                            <input type="time" class="hora-fim" value="${h.fim || '12:00'}" ${!ativo ? 'disabled' : ''}>
+                            ${h.inicio2 ? `
+                                <span style="margin-left:8px;">|</span>
+                                <input type="time" class="hora-inicio2" value="${h.inicio2 || ''}" ${!ativo ? 'disabled' : ''}>
+                                <span>ate</span>
+                                <input type="time" class="hora-fim2" value="${h.fim2 || ''}" ${!ativo ? 'disabled' : ''}>
+                            ` : `
+                                <button class="btn btn-sm btn-secondary" onclick="addTurno(this, '${dia.key}')" style="margin-left:8px;" ${!ativo ? 'disabled' : ''}><i class="fas fa-plus"></i> Turno</button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleDia(btn, dia) {
+            btn.classList.toggle('on');
+            const row = btn.closest('.day-schedule');
+            const inputs = row.querySelectorAll('.time-inputs input, .time-inputs button');
+            inputs.forEach(i => i.disabled = !btn.classList.contains('on'));
+        }
+
+        function addTurno(btn, dia) {
+            const row = btn.closest('.day-schedule');
+            const inputs = row.querySelector('.time-inputs');
+            btn.remove();
+            const extra = document.createElement('span');
+            extra.innerHTML = `
+                <span style="margin-left:8px;">|</span>
+                <input type="time" class="hora-inicio2" value="14:00">
+                <span>ate</span>
+                <input type="time" class="hora-fim2" value="18:00">
+            `;
+            inputs.appendChild(extra);
+        }
+
+        async function salvarHorarios() {
+            const horarios = {};
+            document.querySelectorAll('.day-schedule').forEach(row => {
+                const dia = row.dataset.dia;
+                const ativo = row.querySelector('.day-toggle').classList.contains('on');
+                const inicio = row.querySelector('.hora-inicio')?.value || '';
+                const fim = row.querySelector('.hora-fim')?.value || '';
+                const inicio2 = row.querySelector('.hora-inicio2')?.value || '';
+                const fim2 = row.querySelector('.hora-fim2')?.value || '';
+                horarios[dia] = { ativo, inicio, fim };
+                if (inicio2) { horarios[dia].inicio2 = inicio2; horarios[dia].fim2 = fim2; }
+            });
+            const res = await api('/api/medico/agenda', {
+                method: 'PUT',
+                body: JSON.stringify({ horarios })
+            });
+            if (res.ok) {
+                agendaData = await res.json();
+                alert('Horarios salvos com sucesso!');
+            } else { alert('Erro ao salvar horarios.'); }
+        }
+
+        function renderConfigFields() {
+            const d = agendaData;
+            const dur = document.getElementById('cfg-duracao');
+            if (dur && d.duracao_consulta) dur.value = d.duracao_consulta;
+            const intv = document.getElementById('cfg-intervalo');
+            if (intv && d.intervalo !== undefined) intv.value = d.intervalo;
+            const antMin = document.getElementById('cfg-antecedencia-min');
+            if (antMin && d.antecedencia_min) antMin.value = d.antecedencia_min;
+            const antMax = document.getElementById('cfg-antecedencia-max');
+            if (antMax && d.antecedencia_max) antMax.value = d.antecedencia_max;
+        }
+
+        async function salvarConfigAgenda() {
+            const body = {
+                duracao_consulta: parseInt(document.getElementById('cfg-duracao').value),
+                intervalo: parseInt(document.getElementById('cfg-intervalo').value),
+                antecedencia_min: parseInt(document.getElementById('cfg-antecedencia-min').value),
+                antecedencia_max: parseInt(document.getElementById('cfg-antecedencia-max').value)
+            };
+            const res = await api('/api/medico/agenda', { method: 'PUT', body: JSON.stringify(body) });
+            if (res.ok) {
+                agendaData = await res.json();
+                alert('Configuracoes salvas com sucesso!');
+            } else { alert('Erro ao salvar configuracoes.'); }
+        }
+
+        // Bloqueios
+        function renderBloqueios() {
+            const bloqueios = agendaData.bloqueios || [];
+            const el = document.getElementById('bloqueios-list');
+            if (bloqueios.length === 0) {
+                el.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-check"></i><p>Nenhum bloqueio cadastrado</p><p style="font-size:13px;color:#aaa;">Bloqueie datas em que voce nao atendera (ferias, congressos, etc.)</p></div>';
+                return;
+            }
+            el.innerHTML = bloqueios.map(b => `
+                <div class="bloqueio-item">
+                    <div>
+                        <strong>${b.data_inicio || '-'}</strong> ate <strong>${b.data_fim || b.data_inicio || '-'}</strong>
+                        ${b.motivo ? `<span style="color:#888;margin-left:12px;">(${b.motivo})</span>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="deleteBloqueio('${b.id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function openNovoBloqueioModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:480px;">
+                    <div class="modal-header"><h2><i class="fas fa-ban"></i> Novo Bloqueio</h2><button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button></div>
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Data Inicio</label><input type="date" id="blq-inicio"></div>
+                            <div class="form-group"><label>Data Fim</label><input type="date" id="blq-fim"></div>
+                        </div>
+                        <div class="form-group"><label>Motivo (opcional)</label><input id="blq-motivo" placeholder="Ex: Ferias, Congresso..."></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                        <button class="btn btn-primary" id="btn-save-blq">Salvar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+            modal.querySelector('#btn-save-blq').addEventListener('click', async () => {
+                const body = {
+                    data_inicio: modal.querySelector('#blq-inicio').value,
+                    data_fim: modal.querySelector('#blq-fim').value,
+                    motivo: modal.querySelector('#blq-motivo').value.trim()
+                };
+                if (!body.data_inicio) { alert('Informe a data de inicio.'); return; }
+                if (!body.data_fim) body.data_fim = body.data_inicio;
+                const res = await api('/api/medico/agenda/bloqueio', { method: 'POST', body: JSON.stringify(body) });
+                if (res.ok) {
+                    modal.remove();
+                    loadAgenda();
+                } else { alert('Erro ao salvar bloqueio.'); }
+            });
+        }
+
+        async function deleteBloqueio(id) {
+            if (!confirm('Remover este bloqueio?')) return;
+            await api('/api/medico/agenda/bloqueio/' + id, { method: 'DELETE' });
+            loadAgenda();
+        }
+
+        // Integracoes
+        function renderIntegracoes() {
+            const integ = agendaData.integracao_calendario || {};
+            ['google', 'calendly', 'outlook', 'ical'].forEach(provider => {
+                const cfg = integ[provider];
+                const statusEl = document.getElementById('integ-' + provider + '-status');
+                const cardEl = document.getElementById('integ-' + provider);
+                if (cfg && cfg.conectado) {
+                    statusEl.textContent = 'Conectado';
+                    statusEl.className = 'integ-status integ-connected';
+                    cardEl.classList.add('connected');
+                } else {
+                    statusEl.textContent = 'Desconectado';
+                    statusEl.className = 'integ-status integ-disconnected';
+                    cardEl.classList.remove('connected');
+                }
+            });
+        }
+
+        function configIntegracao(provider) {
+            const integ = (agendaData.integracao_calendario || {})[provider] || {};
+            const labels = {
+                google: { name: 'Google Calendar', fields: ['calendar_id', 'api_key'], placeholders: ['ID do Calendario (ex: email@gmail.com)', 'API Key do Google'] },
+                calendly: { name: 'Calendly', fields: ['url', 'api_token'], placeholders: ['URL do Calendly (ex: https://calendly.com/seu-nome)', 'Personal Access Token'] },
+                outlook: { name: 'Outlook / Microsoft 365', fields: ['email', 'client_id'], placeholders: ['Email da conta Microsoft', 'Client ID do Azure App'] },
+                ical: { name: 'iCal / URL Externa', fields: ['url_import', 'url_export'], placeholders: ['URL para importar eventos (iCal feed)', 'URL para exportar sua agenda (opcional)'] }
+            };
+            const cfg = labels[provider];
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:540px;">
+                    <div class="modal-header"><h2><i class="fas fa-plug"></i> ${cfg.name}</h2><button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button></div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>${cfg.placeholders[0].split('(')[0].trim()}</label>
+                            <input id="integ-field1" placeholder="${cfg.placeholders[0]}" value="${integ[cfg.fields[0]] || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>${cfg.placeholders[1].split('(')[0].trim()}</label>
+                            <input id="integ-field2" placeholder="${cfg.placeholders[1]}" value="${integ[cfg.fields[1]] || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label style="display:flex;align-items:center;gap:8px;">
+                                <input type="checkbox" id="integ-ativo" ${integ.conectado ? 'checked' : ''} style="width:auto;">
+                                Ativar integracao
+                            </label>
+                        </div>
+                        <div style="padding:12px;background:#f5f7fa;border-radius:8px;margin-top:8px;">
+                            <p style="font-size:12px;color:#888;margin:0;"><i class="fas fa-info-circle"></i> 
+                            ${provider === 'google' ? 'Acesse console.cloud.google.com para obter suas credenciais da API do Google Calendar.' :
+                              provider === 'calendly' ? 'Acesse calendly.com/integrations/api para gerar seu Personal Access Token.' :
+                              provider === 'outlook' ? 'Registre um app em portal.azure.com > Azure Active Directory para obter o Client ID.' :
+                              'Cole a URL do feed iCal do seu calendario externo (KalendMe, Apple Calendar, ou outro servico).'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        ${integ.conectado ? '<button class="btn btn-danger" id="btn-desconectar">Desconectar</button>' : ''}
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                        <button class="btn btn-primary" id="btn-save-integ">Salvar</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+
+            modal.querySelector('#btn-save-integ').addEventListener('click', async () => {
+                const newInteg = { ...(agendaData.integracao_calendario || {}) };
+                newInteg[provider] = {
+                    [cfg.fields[0]]: modal.querySelector('#integ-field1').value.trim(),
+                    [cfg.fields[1]]: modal.querySelector('#integ-field2').value.trim(),
+                    conectado: modal.querySelector('#integ-ativo').checked
+                };
+                const res = await api('/api/medico/agenda/integracao', { method: 'PUT', body: JSON.stringify(newInteg) });
+                if (res.ok) {
+                    agendaData.integracao_calendario = await res.json();
+                    renderIntegracoes();
+                    modal.remove();
+                    alert('Integracao salva!');
+                } else { alert('Erro ao salvar integracao.'); }
+            });
+
+            const btnDesc = modal.querySelector('#btn-desconectar');
+            if (btnDesc) {
+                btnDesc.addEventListener('click', async () => {
+                    const newInteg = { ...(agendaData.integracao_calendario || {}) };
+                    newInteg[provider] = { conectado: false };
+                    const res = await api('/api/medico/agenda/integracao', { method: 'PUT', body: JSON.stringify(newInteg) });
+                    if (res.ok) {
+                        agendaData.integracao_calendario = await res.json();
+                        renderIntegracoes();
+                        modal.remove();
+                    }
+                });
+            }
+        }
+
+        // ===== ALTERAR SENHA =====
+        async function alterarSenha() {
+            const fb = document.getElementById('senha-feedback');
+            const atual = document.getElementById('senha-atual').value;
+            const nova = document.getElementById('nova-senha').value;
+            const confirmar = document.getElementById('confirm-nova-senha').value;
+            if (!atual || !nova) { fb.innerHTML = '<span style="color:#e74c3c">Preencha todos os campos.</span>'; return; }
+            if (nova !== confirmar) { fb.innerHTML = '<span style="color:#e74c3c">As senhas nao conferem.</span>'; return; }
+            if (nova.length < 8) { fb.innerHTML = '<span style="color:#e74c3c">Minimo 8 caracteres.</span>'; return; }
+            const res = await api('/api/medico/alterar-senha', {
+                method: 'POST',
+                body: JSON.stringify({ senha_atual: atual, nova_senha: nova })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                fb.innerHTML = '<span style="color:#4caf50">Senha alterada com sucesso!</span>';
+                document.getElementById('senha-atual').value = '';
+                document.getElementById('nova-senha').value = '';
+                document.getElementById('confirm-nova-senha').value = '';
+            } else {
+                fb.innerHTML = `<span style="color:#e74c3c">${data.message||'Erro ao alterar senha.'}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

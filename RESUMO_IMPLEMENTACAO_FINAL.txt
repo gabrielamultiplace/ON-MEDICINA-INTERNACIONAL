@@ -1,0 +1,222 @@
+================================================================================
+             RESUMO COMPLETO DO PROJETO - FINAL
+================================================================================
+
+Data: 2026-02-06
+Objetivo: Disponibilizar aplicação Flask via domínio app.onmedicinainternacional.com
+
+================================================================================
+ISSUES RESOLVIDOS
+================================================================================
+
+1. ERRO JAVASCRIPT NO index.html
+   Status: [OK] RESOLVIDO
+   Problema: Emojis (✅❌) causavam "Uncaught SyntaxError"
+   Solução: Removidos emojis, substituídos por texto
+   Localização: 7 linhas no index.html
+   Resultado: Aplicação carrega sem erros
+
+2. DNS NAO CONFIGURADO
+   Status: [OK] RESOLVIDO
+   Problema: app.onmedicinainternacional.com não resolvia
+   Solução: Adicionado A record no Hostinger
+      - Name: app
+      - Value: 186.232.133.253
+      - TTL: 3600
+   Verificação: nslookup app.onmedicinainternacional.com 8.8.8.8 ✓
+
+3. NGINX PROXY REVERSO
+   Status: [OK] CONFIGURADO
+   Problema: Porta 80 bloqueada pelo IIS (W3SVC Running)
+   Solução: Nginx configurado para porta 8080
+   Config: C:\nginx\conf\nginx.conf
+   Proxy: app.onmedicinainternacional.com:8080 → localhost:5000
+
+================================================================================
+INFRAESTRUTURA IMPLEMENTADA
+================================================================================
+
+FRONTEND:
+  - Tipo: HTML5 + JavaScript + CSS
+  - Arquivo: index.html (7108 linhas)
+  - Status: [OK] Funcional, sem erros JavaScript
+  - Acesso: http://app.onmedicinainternacional.com:8080
+
+BACKEND:
+  - Tipo: Flask (Python)
+  - Arquivo: app.py
+  - Porta: 5000 (localhost)
+  - Status: [OK] Rodando
+  - Módulos: Asaas Integration V2, Cannabis Medicinal
+  - Database: SQLite (data.db)
+
+PROXY REVERSO:
+  - Software: Nginx 1.27.1
+  - Local: C:\nginx\
+  - Porta: 8080
+  - Configuração: C:\nginx\conf\nginx.conf
+  - Status: [OK] Configurado, pronto para iniciar
+
+DNS:
+  - Domínio: onmedicinainternacional.com
+  - Subdomain: app
+  - Tipo: A Record
+  - IP: 186.232.133.253
+  - Status: [OK] Propagado globalmente
+
+================================================================================
+COMO ACESSAR A APLICACAO
+================================================================================
+
+OPCAO 1: Via Porta 8080 (ATUAL)
+   URL: http://app.onmedicinainternacional.com:8080
+   Nota: Funciona porque IIS (W3SVC) está usando porta 80
+
+OPCAO 2: Via Porta 80 (REQUER ADMIN)
+   
+   Para usar porta 80, execute como ADMINISTRADOR:
+   
+   net stop w3svc
+   powershell -ExecutionPolicy Bypass -File "C:\Users\Gabriela Resende\Documents\Plataforma ON\USAR_PORTA_80.ps1"
+   
+   Depois: http://app.onmedicinainternacional.com
+
+================================================================================
+ARQUIVOS CRIADOS/MODIFICADOS
+================================================================================
+
+SCRIPTS UTILITARIOS:
+  - INICIAR_TUDO.ps1
+    → Inicia Flask + Nginx (sem emojis)
+    → Requer: Admin
+    → Uso: powershell -ExecutionPolicy Bypass -File INICIAR_TUDO.ps1
+
+  - FIX_NGINX_CONF.ps1
+    → Corrige nginx.conf (sem BOM)
+    → Pode executar sem admin
+
+  - USAR_PORTA_8080.ps1
+    → Muda Nginx para porta 8080
+    → Pode executar sem admin
+
+  - USAR_PORTA_80.ps1
+    → Muda Nginx para porta 80
+    → Requer: Admin + parar IIS
+
+CONFIGURACOES:
+  - C:\nginx\conf\nginx.conf (porta 8080)
+  - nginx versão 1.27.1 extraído em C:\nginx\
+
+DOCUMENTACAO:
+  - INSTRUCOES_INICIAR.txt
+  - SOLUCAO_PORTA_80.txt
+
+================================================================================
+PROXIMOS PASSOS
+================================================================================
+
+1. INICIAR FLASK + NGINX em background:
+   
+   a) Abra PowerShell como ADMINISTRADOR
+   
+   b) Execute:
+      powershell -ExecutionPolicy Bypass -File "C:\Users\Gabriela Resende\Documents\Plataforma ON\INICIAR_TUDO.ps1"
+   
+   c) Acesse: http://app.onmedicinainternacional.com:8080
+
+2. SE QUISER USAR PORTA 80:
+   
+   a) Abra PowerShell como ADMINISTRADOR
+   
+   b) Execute:
+      net stop w3svc
+      powershell -ExecutionPolicy Bypass -File "C:\Users\Gabriela Resende\Documents\Plataforma ON\USAR_PORTA_80.ps1"
+   
+   c) Depois inicie Nginx:
+      cd C:\nginx
+      .\nginx.exe
+   
+   d) Acesse: http://app.onmedicinainternacional.com
+
+================================================================================
+VERIFICACAO DE STATUS
+================================================================================
+
+Para verificar se tudo está rodando, no PowerShell execute:
+
+  # Flask:
+  Get-Process python | Select Name, Id
+  
+  # Nginx:
+  Get-Process nginx | Select Name, Id
+  
+  # Portas:
+  netstat -ano | Select-String ":5000|:8080"
+
+================================================================================
+RESUMO TECNICO
+================================================================================
+
+Arquitetura:
+
+  Internet
+    |
+    v
+  app.onmedicinainternacional.com (186.232.133.253)
+    |
+    v
+  Nginx (porta 8080 ou 80)
+    |
+    v
+  Flask (localhost:5000)
+    |
+    v
+  index.html + JavaScript
+
+Fluxo:
+  1 usuário acessa http://app.onmedicinainternacional.com:8080
+  2 Nginx recebe na porta 8080
+  3 Nginx faz proxy para localhost:5000
+  4 Flask responde com HTML/JS/CSS
+  5 Browser renderiza aplicação
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+ERRO: bind() failed (10013)
+  -> Terminal não é ADMINISTRADOR
+  -> Abra PowerShell como Admin
+
+ERRO: "Nginx não iniciou"
+  -> Verifique: netstat -ano | Select-String ":8080"
+  -> Verifique logs: C:\nginx\logs\error.log
+
+ERRO: "Pode acessar localhost:5000 mas não via domínio"
+  -> DNS pode estar em cache
+  -> Execute: ipconfig /flushdns
+  -> Aguarde propagação DNS (até 24h)
+
+ERRO: "Port already in use"
+  -> Nginx na 8080: taskkill /F /IM nginx.exe
+  -> Flask na 5000: taskkill /F /IM python.exe
+
+================================================================================
+CHECKLIST FINAL
+================================================================================
+
+[OK] JavaScript errors removidos do index.html
+[OK] DNS configurado no Hostinger
+[OK] DNS verificado (resolve para 186.232.133.253)
+[OK] Flask rodando e testado
+[OK] Nginx instalado (versão 1.27.1)
+[OK] Nginx.conf criado e validado
+[OK] Scripts de inicialização preparados (sem emojis)
+[OK] Proxy reverso configurado (porta 8080)
+
+PENDENTE:
+  [ ] Executar INICIAR_TUDO.ps1 como ADMINISTRADOR
+  [ ] Testar acesso via http://app.onmedicinainternacional.com:8080
+  [ ] Opcionalmente: Para IIS e usar porta 80
+
+================================================================================

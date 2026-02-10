@@ -1,0 +1,157 @@
+================================================================================
+        NGROK REQUER CONTA GRATIS (2 MINUTOS)
+================================================================================
+
+Ngrok mudou suas regras - agora precisa de uma conta gratis para usar.
+
+Nao se preocupa, eh COMPLETAMENTE GRATIS!
+
+================================================================================
+PASSO 1: CRIAR CONTA (1 MINUTO)
+================================================================================
+
+Abra seu navegador e va para:
+
+  https://dashboard.ngrok.com/signup
+
+Escolha uma opcao:
+  ✓ Sign up with Google (mais facil - so clique em sua conta)
+  ✓ Sign up with GitHub (se tiver)
+  ✓ Email + Senha (tradicional)
+
+Clique, e pronto!
+
+================================================================================
+PASSO 2: COPIAR SEU AUTHTOKEN (30 segundos)
+================================================================================
+
+Apos criar conta, voce vai ver uma URL assim:
+
+  https://dashboard.ngrok.com/get-started/your-authtoken
+
+Ou clique em:
+  Profile (canto superior direito) → Authtoken
+
+Voce vera uma string tipo:
+  
+  2jk3h4j5k3h5k3j5h3j5k3jh_abcd1234aBCD_AbCdEfGhIj
+
+COPIE ISSO!
+
+================================================================================
+PASSO 3: INSTALAR AUTHTOKEN (1 minuto)
+================================================================================
+
+Abra PowerShell e execute:
+
+  C:\ngrok-app\ngrok.exe config add-authtoken SEU_TOKEN_AQUI
+
+Exemplo (com token ficticio):
+
+  C:\ngrok-app\ngrok.exe config add-authtoken 2jk3h4j5k3h5k3j5h3j5k3jh_abcd1234aBCD_AbCdEfGhIj
+
+Pressione Enter.
+
+Pronto! Seu token foi salvo!
+
+================================================================================
+PASSO 4: TESTAR NGROK (agora vai funcionar!)
+================================================================================
+
+Abra PowerShell e execute:
+
+  C:\ngrok-app\ngrok.exe http 8080
+
+Voce vera:
+
+  ╔═══════════════════════════════════════════════╗
+  ║                    ngrok                      ║
+  ║                                               ║
+  ║    Session Status                   online    ║
+  ║    Forwarding    https://xxxx-xx.ngrok.io    ║
+  ║                           http://localhost... ║
+  ╚═══════════════════════════════════════════════╝
+
+COPIE A URL que COMECA COM https://
+
+PRONTO! Seu app esta PUBLICO! 🚀
+
+================================================================================
+IMAGENS DE REFERENCIA:
+================================================================================
+
+PASSO 1 - SIGNUP:
+  Abra: https://dashboard.ngrok.com/signup
+  Clique em sua opcao preferida
+  Pronto!
+
+PASSO 2 - AUTHTOKEN:
+  Abra: https://dashboard.ngrok.com/get-started/your-authtoken
+  COPIE a string gigante (seu token)
+
+PASSO 3 - CONFIGURAR:
+  PowerShell:
+  C:\ngrok-app\ngrok.exe config add-authtoken COLA_SEU_TOKEN
+
+PASSO 4 - RODAR:
+  PowerShell:
+  C:\ngrok-app\ngrok.exe http 8080
+  
+  Vera a URL publica aparecendo!
+
+================================================================================
+USA A URL PARA ACESSAR SEU APP:
+================================================================================
+
+A URL que ngrok gera:
+  https://xxxx-xx.ngrok.io
+
+Cola no navegador e acessa!
+
+  - Funciona em qualquer lugar
+  - Compartilha com amigos
+  - Testa no celular
+  - Tudo public na internet!
+
+================================================================================
+ATENCAO: URL MUDA CADA VEZ?
+================================================================================
+
+Versao GRATIS do ngrok:
+  ✓ URL publica funcionando
+  ✓ Acesso ilimitado
+  ✓ MAS url muda cada vez que reinicia
+
+Versao PRO (paga):
+  ✓ URL FIXA (nao muda)
+  ✓ Mais tuneis simultaneos
+  ✓ Suporte
+
+Para desenvolvimento, GRATIS eh suficiente!
+
+================================================================================
+RESUMO RAPIDO:
+================================================================================
+
+1. Abra: https://dashboard.ngrok.com/signup
+2. Crie conta (1 minuto)
+3. Copie seu authtoken (de your-authtoken)
+4. Execute no PowerShell:
+   C:\ngrok-app\ngrok.exe config add-authtoken SEU_TOKEN
+5. Execute:
+   C:\ngrok-app\ngrok.exe http 8080
+6. Copie a URL https:// que aparecer
+7. PRONTO! Seu app esta na internet!
+
+================================================================================
+PRECISA DE AJUDA?
+================================================================================
+
+Se algo nao entender, manda print!
+
+Mas basicamente eh:
+  1. Signup → 2. Copy token → 3. config add-authtoken → 4. http 8080
+
+Facil assim! 🚀
+
+================================================================================

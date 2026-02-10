@@ -1,0 +1,55 @@
+{
+  "sections": [
+    {
+      "id": "section_1",
+      "title": "Dados Informativos do Paciente",
+      "order": 1,
+      "fields": [
+        {"id": "nome_completo", "label": "Nome Completo", "type": "text", "required": true, "order": 1},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "order": 2},
+        {"id": "data_nascimento", "label": "Data de Nascimento", "type": "date", "required": true, "order": 3},
+        {"id": "nome_responsavel", "label": "Nome do Responsável (se menor)", "type": "text", "required": false, "order": 4},
+        {"id": "cpf_responsavel", "label": "CPF do Responsável (se menor)", "type": "text", "required": false, "order": 5},
+        {"id": "telefone", "label": "Telefone", "type": "text", "required": true, "order": 6},
+        {"id": "endereco", "label": "Endereço Completo", "type": "textarea", "required": true, "order": 7},
+        {"id": "email", "label": "E-mail", "type": "email", "required": true, "order": 8}
+      ]
+    },
+    {
+      "id": "section_2",
+      "title": "Dados de Diagnóstico",
+      "order": 2,
+      "fields": [
+        {"id": "peso", "label": "Peso (kg)", "type": "number", "required": true, "order": 1},
+        {"id": "condicao_principal", "label": "Condição Principal para Atendimento", "type": "select", "required": true, "order": 2, "options": ["Autismo", "TDAH", "Ansiedade/Depressão", "Diabetes/Pré-diabetes", "Fibromialgia", "Epilepsia", "Outros"]},
+        {"id": "condicao_principal_outros", "label": "Especificar (se Outros)", "type": "text", "required": false, "order": 3},
+        {"id": "diagnosticos_previos", "label": "Diagnósticos Prévios", "type": "multiselect", "required": false, "order": 4, "options": ["Hipertensão", "Doenças cardíacas", "Câncer", "Distúrbios neurológicos", "Alergias", "Nenhum"]},
+        {"id": "alergias_especificar", "label": "Especificar Alergias", "type": "text", "required": false, "order": 5},
+        {"id": "historico_familiar", "label": "Histórico Familiar Relevante", "type": "multiselect", "required": false, "order": 6, "options": ["Doenças genéticas", "Diabetes", "Alzheimer/Parkinson", "Outros"]},
+        {"id": "historico_familiar_outros", "label": "Especificar (se Outros)", "type": "text", "required": false, "order": 7},
+        {"id": "medicacoes", "label": "Medicações em Uso (nome e dosagem)", "type": "textarea", "required": false, "order": 8},
+        {"id": "cirurgias", "label": "Cirurgias Anteriores", "type": "textarea", "required": false, "order": 9}
+      ]
+    },
+    {
+      "id": "section_3",
+      "title": "Sintomas e Objetivos",
+      "order": 3,
+      "fields": [
+        {"id": "sintomas", "label": "Sintomas Atuais (duração, intensidade e fatores agravantes)", "type": "textarea", "required": true, "order": 1},
+        {"id": "objetivo_consulta", "label": "Objetivo da Consulta", "type": "select", "required": true, "order": 2, "options": ["Iniciar tratamento com óleo de cannabis", "Exames genéticos", "Ajuste de suplementos", "Segunda opinião médica", "Outro"]},
+        {"id": "objetivo_outro", "label": "Especificar (se Outro)", "type": "text", "required": false, "order": 3},
+        {"id": "exames_recentes", "label": "Exames Recentes Anexados", "type": "multiselect", "required": false, "order": 4, "options": ["Hemograma completo", "Teste genético", "Laudo psiquiátrico", "Imagens (RM/Tomografia)"]}
+      ]
+    },
+    {
+      "id": "section_4",
+      "title": "Hábitos",
+      "order": 4,
+      "fields": [
+        {"id": "habitos", "label": "Hábitos", "type": "multiselect", "required": false, "order": 1, "options": ["Tabagismo", "Consumo de álcool", "Atividade física regular", "Dieta específica"]},
+        {"id": "dieta_especificar", "label": "Especificar Dieta", "type": "text", "required": false, "order": 2}
+      ]
+    }
+  ]
+}

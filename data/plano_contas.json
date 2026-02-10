@@ -1,0 +1,211 @@
+{
+  "plano_contas": [
+    {
+      "id": 1,
+      "grupo": "Receita Bruta",
+      "categoria": "Receita com produtos e mercadorias",
+      "subcategorias": [
+        {
+          "id": 101,
+          "nome": "Receita com produtos e mercadorias",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 102,
+          "nome": "Fitorerapico",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 103,
+          "nome": "Microbiota",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 104,
+          "nome": "Mitocondria",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 105,
+          "nome": "Mulher",
+          "status": "Ativo/Exibido"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "grupo": "Receita Bruta",
+      "categoria": "Receita com prestação de serviços",
+      "subcategorias": [
+        {
+          "id": 201,
+          "nome": "Receita com prestação de serviços",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 202,
+          "nome": "Consulta Equipe",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 203,
+          "nome": "Consulta Online",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 204,
+          "nome": "Consulta Presencial",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 205,
+          "nome": "Dentista",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 206,
+          "nome": "Nutricionista",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 207,
+          "nome": "Plano Fidelidade Plus",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 208,
+          "nome": "Plano Fidelidade Rara",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 209,
+          "nome": "Plano Personalité",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 210,
+          "nome": "Plano Plus",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 211,
+          "nome": "Plano Plus Veterinário",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 212,
+          "nome": "Sessão Presencial",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 213,
+          "nome": "Tricologia",
+          "status": "Ativo/Exibido"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "grupo": "Deduções da Receita",
+      "categoria": "Abatimentos e descontos",
+      "subcategorias": [
+        {
+          "id": 301,
+          "nome": "Descontos Concedidos",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 302,
+          "nome": "Abatimentos",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 303,
+          "nome": "Devoluções",
+          "status": "Ativo/Exibido"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "grupo": "Despesas",
+      "categoria": "Despesas Operacionais",
+      "subcategorias": [
+        {
+          "id": 401,
+          "nome": "Pessoal e Encargos",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 402,
+          "nome": "Aluguel",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 403,
+          "nome": "Utilidades (Água, Luz, Internet)",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 404,
+          "nome": "Matéria Prima e Insumos",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 405,
+          "nome": "Marketing e Publicidade",
+          "status": "Ativo/Exibido"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "grupo": "Despesas",
+      "categoria": "Despesas Administrativas",
+      "subcategorias": [
+        {
+          "id": 501,
+          "nome": "Contabilidade",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 502,
+          "nome": "Jurídico",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 503,
+          "nome": "Consultoria",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 504,
+          "nome": "Escritório e Papelaria",
+          "status": "Ativo/Exibido"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "grupo": "Despesas",
+      "categoria": "Despesas Financeiras",
+      "subcategorias": [
+        {
+          "id": 601,
+          "nome": "Juros Bancários",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 602,
+          "nome": "Taxa de Serviço",
+          "status": "Ativo/Exibido"
+        },
+        {
+          "id": 603,
+          "nome": "Multas e Juros",
+          "status": "Ativo/Exibido"
+        }
+      ]
+    }
+  ]
+}

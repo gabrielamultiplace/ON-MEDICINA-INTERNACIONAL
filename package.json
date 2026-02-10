@@ -1,0 +1,11 @@
+{
+  "name": "plataforma-on-tests",
+  "version": "1.0.0",
+  "description": "Scripts de teste automatizado para Plataforma ON (kanban)",
+  "scripts": {
+    "test-kanban": "node playwright-test-kanban.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.37.0"
+  }
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Limpeza de Cache</title>
+</head>
+<body>
+    <h1>Limpando cache local...</h1>
+    <p>Aguarde...</p>
+    <script>
+        localStorage.removeItem('medicamentos');
+        sessionStorage.clear();
+        console.log('✅ Cache limpo!');
+        alert('✅ Cache limpo com sucesso!\n\nVocê será redirecionado para a página principal.');
+        window.location.href = '/';
+    </script>
+</body>
+</html>

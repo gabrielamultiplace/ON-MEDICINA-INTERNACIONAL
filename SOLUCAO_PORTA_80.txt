@@ -1,0 +1,56 @@
+======================================
+  SOLUCAO: PORTA 80 BLOQUEADA
+======================================
+
+A porta 80 está sendo usada pelo Windows (provavelmente IIS).
+
+OPCOES DE SOLUCAO:
+======================================
+
+OPCAO 1 (RECOMENDADA): Parar o servico IIS
+   
+   Abra PowerShell como ADMIN e execute:
+   
+   net stop w3svc
+   net stop iisadmin
+   
+   Depois inicie Nginx:
+   
+   cd C:\nginx
+   .\nginx.exe
+
+======================================
+
+OPCAO 2: Usar Nginx na porta 8080
+   
+   Se nao quiser parar o IIS, use outra porta.
+   
+   Abra o arquivo: C:\nginx\conf\nginx.conf
+   
+   Procure por: listen 80;
+   
+   Mude para: listen 8080;
+   
+   Salve e reinicie Nginx.
+   
+   Acesse: http://app.onmedicinainternacional.com:8080
+
+======================================
+
+OPCAO 3: Usar Apache ao invés de Nginx
+   
+   Configure Apache para rodar na porta 80
+   ao invés do Nginx.
+
+======================================
+
+QUAL ESCOLHER?
+======================================
+
+Se estiver fazendo DESENVOLVIMENTO:
+   -> Use OPCAO 2 (porta 8080)
+
+Se estiver em PRODUCAO:
+   -> Pare o IIS com OPCAO 1 (porta 80)
+
+======================================

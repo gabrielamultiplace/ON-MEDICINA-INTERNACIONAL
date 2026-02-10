@@ -1,0 +1,80 @@
+[
+  {
+    "id": "PRON00001",
+    "paciente_id": "003",
+    "tipo": "receituario",
+    "titulo": "Prescricao Trastuzumabe",
+    "descricao": "Trastuzumabe 6mg/kg IV a cada 3 semanas - 18 ciclos",
+    "conteudo": "RECEITUÁRIO MÉDICO\n\nPaciente: Maria Silva Santos\nData: 10/02/2026\n\nMEDICAMENTO: Trastuzumabe (Herceptin) 6mg/kg IV\nDosagem: 6mg/kg por via intravenosa (IV)\nPosologia: A cada 3 semanas - Infusão hospitalar de 90min\nDuração: 18 ciclos (aproximadamente 12 meses)\n\nORIENTAÇÕES:\n- Administração exclusivamente hospitalar sob supervisão médica\n- Realizar hemograma completo antes de cada ciclo\n- Monitorar função cardíaca (ecocardiograma) a cada 3 meses\n- Relatar imediatamente: febre, calafrios, dor no peito ou falta de ar\n- Manter hidratação adequada antes e após infusão\n\nOBSERVAÇÕES:\nProtocolo indicado para câncer de mama HER2 positivo (Estágio II).\nCompatível com importação via ANVISA conforme RDC nº 81/2008.\nUso conforme orientação médica.\n\nDr. Carlos Mendes\nCRM: CRM/SP 12345",
+    "arquivo_url": "",
+    "medico_id": "",
+    "medico_nome": "Dr. Carlos Mendes",
+    "data": "2026-02-10T11:43:11.201025+00:00",
+    "created_at": "2026-02-10T11:43:11.201049+00:00"
+  },
+  {
+    "id": "PRON00002",
+    "paciente_id": "003",
+    "tipo": "exame",
+    "titulo": "Hemograma Completo",
+    "descricao": "Resultados dentro dos parametros normais. Leucocitos 6.500, Hemoglobina 13.2",
+    "conteudo": "RESULTADO DE EXAME LABORATORIAL\n\nLaboratório: Lab. Central\nData da coleta: 10/02/2026\nMaterial: Sangue venoso\n\nHEMOGRAMA COMPLETO\n\nSÉRIE VERMELHA:\n- Hemácias: 4.5 milhões/mm³ (Ref: 3.9-5.3)\n- Hemoglobina: 13.2 g/dL (Ref: 12.0-16.0) ✓ Normal\n- Hematócrito: 39.5% (Ref: 35-47%)\n- VCM: 87.8 fL (Ref: 80-100)\n- HCM: 29.3 pg (Ref: 27-32)\n\nSÉRIE BRANCA:\n- Leucócitos: 6.500/mm³ (Ref: 4.000-11.000) ✓ Normal\n- Neutrófilos: 58% (3.770/mm³)\n- Linfócitos: 32% (2.080/mm³)\n- Monócitos: 6% (390/mm³)\n- Eosinófilos: 3% (195/mm³)\n- Basófilos: 1% (65/mm³)\n\nPLAQUETAS: 245.000/mm³ (Ref: 150.000-400.000) ✓ Normal\n\nCONCLUSÃO: Resultados dentro dos parâmetros normais.\nPaciente apta para início de quimioterapia.\n\nResponsável técnico: Lab. Central",
+    "arquivo_url": "",
+    "medico_id": "",
+    "medico_nome": "Lab. Central",
+    "data": "2026-02-10T11:43:11.326844+00:00",
+    "created_at": "2026-02-10T11:43:11.326868+00:00"
+  },
+  {
+    "id": "PRON00003",
+    "paciente_id": "003",
+    "tipo": "exame",
+    "titulo": "Marcadores Tumorais CA 15-3",
+    "descricao": "CA 15-3: 42 U/mL (elevado). CEA: 3.2 ng/mL (normal)",
+    "conteudo": "RESULTADO DE EXAME - MARCADORES TUMORAIS\n\nLaboratório: Lab. Central\nData da coleta: 10/02/2026\nMaterial: Soro\n\nMARCADORES TUMORAIS:\n\nCA 15-3: 42 U/mL\n  Valor de referência: < 25 U/mL\n  Status: ⚠ ELEVADO\n\nCEA (Antígeno Carcinoembrionário): 3.2 ng/mL\n  Valor de referência: < 5.0 ng/mL\n  Status: ✓ Normal\n\nINTERPRETAÇÃO:\nO marcador CA 15-3 encontra-se elevado, o que é consistente com o diagnóstico de carcinoma mamário.\nO CEA encontra-se dentro dos limites normais.\n\nNOTA: Os marcadores tumorais devem ser interpretados em conjunto com dados clínicos e exames de imagem.\nRecomenda-se acompanhamento seriado para monitoramento da resposta terapêutica.\n\nResponsável técnico: Lab. Central",
+    "arquivo_url": "",
+    "medico_id": "",
+    "medico_nome": "Lab. Central",
+    "data": "2026-02-10T11:43:11.405013+00:00",
+    "created_at": "2026-02-10T11:43:11.405031+00:00"
+  },
+  {
+    "id": "PRON00004",
+    "paciente_id": "003",
+    "tipo": "laudo",
+    "titulo": "Laudo IA - Analise de Protocolo",
+    "descricao": "Protocolo recomendado: Trastuzumabe + Pertuzumabe para HER2+. Compativel com importacao via ANVISA.",
+    "conteudo": "LAUDO TÉCNICO - ANÁLISE DE PROTOCOLO TERAPÊUTICO\n\nEmitido por: IA ON Platform\nData: 10/02/2026\n\nANÁLISE DO CASO:\nPaciente: Maria Silva Santos\nDiagnóstico: Câncer de mama HER2 positivo - Estágio II\n\nPROTOCOLO RECOMENDADO:\nRegime de tratamento: Trastuzumabe + Pertuzumabe (esquema dual anti-HER2)\n\nFUNDAMENTAÇÃO:\nCom base nas diretrizes NCCN (National Comprehensive Cancer Network) e ESMO\n(European Society for Medical Oncology) para câncer de mama HER2+:\n\n1. O esquema Trastuzumabe + Pertuzumabe demonstrou benefício significativo em\n   sobrevida livre de progressão no estudo CLEOPATRA.\n\n2. Para estágio II HER2+, o regime neoadjuvante/adjuvante com duplo bloqueio\n   anti-HER2 é considerado padrão de tratamento.\n\n3. A taxa de resposta patológica completa (pCR) com duplo bloqueio é\n   significativamente superior ao Trastuzumabe isolado.\n\nVIABILIDADE DE IMPORTAÇÃO:\n✓ Trastuzumabe: Disponível para importação via ANVISA\n✓ Pertuzumabe: Compatível com importação conforme RDC nº 81/2008\n✓ Documentação necessária: Prescrição médica + Laudo técnico + Relatório médico\n\nRECOMENDAÇÃO FINAL:\nProtocolo aprovado para início imediato, com monitoramento cardíaco regular.\n\nIA ON Platform - Sistema de Apoio à Decisão Clínica",
+    "arquivo_url": "",
+    "medico_id": "",
+    "medico_nome": "IA ON Platform",
+    "data": "2026-02-10T11:43:12.880480+00:00",
+    "created_at": "2026-02-10T11:43:12.880498+00:00"
+  },
+  {
+    "id": "PRON00005",
+    "paciente_id": "003",
+    "tipo": "anexo",
+    "titulo": "Solicitacao de Biopsia",
+    "descricao": "Pedido de biopsia mamaria para confirmacao histopatologica",
+    "conteudo": "SOLICITAÇÃO DE EXAME\n\nPEDIDO DE BIÓPSIA MAMÁRIA\n\nPaciente: Maria Silva Santos\nData: 10/02/2026\n\nEXAME SOLICITADO: Biópsia mamária por agulha grossa (core biopsy)\n\nINDICAÇÃO CLÍNICA:\nNódulo mamário identificado em exame de imagem (mamografia + ultrassonografia).\nNecessidade de confirmação histopatológica para definição de conduta terapêutica.\n\nLOCALIZAÇÃO:\nMama esquerda, quadrante superior externo.\n\nEXAMES SOLICITADOS NO MATERIAL:\n1. Análise histopatológica\n2. Imuno-histoquímica:\n   - Receptor de Estrogênio (RE)\n   - Receptor de Progesterona (RP)\n   - HER2 (cerb-B2)\n   - Ki-67\n3. FISH para HER2 (se imuno-histoquímica inconclusiva)\n\nURGÊNCIA: Sim - Paciente em avaliação para início de tratamento\n\nOBSERVAÇÕES:\nPaciente com diagnóstico prévio de CA mama HER2+ (Estágio II).\nBiópsia necessária para confirmação histopatológica e reavaliação\ndos receptores hormonais antes do início da terapia.\n\nDr. Carlos Mendes\nCRM: 12345-SP",
+    "arquivo_url": "",
+    "medico_id": "",
+    "medico_nome": "Dr. Carlos Mendes",
+    "data": "2026-02-10T11:43:13.391543+00:00",
+    "created_at": "2026-02-10T11:43:13.391560+00:00"
+  },
+  {
+    "id": "PRON00006",
+    "paciente_id": "001",
+    "tipo": "receituario",
+    "titulo": "Teste",
+    "descricao": "",
+    "conteudo": "",
+    "arquivo_url": "/uploads/001/prontuario/Boleto_Reginaldo_Donizeti_Fogaca.pdf",
+    "medico_id": "",
+    "medico_nome": "",
+    "data": "2026-02-10T14:07:49.199100+00:00",
+    "created_at": "2026-02-10T14:07:49.199126+00:00"
+  }
+]

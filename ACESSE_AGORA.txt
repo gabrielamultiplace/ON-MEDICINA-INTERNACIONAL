@@ -1,0 +1,95 @@
+🚀 COMO ACESSAR A PLATAFORMA AGORA
+
+═══════════════════════════════════════════════════════════════
+
+PASSO 1: ABRIR PROMPT DE COMANDO
+────────────────────────────────
+• Pressione: Windows + R
+• Digite: cmd
+• Aperte: Enter
+
+
+PASSO 2: NAVEGAR PARA A PASTA
+─────────────────────────────
+Cole no prompt e aperte Enter:
+
+cd "c:\Users\Gabriela Resende\Documents\Plataforma ON"
+
+
+PASSO 3: INSTALAR DEPENDÊNCIAS (primeira vez apenas)
+────────────────────────────────────────────────────
+Cole no prompt e aperte Enter:
+
+pip install -r requirements.txt
+
+
+PASSO 4: INICIAR A APLICAÇÃO
+─────────────────────────────
+Cole no prompt e aperte Enter:
+
+python app.py
+
+Você verá uma mensagem assim:
+  * Running on http://127.0.0.1:5000
+
+
+PASSO 5: ABRIR NO NAVEGADOR
+────────────────────────────
+Cole na barra de endereço do navegador:
+
+http://localhost:5000
+
+OU
+
+http://127.0.0.1:5000
+
+
+PASSO 6: FAZER LOGIN
+────────────────────
+Email:    gabrielamultiplace@gmail.com
+Senha:    @On2025@
+
+Clique em "Entrar"
+
+
+PASSO 7: APROVEITAR!
+───────────────────
+✓ Clique em "Administrativo"
+✓ Explore todas as 11 seções
+✓ Teste todas as funcionalidades
+
+
+═══════════════════════════════════════════════════════════════
+
+RESUMO DOS LINKS DISPONÍVEIS:
+
+URL PRINCIPAL:
+  http://localhost:5000
+
+FORMULÁRIO PROGRESSIVO (teste):
+  http://localhost:5000?registerPaciente=01
+
+CADASTRO DE MÉDICO (teste):
+  http://localhost:5000?registerMedico=true
+
+SELF TEST (teste automático):
+  http://localhost:5000?runSelfTest=true
+
+═══════════════════════════════════════════════════════════════
+
+PRECISA DE AJUDA?
+
+❓ "Port 5000 already in use"
+   → Mude a porta no final do app.py (linha 522):
+     app.run(debug=False, port=5001)
+
+❓ "ModuleNotFoundError: No module named 'flask'"
+   → Rode novamente: pip install -r requirements.txt
+
+❓ "Python não encontrado"
+   → Python não está instalado
+   → Baixe em: python.org
+
+═══════════════════════════════════════════════════════════════
+
+🎉 Tudo pronto! Você consegue! 🎉

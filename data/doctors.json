@@ -1,0 +1,16 @@
+[
+  {
+    "id": "DOC001",
+    "nome": "Dr. Carlos Silva",
+    "email": "carlos@teste.com",
+    "telefone": "(11) 99999-0001",
+    "especialidade": "Clinico Geral",
+    "crm": "CRM/SP 123456",
+    "estado_crm": "SP",
+    "password_hash": "scrypt:32768:8:1$0hNBSFnqBMtOA5i1$eafcdf6314151b38dbce5c1c0689f7b72ca1507e611a00a9467de2d08e3165fe96d1f38339633cdc7f5606d103c21523411a3b432facd76c826644f9c7af3d62",
+    "status": "aprovado",
+    "created_at": "2026-02-09T10:00:00+00:00",
+    "endereco": "Rua das Flores, 100 - Sao Paulo/SP",
+    "bio": "Medico com 15 anos de experiencia em medicina integrativa."
+  }
+]

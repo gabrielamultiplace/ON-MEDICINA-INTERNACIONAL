@@ -1,0 +1,84 @@
+RESUMO RAPIDO - O QUE FAZER AGORA
+================================================================================
+
+STATUS ATUAL:
+  ✓ Flask rodando (porta 5000)
+  ✓ Nginx rodando (porta 8080)  
+  ✓ Localhost:8080 funcionando
+  ✓ Dominio apontando para seu IP publico
+
+================================================================================
+PROXIMO PASSO (1 CLIQUE):
+================================================================================
+
+PASSO 1:
+  Abra seu navegador
+  Digite: 192.168.1.1
+  Pressione Enter
+
+PASSO 2:
+  Verso uma tela de login
+  Usuario: admin
+  Senha: admin
+  Clique Entrar
+
+PASSO 3:
+  Procure "Port Forwarding" ou "Encaminhamento de Porta"
+  (Pode estar em: Advanced / Configuracoes Avancadas / NAT)
+
+PASSO 4:
+  Clique "Add" ou "Adicionar"
+  Preencha EXATAMENTE assim:
+
+  ┌──────────────────────────────┐
+  │ External Port: 8080          │
+  │ Internal IP: 192.168.1.16    │
+  │ Internal Port: 8080          │
+  │ Protocol: TCP                │
+  └──────────────────────────────┘
+
+PASSO 5:
+  Clique "Save" ou "Salvar"
+  Aguarde 1-2 minutos
+
+PASSO 6:
+  TESTE AGORA:
+  
+  Abra: http://app.onmedicinainternacional.com:8080
+
+================================================================================
+SE CONSEGUIR VER SUA APLICACAO = SUCESSO!
+================================================================================
+
+Apos isso voce pode:
+  1. Comecar a desenvolver seu app normalmente
+  2. Esta acessivel na internet via dominio
+  3. Quando quiser colocar em servidor:
+     - Transfira os arquivos
+     - Mude o DNS do Hostinger
+     - Pronto!
+
+================================================================================
+PROBLEMAS?
+================================================================================
+
+Se nao conseguir encontrar Port Forwarding:
+  1. Mande uma print da tela do router
+  2. Consulte o manual do router (marca + modelo)
+  3. Procure em: Advanced, NAT, Virtual Server
+
+Se Flask/Nginx pararem:
+  Execute estes comandos em 2 terminais diferentes:
+  
+  Terminal 1:
+    cd "C:\Users\Gabriela Resende\Documents\Plataforma ON"
+    python app.py
+  
+  Terminal 2:
+    cd C:\nginx
+    C:\nginx\nginx.exe -c conf/nginx.conf
+
+Precisar de mais ajuda?
+  Consulte: CONFIGURAR_ROUTER.txt (guia completo)
+
+================================================================================

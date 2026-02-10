@@ -1,0 +1,182 @@
+[
+  {
+    "id": "TL00001",
+    "paciente_id": "001",
+    "tipo": "cadastro",
+    "titulo": "Paciente cadastrado",
+    "descricao": "Paciente convertido do lead #01 apos confirmacao de pagamento",
+    "dados": {},
+    "data": "2026-02-09T20:31:42.982984+00:00",
+    "created_at": "2026-02-09T20:31:42.983015+00:00"
+  },
+  {
+    "id": "TL00002",
+    "paciente_id": "001",
+    "tipo": "evolucao",
+    "titulo": "MovimentaÃ§Ã£o no Kanban",
+    "descricao": "Paciente movido de \"FormulÃ¡rio/Anamnese\" para \"Consultas\"",
+    "dados": {},
+    "data": "2026-02-09T21:09:45.616024+00:00",
+    "created_at": "2026-02-09T21:09:45.616043+00:00"
+  },
+  {
+    "id": "TL00003",
+    "paciente_id": "001",
+    "tipo": "evolucao",
+    "titulo": "MovimentaÃ§Ã£o no Kanban",
+    "descricao": "Paciente movido de \"Consultas\" para \"FormulÃ¡rio/Anamnese\"",
+    "dados": {},
+    "data": "2026-02-09T21:10:15.806774+00:00",
+    "created_at": "2026-02-09T21:10:15.806794+00:00"
+  },
+  {
+    "id": "TL00004",
+    "paciente_id": "002",
+    "tipo": "cadastro",
+    "titulo": "Paciente cadastrado",
+    "descricao": "Cadastro manual realizado",
+    "dados": {},
+    "data": "2026-02-10T11:41:02.438331+00:00",
+    "created_at": "2026-02-10T11:41:02.438357+00:00"
+  },
+  {
+    "id": "TL00005",
+    "paciente_id": "003",
+    "tipo": "cadastro",
+    "titulo": "Paciente cadastrado",
+    "descricao": "Cadastro manual realizado",
+    "dados": {},
+    "data": "2026-02-10T11:41:23.570033+00:00",
+    "created_at": "2026-02-10T11:41:23.570054+00:00"
+  },
+  {
+    "id": "TL00006",
+    "paciente_id": "003",
+    "tipo": "cadastro",
+    "titulo": "Cadastro realizado",
+    "descricao": "Paciente cadastrada na plataforma ON Medicina Internacional",
+    "dados": {},
+    "data": "2026-02-10T11:42:14.023172+00:00",
+    "created_at": "2026-02-10T11:42:14.023188+00:00"
+  },
+  {
+    "id": "TL00007",
+    "paciente_id": "003",
+    "tipo": "consulta",
+    "titulo": "Primeira consulta agendada",
+    "descricao": "Consulta com Dr. Carlos Mendes - Oncologia. Avaliacao inicial do quadro clinico.",
+    "dados": {},
+    "data": "2026-02-10T11:42:14.105476+00:00",
+    "created_at": "2026-02-10T11:42:14.105495+00:00"
+  },
+  {
+    "id": "TL00008",
+    "paciente_id": "003",
+    "tipo": "exame",
+    "titulo": "Exame de sangue solicitado",
+    "descricao": "Hemograma completo, marcadores tumorais (CA 15-3, CEA), funcao hepatica e renal.",
+    "dados": {},
+    "data": "2026-02-10T11:42:14.180292+00:00",
+    "created_at": "2026-02-10T11:42:14.180306+00:00"
+  },
+  {
+    "id": "TL00009",
+    "paciente_id": "003",
+    "tipo": "prescricao",
+    "titulo": "Prescricao medica emitida",
+    "descricao": "Trastuzumabe 6mg/kg IV a cada 3 semanas. Inicio previsto apos resultados dos exames.",
+    "dados": {},
+    "data": "2026-02-10T11:42:14.259952+00:00",
+    "created_at": "2026-02-10T11:42:14.259968+00:00"
+  },
+  {
+    "id": "TL00010",
+    "paciente_id": "003",
+    "tipo": "prontuario",
+    "titulo": "Receituario adicionado",
+    "descricao": "Prescricao Trastuzumabe",
+    "dados": {},
+    "data": "2026-02-10T11:43:11.202999+00:00",
+    "created_at": "2026-02-10T11:43:11.203016+00:00"
+  },
+  {
+    "id": "TL00011",
+    "paciente_id": "003",
+    "tipo": "prontuario",
+    "titulo": "Exame adicionado",
+    "descricao": "Hemograma Completo",
+    "dados": {},
+    "data": "2026-02-10T11:43:11.328996+00:00",
+    "created_at": "2026-02-10T11:43:11.329063+00:00"
+  },
+  {
+    "id": "TL00012",
+    "paciente_id": "003",
+    "tipo": "prontuario",
+    "titulo": "Exame adicionado",
+    "descricao": "Marcadores Tumorais CA 15-3",
+    "dados": {},
+    "data": "2026-02-10T11:43:11.407216+00:00",
+    "created_at": "2026-02-10T11:43:11.407236+00:00"
+  },
+  {
+    "id": "TL00013",
+    "paciente_id": "003",
+    "tipo": "prontuario",
+    "titulo": "Laudo adicionado",
+    "descricao": "Laudo IA - Analise de Protocolo",
+    "dados": {},
+    "data": "2026-02-10T11:43:12.883122+00:00",
+    "created_at": "2026-02-10T11:43:12.883140+00:00"
+  },
+  {
+    "id": "TL00014",
+    "paciente_id": "003",
+    "tipo": "prontuario",
+    "titulo": "Anexo adicionado",
+    "descricao": "Solicitacao de Biopsia",
+    "dados": {},
+    "data": "2026-02-10T11:43:13.393176+00:00",
+    "created_at": "2026-02-10T11:43:13.393189+00:00"
+  },
+  {
+    "id": "TL00015",
+    "paciente_id": "001",
+    "tipo": "evolucao",
+    "titulo": "Movimentação no Kanban",
+    "descricao": "Paciente movido de \"Formulário/Anamnese\" para \"Consultas\"",
+    "dados": {},
+    "data": "2026-02-10T12:22:14.903153+00:00",
+    "created_at": "2026-02-10T12:22:14.903182+00:00"
+  },
+  {
+    "id": "TL00016",
+    "paciente_id": "001",
+    "tipo": "evolucao",
+    "titulo": "Movimentação no Kanban",
+    "descricao": "Paciente movido de \"Consultas\" para \"Formulário/Anamnese\"",
+    "dados": {},
+    "data": "2026-02-10T12:22:17.314158+00:00",
+    "created_at": "2026-02-10T12:22:17.314179+00:00"
+  },
+  {
+    "id": "TL00017",
+    "paciente_id": "001",
+    "tipo": "upload",
+    "titulo": "Arquivo enviado: Teste",
+    "descricao": "",
+    "dados": {},
+    "data": "2026-02-10T14:07:49.202048+00:00",
+    "created_at": "2026-02-10T14:07:49.202075+00:00"
+  },
+  {
+    "id": "TL00018",
+    "paciente_id": "001",
+    "tipo": "prescricao",
+    "titulo": "Prescrição médica realizada",
+    "descricao": "Dr. Carlos Silva prescreveu: NUI LIFE Gummy",
+    "dados": {},
+    "data": "2026-02-10T14:38:02.312994+00:00",
+    "created_at": "2026-02-10T14:38:02.313016+00:00"
+  }
+]

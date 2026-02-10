@@ -1,0 +1,77 @@
+# ⚡ INICIAR SERVIDOR - GUIA SUPER RÁPIDO
+
+## 🎯 A FORMA MAIS FÁCIL (RECOMENDADA)
+
+### PASSO 1: Abra a pasta
+```
+c:\Users\Gabriela Resende\Documents\Plataforma ON
+```
+
+### PASSO 2: Clique 2x em
+```
+INICIAR_SERVIDOR.bat
+```
+
+### PASSO 3: Veja a mensagem
+```
+✅ Servidor iniciado!
+🔗 URL: http://localhost:5000
+```
+
+### PASSO 4: Abra no navegador
+```
+http://localhost:5000
+```
+
+### PASSO 5: Faça login
+```
+Email: gabrielamultiplace@gmail.com
+Senha: @On2025@
+```
+
+**FIM! 🎉 Servidor está rodando!**
+
+---
+
+## 📁 ARQUIVOS DISPONÍVEIS
+
+| Arquivo | O Que Faz |
+|---------|-----------|
+| **INICIAR_SERVIDOR.bat** | ⭐ Iniciar rápido (RECOMENDADO) |
+| iniciar.bat | Iniciar servidor |
+| iniciar_auto.py | Iniciar com auto-reload (Python) |
+
+---
+
+## ⚙️ COMO PARAR O SERVIDOR
+
+Pressione no terminal:
+```
+CTRL + C
+```
+
+Depois: `S` + Enter
+
+---
+
+## 🚀 ATUALIZAÇÃO AUTOMÁTICA
+
+Quando você fizer mudanças no `index.html` ou `app.py`:
+
+1. **Salve o arquivo** (CTRL + S)
+2. **Recarregue o navegador** (F5)
+3. **Mudanças aparecem automaticamente!** ✅
+
+---
+
+## 💡 DICAS
+
+- Manter o terminal **sempre aberto**
+- Se der erro, **pressione CTRL + C** e rode novamente
+- Se a porta 5000 estiver em uso, veja o erro no terminal
+
+---
+
+**É só isso! Servidor iniciado! 🚀**
+
+Qualquer dúvida, me chama! 😊

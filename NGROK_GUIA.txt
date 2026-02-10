@@ -1,0 +1,151 @@
+================================================================================
+              USAR NGROK PARA EXPOR SEU APP NA INTERNET
+================================================================================
+
+O que é ngrok?
+  - Cria um "túnel" que conecta seu PC local à internet
+  - Gera uma URL PÚBLICA que qualquer pessoa pode acessar
+  - Funciona mesmo sem mexer no router!
+
+================================================================================
+PASSO 1: CERTIFIQUE-SE QUE FLASK + NGINX ESTAO RODANDO
+================================================================================
+
+Abra PowerShell e execute:
+
+  tasklist | findstr "python nginx"
+
+Deve mostrar:
+  python.exe
+  nginx.exe
+
+Se nao mostrar nada, inicie manualmente:
+  Terminal 1: cd "C:\Users\Gabriela Resende\Documents\Plataforma ON" && python app.py
+  Terminal 2: cd C:\nginx && C:\nginx\nginx.exe -c conf/nginx.conf
+
+================================================================================
+PASSO 2: INICIE NGROK
+================================================================================
+
+Duplo clique no arquivo:
+  C:\Users\Gabriela Resende\Documents\Plataforma ON\INICIAR_NGROK.bat
+
+Uma janela vai abrir mostrando algo como:
+
+  ┌─────────────────────────────────────────┐
+  │ ngrok                                   │
+  │                                         │
+  │ Session Status: online                  │
+  │ Web Interface: http://127.0.0.1:4040    │
+  │                                         │
+  │ Forwarding https://XXXXX-XX.ngrok.io-> │
+  │           localhost:8080                 │
+  └─────────────────────────────────────────┘
+
+Procure pela URL que COMECA COM https://
+
+Exemplo: https://abc12345-67.ngrok.io
+
+ESSA É SUA URL PUBLICA! ✅
+
+================================================================================
+PASSO 3: TESTE A URL PUBLICA
+================================================================================
+
+Copie a URL (exemplo: https://abc12345-67.ngrok.io)
+
+Abra em qualquer navegador:
+  https://abc12345-67.ngrok.io
+
+Pronto! Seu app esta PUBLICO na internet! 🎉
+
+Pode acessar de qualquer lugar, de qualquer dispositivo!
+
+================================================================================
+PASSO 4: COMPARTILHE A URL
+================================================================================
+
+Mande a URL para amigos testarem:
+  "Veja meu app: https://abc12345-67.ngrok.io"
+
+Eles conseguem ver seu app completamente funcional!
+
+================================================================================
+IMPORTANTE: NGROK E NGROK PREMIUM
+================================================================================
+
+VERSAO GRATIS (suficiente):
+  ✓ Funciona 24/7
+  ✓ Crie uma conta (gratis)
+  ✓ Pode parar e reiniciar quantas vezes quiser
+  ✓ URL muda a cada reinicio
+
+ATUALIZACAO (opcional):
+  Se quiser URL FIXA (que nao muda):
+    - Crie conta em ngrok.com (gratis)
+    - Copie seu authtoken
+    - Execute: ngrok config add-authtoken SEU_TOKEN
+    - Pronto! URL fica fixa
+
+================================================================================
+COMANDOS UTEIS
+================================================================================
+
+Para criar conta ngrok gratis:
+  1. Acesse: https://ngrok.com/
+  2. Clique "Sign Up"
+  3. Use Email ou Google
+
+Para usar authtoken (URL fixa):
+  ngrok config add-authtoken seu_token_aqui
+
+Para parar ngrok:
+  Apague a janela (Ctrl+C) ou feche
+
+Para reiniciar:
+  Duplo clique em INICIAR_NGROK.bat novamente
+
+================================================================================
+PROBLEMA: "This ngrok session has reached its connection limit"
+================================================================================
+
+Significa que voce ja tem outra sessao ngrok aberta.
+
+Solucao:
+  1. Feche a janela anterior do ngrok
+  2. Aguarde 10 segundos
+  3. Inicie novamente
+
+================================================================================
+COMPARACAO: LOCALHOST vs NGROK
+================================================================================
+
+LOCALHOST:
+  - URL: http://localhost:8080
+  - Funciona: So no seu PC
+  - Uso: Desenvolvimento local
+
+REDE LOCAL:
+  - URL: http://192.168.1.16:8080
+  - Funciona: Mesma rede WiFi
+  - Uso: Teste com outros dispositivos em casa
+
+NGROK:
+  - URL: https://abc12345-67.ngrok.io
+  - Funciona: Internet mundial!
+  - Uso: Produção, compartilhar com mundo
+
+================================================================================
+PROXIMA ETAPA
+================================================================================
+
+Uma vez que NGROK esta funcionando, voce pode:
+
+1. CONTINUAR DESENVOLVENDO seu app localmente
+2. TESTAR em qualquer lugar (celular, outro PC, internet)
+3. QUANDO ESTIVER PRONTO - transferir para um servidor
+4. DEPOIS mudar DNS para apontar ao servidor
+
+Mas agora ja pode trabalhar, testar e compartilhar! 🚀
+
+================================================================================

@@ -1,0 +1,117 @@
+{
+  "grupos": [
+    {
+      "id": 1,
+      "nome": "Produtos, serviços ou Contratos",
+      "subgrupos": [
+        {
+          "id": 101,
+          "nome": "Médicos",
+          "status": "Ativo"
+        },
+        {
+          "id": 102,
+          "nome": "Clínica Verde",
+          "status": "Ativo"
+        },
+        {
+          "id": 103,
+          "nome": "Dentista",
+          "status": "Ativo"
+        },
+        {
+          "id": 104,
+          "nome": "Holding Espaço",
+          "status": "Ativo"
+        },
+        {
+          "id": 105,
+          "nome": "Nutricionista",
+          "status": "Ativo"
+        },
+        {
+          "id": 106,
+          "nome": "Nutriquantum",
+          "status": "Ativo"
+        },
+        {
+          "id": 107,
+          "nome": "ON Medicina",
+          "status": "Ativo"
+        },
+        {
+          "id": 108,
+          "nome": "Quantulab",
+          "status": "Ativo"
+        },
+        {
+          "id": 109,
+          "nome": "Tricologia",
+          "status": "Ativo"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "nome": "Setores Operacionais",
+      "subgrupos": [
+        {
+          "id": 201,
+          "nome": "Atendimento Domiciliar",
+          "status": "Ativo"
+        },
+        {
+          "id": 202,
+          "nome": "Atendimento Operacional",
+          "status": "Ativo"
+        },
+        {
+          "id": 203,
+          "nome": "Unidade Conceito Vida",
+          "status": "Ativo"
+        },
+        {
+          "id": 204,
+          "nome": "Telemedicina",
+          "status": "Ativo"
+        },
+        {
+          "id": 205,
+          "nome": "Importação de Produtos",
+          "status": "Ativo"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "nome": "Setores da Administração",
+      "subgrupos": [
+        {
+          "id": 301,
+          "nome": "Setor Administrativo",
+          "status": "Ativo"
+        },
+        {
+          "id": 302,
+          "nome": "Setor Ativo e Conservação",
+          "status": "Ativo"
+        },
+        {
+          "id": 303,
+          "nome": "Setor Contabilidade",
+          "status": "Ativo"
+        },
+        {
+          "id": 304,
+          "nome": "Setor Jurídico",
+          "status": "Ativo"
+        },
+        {
+          "id": 305,
+          "nome": "Setor Manutenção",
+          "status": "Ativo"
+        }
+      ]
+    }
+  ]
+}

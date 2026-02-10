@@ -1,0 +1,67 @@
+<!-- Verificador de localStorage -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verificador de localStorage - Leads e Pacientes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        h1 { color: #0E4D42; }
+        .container { background: white; padding: 20px; border-radius: 8px; margin: 10px 0; }
+        pre { background: #f0f0f0; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        button { background: #0E4D42; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #07362f; }
+        .info-box { background: #e8f5e9; padding: 15px; border-left: 4px solid #0E4D42; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Verificador de localStorage - Leads e Pacientes</h1>
+    
+    <div class="container">
+        <h2>Pacientes Salvos Localmente</h2>
+        <button onclick="verificarPacientes()">Verificar Pacientes</button>
+        <pre id="pacientes-output">Clique no botão para verificar...</pre>
+    </div>
+
+    <div class="container">
+        <h2>Leads Salvos Localmente</h2>
+        <button onclick="verificarLeads()">Verificar Leads</button>
+        <pre id="leads-output">Clique no botão para verificar...</pre>
+    </div>
+
+    <div class="container">
+        <h2>Todos os Dados do localStorage</h2>
+        <button onclick="verificarTudo()">Verificar Tudo</button>
+        <pre id="tudo-output">Clique no botão para verificar...</pre>
+    </div>
+
+    <div class="info-box">
+        <strong>Instruções:</strong>
+        <ul>
+            <li>Use este verificador para ver quais dados estão salvos no navegador</li>
+            <li>Se encontrar dados antigos de pacientes/leads, eles serão carregados automaticamente quando recarregar a página</li>
+            <li>A página foi atualizada para carregar dados do localStorage automaticamente</li>
+        </ul>
+    </div>
+
+    <script>
+        function verificarPacientes() {
+            const pacientes = JSON.parse(localStorage.getItem('pacientes') || '[]');
+            document.getElementById('pacientes-output').textContent = JSON.stringify(pacientes, null, 2);
+        }
+
+        function verificarLeads() {
+            const leads = JSON.parse(localStorage.getItem('leads') || '[]');
+            document.getElementById('leads-output').textContent = JSON.stringify(leads, null, 2);
+        }
+
+        function verificarTudo() {
+            const tudo = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const chave = localStorage.key(i);
+                tudo[chave] = localStorage.getItem(chave);
+            }
+            document.getElementById('tudo-output').textContent = JSON.stringify(tudo, null, 2);
+        }
+    </script>
+</body>
+</html>

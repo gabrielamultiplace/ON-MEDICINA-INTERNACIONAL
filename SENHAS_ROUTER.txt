@@ -1,0 +1,63 @@
+SENHAS PADRAO COMUNS PARA ROUTERS
+================================================================================
+
+Se usuario "admin" nao funciona, tente estas combinacoes:
+
+OPCAO 1 (Mais comum):
+  Usuario: admin
+  Senha: 12345
+
+OPCAO 2:
+  Usuario: admin  
+  Senha: (deixar vazio - so pressionar Enter)
+
+OPCAO 3:
+  Usuario: (deixar vazio)
+  Senha: admin
+
+OPCAO 4:
+  Usuario: root
+  Senha: root
+
+OPCAO 5:
+  Usuario: admin
+  Senha: admin123
+
+================================================================================
+SE NENHUMA FUNCIONAR:
+================================================================================
+
+Procure a ETIQUETA no fundo do seu router!
+
+Ela deve mostrar:
+  - Model/Modelo do router (ex: TP-Link, D-Link, etc)
+  - IP de acesso (192.168.1.1 ou outro)
+  - Usuario padrao
+  - Senha padrao
+
+================================================================================
+ULTIMO RECURSO: Resetar o Router
+================================================================================
+
+Se a senha foi alterada e nao lembra, pode resetar para as configuracoes de fabrica:
+
+1. Desligue o router (desligue da tomada)
+2. Procure um botao pequeno "RESET" no fundo
+3. Com o router DESLIGADO, aperte e SEGURE este botao
+4. Conecte na tomada (MANTENDO APERTADO)
+5. Aguarde 10-15 segundos
+6. Solte o botao
+7. Aguarde o router reiniciar (2-3 minutos)
+8. Tente novamente com as senhas padrao acima
+
+ATENCAO: Isso vai resetar TODAS as configuracoes do router!
+
+================================================================================
+ME MANDA:
+================================================================================
+
+1. Qual router voce tem? (marca e modelo)
+2. Qual senha ele aceita? (para eu colocar no guia)
+3. Se nao conseguir entrar... vou encontrar outra solucao!
+
+================================================================================
