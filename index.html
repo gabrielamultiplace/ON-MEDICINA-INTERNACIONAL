@@ -3282,6 +3282,7 @@
                     <button class="settings-tab active" data-tab="users">Usuários e permissões</button>
                     <button class="settings-tab" data-tab="parameters">Parâmetros do sistema</button>
                     <button class="settings-tab" data-tab="integrations">Integrações API</button>
+                    <button class="settings-tab" data-tab="assinatura"><i class="fas fa-file-signature" style="margin-right:4px;"></i> Assinatura Digital</button>
                     <button class="settings-tab" data-tab="backup">Backup e segurança</button>
                 </div>
                 <div class="settings-content">
@@ -3375,6 +3376,137 @@
                             <li><i class="fas fa-check-circle"></i> Integração financeira</li>
                         </ul>
                     </div>
+                    <!-- ===== ABA: ASSINATURA DIGITAL ===== -->
+                    <div class="settings-panel" data-panel="assinatura">
+                        <div style="margin-bottom:24px;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                                <div style="background:linear-gradient(135deg,#667eea,#764ba2);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-file-signature" style="color:#fff;font-size:18px;"></i></div>
+                                <div>
+                                    <h4 style="margin:0;color:#333;font-size:16px;">Configuração de Assinatura Digital</h4>
+                                    <p style="margin:0;color:#6b7280;font-size:12px;">Gerencie os certificados e provedores de assinatura da ON Medicina</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Geral -->
+                        <div id="assinatura-status-geral" style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:200px;padding:14px 16px;border-radius:10px;border:1px solid #e5e7eb;background:#f9fafb;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                    <i class="fas fa-user-md" style="color:#667eea;font-size:14px;"></i>
+                                    <span style="font-weight:600;font-size:13px;color:#374151;">Assinatura Médica (ICP-Brasil)</span>
+                                </div>
+                                <div id="status-integraicp" style="font-size:12px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Verificando...</div>
+                            </div>
+                            <div style="flex:1;min-width:200px;padding:14px 16px;border-radius:10px;border:1px solid #e5e7eb;background:#f9fafb;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                    <i class="fas fa-user" style="color:#059669;font-size:14px;"></i>
+                                    <span style="font-weight:600;font-size:13px;color:#374151;">Assinatura Paciente (Eletrônica)</span>
+                                </div>
+                                <div id="status-intellisign" style="font-size:12px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Verificando...</div>
+                            </div>
+                        </div>
+
+                        <!-- Seção IntegraICP -->
+                        <div style="margin-bottom:24px;padding:20px;background:#f0f4ff;border-radius:12px;border:1px solid #c7d2fe;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="background:#667eea;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-certificate" style="color:#fff;font-size:16px;"></i></div>
+                                    <div>
+                                        <h4 style="margin:0;color:#4338ca;font-size:14px;">IntegraICP — Certificado Digital ICP-Brasil</h4>
+                                        <p style="margin:0;color:#6366f1;font-size:11px;">Assinatura digital qualificada para médicos (Vidaas, BirdID)</p>
+                                    </div>
+                                </div>
+                                <a href="https://integraicp.com.br" target="_blank" style="font-size:11px;color:#667eea;text-decoration:none;"><i class="fas fa-external-link-alt"></i> Portal</a>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                                <div>
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Channel ID</label>
+                                    <input type="text" id="cfg-integraicp-channel" placeholder="Informe o Channel ID da IntegraICP" style="width:100%;padding:10px;border:2px solid #c7d2fe;border-radius:8px;font-size:13px;box-sizing:border-box;background:#fff;">
+                                </div>
+                                <div>
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Callback URL</label>
+                                    <input type="url" id="cfg-integraicp-callback" placeholder="https://app.onmedicinainternacional.com" style="width:100%;padding:10px;border:2px solid #c7d2fe;border-radius:8px;font-size:13px;box-sizing:border-box;background:#fff;">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <button onclick="salvarConfigAssinatura('integraicp')" style="padding:8px 20px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-save" style="margin-right:4px;"></i> Salvar</button>
+                                <button onclick="testarConexaoAssinatura('integraicp')" style="padding:8px 20px;background:#4338ca;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-plug" style="margin-right:4px;"></i> Testar Conexão</button>
+                                <div id="feedback-integraicp" style="font-size:12px;margin-left:8px;"></div>
+                            </div>
+                            <div style="margin-top:12px;padding:10px;background:rgba(255,255,255,0.7);border-radius:8px;">
+                                <p style="margin:0;font-size:11px;color:#6b7280;"><i class="fas fa-info-circle" style="color:#667eea;margin-right:4px;"></i> <strong>Como obter:</strong> Acesse <a href="https://integraicp.com.br" target="_blank" style="color:#667eea;">integraicp.com.br</a>, crie uma conta, registre uma aplicação e copie o Channel ID fornecido. O certificado digital do médico (e-CPF A3/cloud) será usado para assinar prescrições e laudos.</p>
+                            </div>
+                        </div>
+
+                        <!-- Seção Intellisign -->
+                        <div style="margin-bottom:24px;padding:20px;background:#f0fdf4;border-radius:12px;border:1px solid #bbf7d0;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="background:#059669;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-file-contract" style="color:#fff;font-size:16px;"></i></div>
+                                    <div>
+                                        <h4 style="margin:0;color:#065f46;font-size:14px;">Intellisign (Soluti) — Assinatura Eletrônica</h4>
+                                        <p style="margin:0;color:#059669;font-size:11px;">Envio de documentos para assinatura de pacientes via email/WhatsApp</p>
+                                    </div>
+                                </div>
+                                <a href="https://assine.online" target="_blank" style="font-size:11px;color:#059669;text-decoration:none;"><i class="fas fa-external-link-alt"></i> Portal</a>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                                <div>
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Client ID</label>
+                                    <input type="text" id="cfg-intellisign-client-id" placeholder="UUID do Client ID" style="width:100%;padding:10px;border:2px solid #bbf7d0;border-radius:8px;font-size:13px;box-sizing:border-box;background:#fff;">
+                                </div>
+                                <div>
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Client Secret</label>
+                                    <input type="password" id="cfg-intellisign-client-secret" placeholder="Client Secret da API" style="width:100%;padding:10px;border:2px solid #bbf7d0;border-radius:8px;font-size:13px;box-sizing:border-box;background:#fff;">
+                                    <button onclick="toggleSecretVisibility()" style="margin-top:4px;background:none;border:none;color:#059669;font-size:11px;cursor:pointer;"><i class="fas fa-eye"></i> Mostrar/Ocultar</button>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Organização (opcional)</label>
+                                <input type="text" id="cfg-intellisign-org" placeholder="ID da organização Intellisign (se houver)" style="width:100%;padding:10px;border:2px solid #bbf7d0;border-radius:8px;font-size:13px;box-sizing:border-box;background:#fff;">
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <button onclick="salvarConfigAssinatura('intellisign')" style="padding:8px 20px;background:#059669;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-save" style="margin-right:4px;"></i> Salvar</button>
+                                <button onclick="testarConexaoAssinatura('intellisign')" style="padding:8px 20px;background:#047857;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-plug" style="margin-right:4px;"></i> Testar Conexão</button>
+                                <div id="feedback-intellisign" style="font-size:12px;margin-left:8px;"></div>
+                            </div>
+                            <div style="margin-top:12px;padding:10px;background:rgba(255,255,255,0.7);border-radius:8px;">
+                                <p style="margin:0;font-size:11px;color:#6b7280;"><i class="fas fa-info-circle" style="color:#059669;margin-right:4px;"></i> <strong>Como obter:</strong> Acesse <a href="https://assine.online" target="_blank" style="color:#059669;">assine.online</a>, crie sua conta empresarial, vá em Configurações → API e gere suas credenciais (Client ID e Client Secret).</p>
+                            </div>
+                        </div>
+
+                        <!-- Certificados Médicos Cadastrados -->
+                        <div style="margin-bottom:24px;padding:20px;background:#fefce8;border-radius:12px;border:1px solid #fde68a;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                                <div style="background:#d97706;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-id-card" style="color:#fff;font-size:16px;"></i></div>
+                                <div>
+                                    <h4 style="margin:0;color:#92400e;font-size:14px;">Certificados Digitais dos Médicos</h4>
+                                    <p style="margin:0;color:#b45309;font-size:11px;">Status dos certificados ICP-Brasil vinculados aos médicos da plataforma</p>
+                                </div>
+                            </div>
+                            <div id="lista-certificados-medicos" style="min-height:60px;">
+                                <div style="text-align:center;padding:20px;color:#9ca3af;"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+                            </div>
+                        </div>
+
+                        <!-- Histórico de Envios Intellisign -->
+                        <div style="padding:20px;background:#faf5ff;border-radius:12px;border:1px solid #e9d5ff;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="background:#7c3aed;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-history" style="color:#fff;font-size:16px;"></i></div>
+                                    <div>
+                                        <h4 style="margin:0;color:#5b21b6;font-size:14px;">Histórico de Envios para Assinatura</h4>
+                                        <p style="margin:0;color:#7c3aed;font-size:11px;">Últimos documentos enviados para assinatura de pacientes</p>
+                                    </div>
+                                </div>
+                                <button onclick="carregarHistoricoEnvios()" style="padding:6px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                            </div>
+                            <div id="historico-envios-assinatura" style="min-height:60px;">
+                                <div style="text-align:center;padding:20px;color:#9ca3af;"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="settings-panel" data-panel="backup">
                         <ul class="admin-list">
                             <li><i class="fas fa-check-circle"></i> Rotina de backup automático</li>
@@ -3826,6 +3958,9 @@
 
                 if (tabId === 'users') {
                     loadUsers();
+                }
+                if (tabId === 'assinatura') {
+                    carregarConfigAssinatura();
                 }
             }
 
@@ -11488,6 +11623,166 @@
                 }
             }
 
+            // ===== ASSINATURA DIGITAL — CONFIGURAÇÕES =====
+            async function carregarConfigAssinatura() {
+                try {
+                    const config = await apiRequest('/api/assinatura-config');
+                    // IntegraICP
+                    const chEl = document.getElementById('cfg-integraicp-channel');
+                    const cbEl = document.getElementById('cfg-integraicp-callback');
+                    if (chEl) chEl.value = config.integraicp_channel_id || '';
+                    if (cbEl) cbEl.value = config.integraicp_callback_url || '';
+                    // Intellisign
+                    const ciEl = document.getElementById('cfg-intellisign-client-id');
+                    const csEl = document.getElementById('cfg-intellisign-client-secret');
+                    const orgEl = document.getElementById('cfg-intellisign-org');
+                    if (ciEl) ciEl.value = config.intellisign_client_id || '';
+                    if (csEl) csEl.value = config.intellisign_client_secret_masked || '';
+                    if (orgEl) orgEl.value = config.intellisign_organization || '';
+                    // Status
+                    const stIcp = document.getElementById('status-integraicp');
+                    const stIs = document.getElementById('status-intellisign');
+                    if (stIcp) {
+                        if (config.integraicp_configured) {
+                            stIcp.innerHTML = '<span style="color:#059669;"><i class="fas fa-check-circle"></i> Configurado e ativo</span>';
+                        } else {
+                            stIcp.innerHTML = '<span style="color:#d97706;"><i class="fas fa-exclamation-triangle"></i> Não configurado — modo simulado</span>';
+                        }
+                    }
+                    if (stIs) {
+                        if (config.intellisign_configured) {
+                            stIs.innerHTML = '<span style="color:#059669;"><i class="fas fa-check-circle"></i> Configurado e ativo</span>';
+                        } else {
+                            stIs.innerHTML = '<span style="color:#d97706;"><i class="fas fa-exclamation-triangle"></i> Não configurado</span>';
+                        }
+                    }
+                } catch(e) {
+                    console.error('Erro ao carregar config assinatura:', e);
+                }
+                // Carregar dados auxiliares
+                carregarCertificadosMedicos();
+                carregarHistoricoEnvios();
+            }
+
+            async function salvarConfigAssinatura(provider) {
+                const feedbackEl = document.getElementById('feedback-' + provider);
+                if (feedbackEl) { feedbackEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...'; feedbackEl.style.color = '#3b82f6'; }
+                try {
+                    const body = {};
+                    if (provider === 'integraicp') {
+                        body.integraicp_channel_id = document.getElementById('cfg-integraicp-channel')?.value || '';
+                        body.integraicp_callback_url = document.getElementById('cfg-integraicp-callback')?.value || '';
+                    } else if (provider === 'intellisign') {
+                        body.intellisign_client_id = document.getElementById('cfg-intellisign-client-id')?.value || '';
+                        const secretVal = document.getElementById('cfg-intellisign-client-secret')?.value || '';
+                        if (secretVal && !secretVal.includes('•')) body.intellisign_client_secret = secretVal;
+                        body.intellisign_organization = document.getElementById('cfg-intellisign-org')?.value || '';
+                    }
+                    await apiRequest('/api/assinatura-config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    if (feedbackEl) { feedbackEl.innerHTML = '<span style="color:#059669;"><i class="fas fa-check-circle"></i> Salvo com sucesso!</span>'; }
+                    setTimeout(() => { if (feedbackEl) feedbackEl.innerHTML = ''; }, 3000);
+                    carregarConfigAssinatura();
+                } catch(e) {
+                    if (feedbackEl) { feedbackEl.innerHTML = '<span style="color:#dc2626;"><i class="fas fa-times-circle"></i> Erro: ' + (e.message || 'Falha') + '</span>'; }
+                }
+            }
+
+            async function testarConexaoAssinatura(provider) {
+                const feedbackEl = document.getElementById('feedback-' + provider);
+                if (feedbackEl) { feedbackEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando conexão...'; feedbackEl.style.color = '#3b82f6'; }
+                try {
+                    const result = await apiRequest('/api/assinatura-config/test/' + provider, { method: 'POST' });
+                    if (result.success) {
+                        if (feedbackEl) { feedbackEl.innerHTML = '<span style="color:#059669;"><i class="fas fa-check-circle"></i> ' + (result.message || 'Conexão OK!') + '</span>'; }
+                    } else {
+                        if (feedbackEl) { feedbackEl.innerHTML = '<span style="color:#dc2626;"><i class="fas fa-times-circle"></i> ' + (result.error || 'Falha na conexão') + '</span>'; }
+                    }
+                    setTimeout(() => { if (feedbackEl) feedbackEl.innerHTML = ''; }, 5000);
+                } catch(e) {
+                    if (feedbackEl) { feedbackEl.innerHTML = '<span style="color:#dc2626;"><i class="fas fa-times-circle"></i> ' + (e.message || 'Erro de conexão') + '</span>'; }
+                }
+            }
+
+            function toggleSecretVisibility() {
+                const el = document.getElementById('cfg-intellisign-client-secret');
+                if (el) el.type = el.type === 'password' ? 'text' : 'password';
+            }
+
+            async function carregarCertificadosMedicos() {
+                const container = document.getElementById('lista-certificados-medicos');
+                if (!container) return;
+                try {
+                    const doctors = await apiRequest('/api/doctors');
+                    const aprovados = doctors.filter(d => d.status === 'aprovado');
+                    if (aprovados.length === 0) {
+                        container.innerHTML = '<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;">Nenhum médico aprovado na plataforma</div>';
+                        return;
+                    }
+                    container.innerHTML = aprovados.map(doc => {
+                        const hasCert = doc.certificado_vinculado || false;
+                        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border:1px solid #fde68a;border-radius:8px;margin-bottom:6px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:36px;height:36px;border-radius:50%;background:${hasCert ? '#d1fae5' : '#f3f4f6'};display:flex;align-items:center;justify-content:center;">
+                                    <i class="fas ${hasCert ? 'fa-certificate' : 'fa-user-md'}" style="color:${hasCert ? '#059669' : '#9ca3af'};font-size:14px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:600;font-size:13px;color:#1f2937;">${doc.nome || 'Médico'}</div>
+                                    <div style="font-size:11px;color:#6b7280;">CRM: ${doc.crm || '---'} ${doc.especialidade ? '• ' + doc.especialidade : ''}</div>
+                                </div>
+                            </div>
+                            <div>
+                                ${hasCert
+                                    ? '<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;"><i class="fas fa-check"></i> Certificado vinculado</span>'
+                                    : '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;"><i class="fas fa-exclamation-triangle"></i> Sem certificado</span>'
+                                }
+                            </div>
+                        </div>`;
+                    }).join('');
+                } catch(e) {
+                    container.innerHTML = '<div style="text-align:center;padding:16px;color:#dc2626;font-size:12px;">Erro ao carregar médicos</div>';
+                }
+            }
+
+            async function carregarHistoricoEnvios() {
+                const container = document.getElementById('historico-envios-assinatura');
+                if (!container) return;
+                try {
+                    const envelopes = await apiRequest('/api/intellisign/envelopes');
+                    if (!envelopes || envelopes.length === 0) {
+                        container.innerHTML = '<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;">Nenhum documento enviado para assinatura ainda</div>';
+                        return;
+                    }
+                    const statusMap = {
+                        'draft': { label: 'Rascunho', color: '#6b7280', bg: '#f3f4f6', icon: 'fa-file' },
+                        'in-transit': { label: 'Aguardando', color: '#d97706', bg: '#fef3c7', icon: 'fa-clock' },
+                        'completed': { label: 'Assinado', color: '#059669', bg: '#d1fae5', icon: 'fa-check-circle' },
+                        'cancelled': { label: 'Cancelado', color: '#dc2626', bg: '#fee2e2', icon: 'fa-times-circle' },
+                        'expired': { label: 'Expirado', color: '#9333ea', bg: '#f3e8ff', icon: 'fa-hourglass-end' }
+                    };
+                    const ultimos = envelopes.slice(-10).reverse();
+                    container.innerHTML = ultimos.map(env => {
+                        const st = statusMap[env.status] || statusMap['in-transit'];
+                        const dt = env.enviado_em ? new Date(env.enviado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+                        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border:1px solid #e9d5ff;border-radius:8px;margin-bottom:4px;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <i class="fas ${st.icon}" style="color:${st.color};font-size:12px;"></i>
+                                <div>
+                                    <div style="font-size:12px;font-weight:600;color:#1f2937;">${env.doc_titulo || env.doc_type || 'Documento'}</div>
+                                    <div style="font-size:10px;color:#6b7280;">${env.paciente_nome || ''} • ${env.canal === 'whatsapp' ? '📱' : '📧'} ${env.enviado_para || ''} • ${dt}</div>
+                                </div>
+                            </div>
+                            <span style="background:${st.bg};color:${st.color};padding:2px 8px;border-radius:8px;font-size:9px;font-weight:600;white-space:nowrap;">${st.label}</span>
+                        </div>`;
+                    }).join('');
+                } catch(e) {
+                    container.innerHTML = '<div style="text-align:center;padding:16px;color:#dc2626;font-size:12px;">Erro ao carregar histórico</div>';
+                }
+            }
+
             // ===== SOLICITAÇÃO DE EXAMES / TESTE FARMACOGENÉTICO =====
             function onEventoTipoChange(value) {
                 if (value === 'solicitacao_exames') {
@@ -11815,6 +12110,12 @@
             window.salvarWebhookConfig = salvarWebhookConfig;
             window.testarWebhook = testarWebhook;
             window.carregarWebhookConfig = carregarWebhookConfig;
+            window.salvarConfigAssinatura = salvarConfigAssinatura;
+            window.testarConexaoAssinatura = testarConexaoAssinatura;
+            window.toggleSecretVisibility = toggleSecretVisibility;
+            window.carregarConfigAssinatura = carregarConfigAssinatura;
+            window.carregarHistoricoEnvios = carregarHistoricoEnvios;
+            window.carregarCertificadosMedicos = carregarCertificadosMedicos;
             window.onEventoTipoChange = onEventoTipoChange;
             window.abrirModalSolicitacao = abrirModalSolicitacao;
             window.fecharModalSolicitacao = fecharModalSolicitacao;

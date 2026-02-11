@@ -3565,6 +3565,192 @@ def criar_solicitacao(pac_id):
     }), 201
 
 
+# ===== ASSINATURA CONFIG API =====
+ASSINATURA_CONFIG_FILE = os.path.join(DATA_DIR, 'assinatura_config.json')
+
+def load_assinatura_config():
+    return _load_json_file(ASSINATURA_CONFIG_FILE, {
+        'integraicp_channel_id': '',
+        'integraicp_callback_url': 'https://app.onmedicinainternacional.com',
+        'intellisign_client_id': '',
+        'intellisign_client_secret': '',
+        'intellisign_organization': ''
+    })
+
+def save_assinatura_config(data):
+    _save_json_file(ASSINATURA_CONFIG_FILE, data)
+
+
+@app.route('/api/assinatura-config', methods=['GET'])
+def get_assinatura_config():
+    """Retorna configuração de assinatura digital (mascarando secrets)"""
+    config = load_assinatura_config()
+    # Ler também do .env como fallback
+    env_icp_channel = os.environ.get('INTEGRAICP_CHANNEL_ID', '')
+    env_icp_callback = os.environ.get('INTEGRAICP_CALLBACK_URL', 'https://app.onmedicinainternacional.com')
+    env_is_client_id = os.environ.get('INTELLISIGN_CLIENT_ID', '')
+    env_is_client_secret = os.environ.get('INTELLISIGN_CLIENT_SECRET', '')
+
+    channel_id = config.get('integraicp_channel_id') or env_icp_channel
+    callback_url = config.get('integraicp_callback_url') or env_icp_callback
+    client_id = config.get('intellisign_client_id') or env_is_client_id
+    client_secret = config.get('intellisign_client_secret') or env_is_client_secret
+    organization = config.get('intellisign_organization', '')
+
+    # Mascarar secret
+    masked_secret = ''
+    if client_secret:
+        if len(client_secret) > 8:
+            masked_secret = client_secret[:4] + '••••••••' + client_secret[-4:]
+        else:
+            masked_secret = '••••••••'
+
+    return jsonify({
+        'integraicp_channel_id': channel_id,
+        'integraicp_callback_url': callback_url,
+        'integraicp_configured': bool(channel_id),
+        'intellisign_client_id': client_id,
+        'intellisign_client_secret_masked': masked_secret,
+        'intellisign_organization': organization,
+        'intellisign_configured': bool(client_id and client_secret)
+    })
+
+
+@app.route('/api/assinatura-config', methods=['POST'])
+def update_assinatura_config():
+    """Atualiza configuração de assinatura digital e recarrega serviços"""
+    data = request.get_json(silent=True) or {}
+    config = load_assinatura_config()
+
+    updated_env = False
+
+    # IntegraICP
+    if 'integraicp_channel_id' in data:
+        config['integraicp_channel_id'] = data['integraicp_channel_id']
+        os.environ['INTEGRAICP_CHANNEL_ID'] = data['integraicp_channel_id']
+        updated_env = True
+    if 'integraicp_callback_url' in data:
+        config['integraicp_callback_url'] = data['integraicp_callback_url']
+        os.environ['INTEGRAICP_CALLBACK_URL'] = data['integraicp_callback_url']
+
+    # Intellisign
+    if 'intellisign_client_id' in data:
+        config['intellisign_client_id'] = data['intellisign_client_id']
+        os.environ['INTELLISIGN_CLIENT_ID'] = data['intellisign_client_id']
+        updated_env = True
+    if 'intellisign_client_secret' in data:
+        config['intellisign_client_secret'] = data['intellisign_client_secret']
+        os.environ['INTELLISIGN_CLIENT_SECRET'] = data['intellisign_client_secret']
+        updated_env = True
+    if 'intellisign_organization' in data:
+        config['intellisign_organization'] = data['intellisign_organization']
+
+    save_assinatura_config(config)
+
+    # Atualizar .env file
+    try:
+        env_path = os.path.join(BASE_DIR, '.env')
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8') as f:
+                env_content = f.read()
+
+            env_updates = {
+                'INTEGRAICP_CHANNEL_ID': config.get('integraicp_channel_id', ''),
+                'INTEGRAICP_CALLBACK_URL': config.get('integraicp_callback_url', ''),
+                'INTELLISIGN_CLIENT_ID': config.get('intellisign_client_id', ''),
+                'INTELLISIGN_CLIENT_SECRET': config.get('intellisign_client_secret', ''),
+            }
+
+            for key, value in env_updates.items():
+                if value:
+                    import re
+                    pattern = re.compile(rf'^{key}=.*$', re.MULTILINE)
+                    if pattern.search(env_content):
+                        env_content = pattern.sub(f'{key}={value}', env_content)
+                    else:
+                        env_content += f'\n{key}={value}'
+
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.write(env_content)
+    except Exception as e:
+        logger.warning(f"Erro ao atualizar .env: {e}")
+
+    # Recarregar serviços IntegraICP
+    global integraicp
+    try:
+        from integraicp_service import IntegraICPService
+        integraicp = IntegraICPService()
+        if integraicp.is_configured():
+            logger.info("✅ IntegraICP reconfigurado com sucesso")
+        else:
+            logger.warning("⚠️ IntegraICP ainda sem channel_id")
+    except Exception as e:
+        logger.warning(f"Erro ao recarregar IntegraICP: {e}")
+
+    # Recarregar Intellisign
+    global intellisign
+    try:
+        from intellisign_service import IntellisignService
+        intellisign = IntellisignService()
+        logger.info("✅ Intellisign reconfigurado com sucesso")
+    except Exception as e:
+        logger.warning(f"Erro ao recarregar Intellisign: {e}")
+
+    return jsonify({'success': True, 'message': 'Configurações salvas com sucesso'})
+
+
+@app.route('/api/assinatura-config/test/<provider>', methods=['POST'])
+def test_assinatura_connection(provider):
+    """Testa conexão com provedor de assinatura"""
+    if provider == 'integraicp':
+        channel_id = os.environ.get('INTEGRAICP_CHANNEL_ID', '')
+        if not channel_id:
+            return jsonify({'success': False, 'error': 'Channel ID não configurado'}), 400
+        try:
+            # Testar conectividade com IntegraICP
+            import requests as req
+            resp = req.get(
+                f'https://services.integraicp.com.br/{channel_id}/authentications',
+                params={'code_challenge': 'test', 'code_challenge_method': 'S256'},
+                timeout=10
+            )
+            if resp.status_code in [200, 400, 401]:
+                return jsonify({'success': True, 'message': f'Conexão OK (HTTP {resp.status_code})'})
+            return jsonify({'success': False, 'error': f'Resposta inesperada: HTTP {resp.status_code}'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Erro de conexão: {str(e)}'}), 500
+
+    elif provider == 'intellisign':
+        client_id = os.environ.get('INTELLISIGN_CLIENT_ID', '')
+        client_secret = os.environ.get('INTELLISIGN_CLIENT_SECRET', '')
+        if not client_id or not client_secret:
+            return jsonify({'success': False, 'error': 'Client ID ou Client Secret não configurados'}), 400
+        try:
+            import requests as req
+            resp = req.post(
+                'https://api.intellisign.com/oauth/token',
+                data={
+                    'grant_type': 'client_credentials',
+                    'client_id': client_id,
+                    'client_secret': client_secret
+                },
+                timeout=10
+            )
+            if resp.status_code == 200:
+                token_data = resp.json()
+                return jsonify({
+                    'success': True,
+                    'message': f'Autenticação OK! Token válido por {token_data.get("expires_in", "?")}s'
+                })
+            else:
+                err_msg = resp.json().get('error_description', resp.text[:200]) if resp.text else f'HTTP {resp.status_code}'
+                return jsonify({'success': False, 'error': f'Falha na autenticação: {err_msg}'})
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Erro de conexão: {str(e)}'}), 500
+
+    return jsonify({'success': False, 'error': 'Provedor desconhecido'}), 400
+
+
 # ===== WEBHOOKS CONFIG API =====
 @app.route('/api/webhooks-config', methods=['GET'])
 def get_webhooks_config():
