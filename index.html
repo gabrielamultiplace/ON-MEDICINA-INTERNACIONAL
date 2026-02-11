@@ -3373,16 +3373,29 @@
             </div>
         </div>
 
-        <!-- Modal: Nova Prescrição -->
+        <!-- Modal: Nova Prescrição Cannabis (Com Titulação + Calculadora 24 Meses + Laudo) -->
         <div id="modal-prescricao" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10001;align-items:center;justify-content:center;">
-            <div style="background:#fff;border-radius:16px;max-width:850px;width:96%;max-height:92vh;overflow-y:auto;padding:0;box-shadow:0 25px 60px rgba(0,0,0,0.3);">
+            <div style="background:#fff;border-radius:16px;max-width:960px;width:97%;max-height:94vh;overflow-y:auto;padding:0;box-shadow:0 25px 60px rgba(0,0,0,0.3);">
                 <!-- Header -->
                 <div style="background:linear-gradient(135deg,#059669,#047857);padding:20px 24px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
                     <div>
-                        <h3 style="margin:0;color:#fff;font-size:18px;"><i class="fas fa-prescription" style="margin-right:8px;"></i> Nova Prescrição Médica</h3>
-                        <p style="margin:4px 0 0;color:rgba(255,255,255,0.8);font-size:12px;">Prescrição de medicamentos cannabis medicinal</p>
+                        <h3 style="margin:0;color:#fff;font-size:18px;"><i class="fas fa-prescription" style="margin-right:8px;"></i> Documentação Médica Cannabis</h3>
+                        <p style="margin:4px 0 0;color:rgba(255,255,255,0.8);font-size:12px;">Prescrição com Titulação • Laudo Judicial • Assinatura Digital</p>
                     </div>
                     <button onclick="fecharModalPrescricao()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;"><i class="fas fa-times"></i></button>
+                </div>
+
+                <!-- Abas: Receita | Laudo | Exames -->
+                <div style="display:flex;border-bottom:2px solid #e5e7eb;background:#f9fafb;" id="presc-tabs-container">
+                    <button class="presc-tab-btn active" onclick="switchPrescTab('receita')" data-tab="receita" style="flex:1;padding:14px;border:none;background:none;font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid #059669;color:#059669;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <i class="fas fa-prescription"></i> Receita Cannabis
+                    </button>
+                    <button class="presc-tab-btn" onclick="switchPrescTab('laudo')" data-tab="laudo" style="flex:1;padding:14px;border:none;background:none;font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;color:#6b7280;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <i class="fas fa-file-medical-alt"></i> Laudo Judicial
+                    </button>
+                    <button class="presc-tab-btn" onclick="switchPrescTab('exames')" data-tab="exames" style="flex:1;padding:14px;border:none;background:none;font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;color:#6b7280;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <i class="fas fa-flask"></i> Pedidos de Exames
+                    </button>
                 </div>
 
                 <div style="padding:24px;">
@@ -3395,35 +3408,123 @@
                         </div>
                     </div>
 
-                    <!-- Buscar medicamento -->
-                    <div style="margin-bottom:20px;">
-                        <label style="font-weight:600;font-size:13px;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-search" style="color:#059669;margin-right:4px;"></i> Buscar Medicamento</label>
-                        <div style="position:relative;">
-                            <input type="text" id="presc-busca-med" placeholder="Digite o nome do medicamento para buscar..." oninput="buscarMedicamentosPrescricao(this.value)" autocomplete="off" style="width:100%;padding:12px 16px;border:2px solid #d1d5db;border-radius:10px;font-size:13px;box-sizing:border-box;">
-                            <div id="presc-busca-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #059669;border-top:none;border-radius:0 0 10px 10px;max-height:250px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.15);"></div>
+                    <!-- ===================== ABA 1: RECEITA CANNABIS ===================== -->
+                    <div id="presc-tab-receita">
+                        <!-- Calculadora Cannabis Banner -->
+                        <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:1px solid #6ee7b7;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+                            <div style="background:#059669;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-calculator" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <div style="font-weight:700;color:#065f46;font-size:14px;">Calculadora Judicial Cannabis (24 Meses)</div>
+                                <div style="font-size:12px;color:#047857;">A quantidade de frascos é calculada automaticamente pela posologia progressiva (titulação)</div>
+                            </div>
+                            <div style="margin-left:auto;">
+                                <label style="font-size:11px;color:#065f46;display:block;">Duração</label>
+                                <select id="presc-duracao-meses" style="padding:6px 10px;border:1px solid #6ee7b7;border-radius:6px;font-size:13px;font-weight:700;color:#065f46;background:#fff;">
+                                    <option value="6">6 meses</option>
+                                    <option value="12">12 meses</option>
+                                    <option value="24" selected>24 meses</option>
+                                    <option value="36">36 meses</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Buscar medicamento -->
+                        <div style="margin-bottom:20px;">
+                            <label style="font-weight:600;font-size:13px;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-search" style="color:#059669;margin-right:4px;"></i> Buscar Medicamento Cannabis</label>
+                            <div style="position:relative;">
+                                <input type="text" id="presc-busca-med" placeholder="Digite o nome do óleo, marca ou tipo para buscar..." oninput="buscarMedicamentosPrescricao(this.value)" autocomplete="off" style="width:100%;padding:12px 16px;border:2px solid #d1d5db;border-radius:10px;font-size:13px;box-sizing:border-box;">
+                                <div id="presc-busca-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #059669;border-top:none;border-radius:0 0 10px 10px;max-height:250px;overflow-y:auto;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.15);"></div>
+                            </div>
+                        </div>
+
+                        <!-- Medicamentos com Titulação (Escadinha) -->
+                        <div style="margin-bottom:20px;">
+                            <label style="font-weight:600;font-size:13px;color:#374151;display:block;margin-bottom:8px;"><i class="fas fa-pills" style="color:#059669;margin-right:4px;"></i> Medicamentos Prescritos – Escada de Titulação</label>
+                            <div id="presc-medicamentos-lista" style="border:2px dashed #d1d5db;border-radius:10px;min-height:80px;padding:12px;">
+                                <div class="presc-empty-msg" style="text-align:center;padding:20px;color:#9ca3af;font-size:13px;">
+                                    <i class="fas fa-arrow-up" style="margin-right:4px;"></i> Busque e adicione medicamentos acima
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Observações -->
+                        <div style="margin-bottom:20px;">
+                            <label style="font-weight:600;font-size:13px;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-comment-medical" style="color:#059669;margin-right:4px;"></i> Observações / Orientações</label>
+                            <textarea id="presc-observacoes" rows="3" placeholder="Orientações gerais ao paciente, cuidados especiais, restrições..." style="width:100%;padding:12px;border:2px solid #d1d5db;border-radius:10px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
                         </div>
                     </div>
 
-                    <!-- Medicamentos adicionados -->
-                    <div style="margin-bottom:20px;">
-                        <label style="font-weight:600;font-size:13px;color:#374151;display:block;margin-bottom:8px;"><i class="fas fa-pills" style="color:#059669;margin-right:4px;"></i> Medicamentos Prescritos</label>
-                        <div id="presc-medicamentos-lista" style="border:2px dashed #d1d5db;border-radius:10px;min-height:80px;padding:12px;">
-                            <div class="presc-empty-msg" style="text-align:center;padding:20px;color:#9ca3af;font-size:13px;">
-                                <i class="fas fa-arrow-up" style="margin-right:4px;"></i> Busque e adicione medicamentos acima
+                    <!-- ===================== ABA 2: LAUDO JUDICIAL ===================== -->
+                    <div id="presc-tab-laudo" style="display:none;">
+                        <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;padding:12px 16px;margin-bottom:20px;">
+                            <p style="font-size:12px;color:#92400e;margin:0;"><i class="fas fa-gavel" style="margin-right:6px;"></i> <strong>Laudo Médico Circunstanciado</strong> – Documento para processo judicial. A IA preenche automaticamente com base na anamnese. Edite se necessário.</p>
+                        </div>
+                        <div style="display:grid;gap:14px;">
+                            <div>
+                                <label style="font-weight:700;font-size:12px;color:#374151;display:block;margin-bottom:4px;text-transform:uppercase;">Diagnóstico (CIDs)</label>
+                                <input type="text" id="laudo-cid" placeholder="Ex: F32.1 - Episódio depressivo moderado" style="width:100%;padding:10px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px;color:#374151;display:block;margin-bottom:4px;text-transform:uppercase;">Histórico Clínico (Anamnese)</label>
+                                <textarea id="laudo-historico" rows="4" placeholder="Paciente de X anos, refere quadro de... há X anos. Relata sintomas como..." style="width:100%;padding:10px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px;color:#374151;display:block;margin-bottom:4px;text-transform:uppercase;">Tratamentos Anteriores (Falha Terapêutica)</label>
+                                <textarea id="laudo-tratamentos" rows="3" placeholder="Paciente já utilizou os seguintes medicamentos sem resposta adequada..." style="width:100%;padding:10px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px;color:#374151;display:block;margin-bottom:4px;text-transform:uppercase;">Medicações em Uso Atual (MUC)</label>
+                                <textarea id="laudo-medicacoes" rows="2" placeholder="Listar medicamentos em uso com dosagem..." style="width:100%;padding:10px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px;color:#374151;display:block;margin-bottom:4px;text-transform:uppercase;">Justificativa Técnica (Por que Cannabis?)</label>
+                                <textarea id="laudo-justificativa" rows="4" style="width:100%;padding:10px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;">O canabidiol (CBD) e demais fitocanabinoides têm demonstrado eficácia terapêutica comprovada em estudos clínicos e revisões sistemáticas publicadas em periódicos indexados. O Sistema Endocanabinoide (SEC) é responsável pela modulação de funções essenciais como dor, humor, sono e inflamação, sendo os fitocanabinoides agonistas naturais deste sistema, proporcionando alternativa terapêutica com perfil de segurança superior aos tratamentos convencionais já tentados sem sucesso.</textarea>
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px;color:#374151;display:block;margin-bottom:4px;text-transform:uppercase;">Consequências da Ausência de Tratamento</label>
+                                <textarea id="laudo-consequencias" rows="3" placeholder="Se o tratamento for negado, o paciente apresentará..." style="width:100%;padding:10px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                            </div>
+                            <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px;">
+                                <label style="font-weight:700;font-size:12px;color:#92400e;display:block;margin-bottom:4px;text-transform:uppercase;"><i class="fas fa-hand-holding-usd" style="margin-right:4px;"></i> Hipossuficiência e Justificativa Financeira</label>
+                                <textarea id="laudo-hipossuficiencia" rows="3" style="width:100%;padding:10px;border:2px solid #fbbf24;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;">A concessão gratuita do medicamento é necessária, considerando que o tratamento com cannabis medicinal importada implica custos elevados e contínuos, incompatíveis com a capacidade financeira do paciente. O direito à saúde é garantido constitucionalmente (Art. 196, CF/88) e o fornecimento de medicamentos essenciais é dever do Estado.</textarea>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Observações -->
-                    <div style="margin-bottom:20px;">
-                        <label style="font-weight:600;font-size:13px;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-comment-medical" style="color:#059669;margin-right:4px;"></i> Observações / Orientações</label>
-                        <textarea id="presc-observacoes" rows="3" placeholder="Orientações gerais ao paciente, cuidados especiais, restrições..." style="width:100%;padding:12px;border:2px solid #d1d5db;border-radius:10px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                    <!-- ===================== ABA 3: PEDIDOS DE EXAMES ===================== -->
+                    <div id="presc-tab-exames" style="display:none;">
+                        <div style="display:grid;gap:20px;">
+                            <div>
+                                <h4 style="margin:0 0 12px;color:#1e40af;font-size:14px;"><i class="fas fa-vial" style="margin-right:6px;"></i> Exames Laboratoriais</h4>
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="presc-exames-lab-list">
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="Hemograma Completo" checked> Hemograma Completo</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="TGP/TGO (Hepatograma)" checked> TGP/TGO (Hepatograma)</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="Creatinina e Ureia" checked> Creatinina e Ureia</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="Vitamina D (25-OH)" checked> Vitamina D (25-OH)</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="Vitamina B12"> Vitamina B12</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="TSH e T4 Livre"> TSH e T4 Livre</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="Glicemia de Jejum"> Glicemia de Jejum</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="Hemoglobina Glicada"> Hemoglobina Glicada</label>
+                                    <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.15s;" onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#e5e7eb'"><input type="checkbox" class="presc-exam-lab" value="PCR (Proteína C Reativa)"> PCR (Proteína C Reativa)</label>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="margin:0 0 12px;color:#7c3aed;font-size:14px;"><i class="fas fa-dna" style="margin-right:6px;"></i> Teste Farmacogenético</h4>
+                                <label style="display:flex;align-items:center;gap:10px;padding:14px 16px;border:2px solid #c4b5fd;border-radius:10px;cursor:pointer;background:#faf5ff;transition:all 0.15s;" onmouseover="this.style.borderColor='#7c3aed'" onmouseout="this.style.borderColor='#c4b5fd'">
+                                    <input type="checkbox" id="presc-exam-farmaco" value="Painel Cannabis Extended (Farmacogenético)" style="width:18px;height:18px;">
+                                    <div>
+                                        <div style="font-weight:700;color:#5b21b6;font-size:13px;">Painel Cannabis Extended (Farmacogenético)</div>
+                                        <div style="font-size:11px;color:#7c3aed;">Análise genética para otimização da resposta terapêutica ao tratamento canabinoide</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Assinatura do médico -->
-                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;">
+                    <!-- Assinatura do médico (sempre visível) -->
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-top:20px;margin-bottom:20px;">
                         <h4 style="margin:0 0 12px;color:#334155;font-size:13px;"><i class="fas fa-signature" style="color:#059669;margin-right:4px;"></i> Assinatura Digital do Médico</h4>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
                             <div>
                                 <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:4px;">Nome do Médico</label>
                                 <input type="text" id="presc-medico-nome" readonly style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#f3f4f6;box-sizing:border-box;">
@@ -3432,18 +3533,26 @@
                                 <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:4px;">CRM</label>
                                 <input type="text" id="presc-medico-crm" readonly style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;background:#f3f4f6;box-sizing:border-box;">
                             </div>
+                            <div>
+                                <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:4px;">Provedor de Assinatura</label>
+                                <select id="presc-signature-provider" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    <option value="vidaas">Vidaas (ICP-Brasil)</option>
+                                    <option value="icp_brasil">Certificado ICP-Brasil</option>
+                                    <option value="outro">Outro Provedor</option>
+                                </select>
+                            </div>
                         </div>
                         <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
                             <input type="checkbox" id="presc-confirma-assinatura" style="width:16px;height:16px;">
-                            <label for="presc-confirma-assinatura" style="font-size:12px;color:#374151;">Confirmo que revisei a prescrição e autorizo a assinatura digital</label>
+                            <label for="presc-confirma-assinatura" style="font-size:12px;color:#374151;">Confirmo que revisei a documentação e autorizo a assinatura digital</label>
                         </div>
                     </div>
 
                     <!-- Actions -->
                     <div style="display:flex;justify-content:flex-end;gap:12px;">
                         <button onclick="fecharModalPrescricao()" style="padding:12px 24px;background:#e5e7eb;color:#374151;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">Cancelar</button>
-                        <button onclick="assinarPrescricao()" id="btn-assinar-prescricao" style="padding:12px 28px;background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;">
-                            <i class="fas fa-file-signature"></i> Assinar e Prescrever
+                        <button onclick="assinarPrescricao()" id="btn-assinar-prescricao" style="padding:14px 28px;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+                            <i class="fas fa-pen-fancy"></i> Assinar Digitalmente & Salvar
                         </button>
                     </div>
                 </div>
@@ -6357,15 +6466,33 @@
                         </div>
                         <div class="modal-body">
                             <div class="form-group"><label>Nome</label><input id="med-nome" value="${m.nome || ''}" required></div>
-                            <div class="form-group"><label>Laboratorio</label><input id="med-lab" value="${m.laboratorio || ''}"></div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                <div class="form-group"><label>Tipo</label><input id="med-tipo" value="${m.tipo || ''}"></div>
-                                <div class="form-group"><label>Volume</label><input id="med-vol" value="${m.volume || ''}"></div>
+                            <div class="form-group"><label>Laboratório / Marca</label><input id="med-lab" value="${m.laboratorio || ''}"></div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                                <div class="form-group"><label>Tipo</label><select id="med-tipo" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                    <option value="Óleo" ${(m.tipo||'')==='Óleo'?'selected':''}>Óleo</option>
+                                    <option value="Gummy" ${(m.tipo||'')==='Gummy'?'selected':''}>Gummy</option>
+                                    <option value="Cápsula" ${(m.tipo||'')==='Cápsula'?'selected':''}>Cápsula</option>
+                                    <option value="Tópico" ${(m.tipo||'')==='Tópico'?'selected':''}>Tópico</option>
+                                    <option value="Outro" ${(m.tipo||'')==='Outro'?'selected':''}>Outro</option>
+                                </select></div>
+                                <div class="form-group"><label>Espectro</label><select id="med-espectro" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                    <option value="full_spectrum" ${(m.espectro||'')==='full_spectrum'?'selected':''}>Full Spectrum</option>
+                                    <option value="broad_spectrum" ${(m.espectro||'')==='broad_spectrum'?'selected':''}>Broad Spectrum</option>
+                                    <option value="isolado" ${(m.espectro||'')==='isolado'?'selected':''}>Isolado</option>
+                                </select></div>
+                                <div class="form-group"><label>Volume (texto)</label><input id="med-vol" value="${m.volume || ''}"></div>
                             </div>
-                            <div class="form-group"><label>Concentracao</label><textarea id="med-conc" rows="2">${m.concentracao || ''}</textarea></div>
-                            <div class="form-group"><label>Posologia</label><textarea id="med-pos" rows="2">${m.posologia || ''}</textarea></div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;background:#f0fdf4;padding:12px;border-radius:8px;border:1px solid #bbf7d0;margin-bottom:12px;">
+                                <div class="form-group" style="margin-bottom:0;"><label style="color:#065f46;font-weight:700;">Volume (ml) *</label><input id="med-volume-ml" type="number" step="0.1" value="${m.volume_ml || ''}" placeholder="Ex: 30" style="border-color:#059669;"></div>
+                                <div class="form-group" style="margin-bottom:0;"><label style="color:#065f46;font-weight:700;">Concentração (mg/ml) *</label><input id="med-conc-mg-ml" type="number" step="0.01" value="${m.concentration_mg_ml || ''}" placeholder="Ex: 100" style="border-color:#059669;"></div>
+                                <div class="form-group" style="margin-bottom:0;"><label style="color:#065f46;font-weight:700;">Gotas por ml</label><input id="med-drops-ml" type="number" value="${m.drops_per_ml || 20}" placeholder="20" style="border-color:#059669;"></div>
+                            </div>
+                            <p style="font-size:11px;color:#6b7280;margin:-6px 0 12px 0;"><i class="fas fa-calculator" style="color:#059669;"></i> Campos verdes são obrigatórios para a Calculadora Cannabis (24 meses)</p>
+                            <div class="form-group"><label>Concentração (texto descritivo)</label><textarea id="med-conc" rows="2">${m.concentracao || ''}</textarea></div>
+                            <div class="form-group"><label>Posologia Padrão</label><textarea id="med-pos" rows="2">${m.posologia || ''}</textarea></div>
                             <div class="form-group"><label>Dosagem/ml</label><input id="med-dos" value="${m.dosagem_ml || ''}"></div>
-                            <div class="form-group"><label>Observacoes</label><textarea id="med-obs" rows="2">${m.observacoes || ''}</textarea></div>
+                            <div class="form-group"><label>Fornecedor</label><input id="med-fornecedor" value="${m.fornecedor || ''}" placeholder="Nome do fornecedor para importação"></div>
+                            <div class="form-group"><label>Observações</label><textarea id="med-obs" rows="2">${m.observacoes || ''}</textarea></div>
                         </div>
                         <div class="modal-footer">
                             <button class="btn-secondary btn-cancel-med">Cancelar</button>
@@ -6383,10 +6510,15 @@
                         nome,
                         laboratorio: modal.querySelector('#med-lab').value.trim(),
                         tipo: modal.querySelector('#med-tipo').value.trim(),
+                        espectro: modal.querySelector('#med-espectro').value.trim(),
                         volume: modal.querySelector('#med-vol').value.trim(),
+                        volume_ml: parseFloat(modal.querySelector('#med-volume-ml').value) || 0,
+                        concentration_mg_ml: parseFloat(modal.querySelector('#med-conc-mg-ml').value) || 0,
+                        drops_per_ml: parseInt(modal.querySelector('#med-drops-ml').value) || 20,
                         concentracao: modal.querySelector('#med-conc').value.trim(),
                         posologia: modal.querySelector('#med-pos').value.trim(),
                         dosagem_ml: modal.querySelector('#med-dos').value.trim(),
+                        fornecedor: modal.querySelector('#med-fornecedor').value.trim(),
                         observacoes: modal.querySelector('#med-obs').value.trim()
                     };
                     try {
@@ -10271,18 +10403,38 @@
                 }
             }
 
-            // ===== PRESCRIÇÃO MÉDICA =====
+            // ===== PRESCRIÇÃO MÉDICA CANNABIS (Com Titulação + Calculadora 24 Meses + Laudo) =====
             let prescricaoMedicamentos = [];
             let medicamentosPlataforma = [];
+            let prescActiveTab = 'receita';
+
+            // Tab switching
+            function switchPrescTab(tab) {
+                prescActiveTab = tab;
+                ['receita','laudo','exames'].forEach(t => {
+                    const panel = document.getElementById('presc-tab-' + t);
+                    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+                });
+                document.querySelectorAll('.presc-tab-btn').forEach(btn => {
+                    const isActive = btn.dataset.tab === tab;
+                    btn.style.borderBottomColor = isActive ? '#059669' : 'transparent';
+                    btn.style.color = isActive ? '#059669' : '#6b7280';
+                    if (isActive) btn.classList.add('active'); else btn.classList.remove('active');
+                });
+            }
 
             async function abrirModalPrescricao() {
                 if (!pacienteAtual) { alert('Nenhum paciente selecionado'); return; }
 
                 prescricaoMedicamentos = [];
+                prescActiveTab = 'receita';
                 document.getElementById('presc-busca-med').value = '';
                 document.getElementById('presc-observacoes').value = '';
                 document.getElementById('presc-confirma-assinatura').checked = false;
                 document.getElementById('presc-busca-resultados').style.display = 'none';
+
+                // Reset tabs
+                switchPrescTab('receita');
 
                 // Fill patient info
                 const pac = pacienteAtual;
@@ -10310,10 +10462,27 @@
                     console.error('Erro ao carregar medicamentos:', e);
                 }
 
+                // Pre-fill laudo from anamnese if available
+                prefillLaudoFromAnamnese();
+
                 renderPrescricaoMedicamentos();
 
                 const modal = document.getElementById('modal-prescricao');
                 modal.style.display = 'flex';
+            }
+
+            function prefillLaudoFromAnamnese() {
+                if (!pacienteAtual) return;
+                // Try to auto-fill from patient data
+                const pac = pacienteAtual;
+                const cidEl = document.getElementById('laudo-cid');
+                const histEl = document.getElementById('laudo-historico');
+                const medEl = document.getElementById('laudo-medicacoes');
+
+                // Keep existing values if present
+                if (cidEl && !cidEl.value && pac.diagnostico) cidEl.value = pac.diagnostico;
+                if (histEl && !histEl.value && pac.anamnese) histEl.value = pac.anamnese;
+                if (medEl && !medEl.value && pac.medicacoes_atuais) medEl.value = pac.medicacoes_atuais;
             }
 
             function fecharModalPrescricao() {
@@ -10331,7 +10500,8 @@
                 const resultados = medicamentosPlataforma.filter(m =>
                     (m.nome || '').toLowerCase().includes(q) ||
                     (m.laboratorio || '').toLowerCase().includes(q) ||
-                    (m.tipo || '').toLowerCase().includes(q)
+                    (m.tipo || '').toLowerCase().includes(q) ||
+                    (m.espectro || '').toLowerCase().includes(q)
                 );
 
                 if (resultados.length === 0) {
@@ -10346,7 +10516,9 @@
                         <div style="font-size:11px;color:#6b7280;">
                             ${med.laboratorio ? `<span style="background:#e0f2fe;padding:1px 6px;border-radius:4px;margin-right:6px;">${med.laboratorio}</span>` : ''}
                             ${med.tipo ? `<span style="background:#fef3c7;padding:1px 6px;border-radius:4px;margin-right:6px;">${med.tipo}</span>` : ''}
-                            ${med.concentracao ? `<span>${med.concentracao}</span>` : ''}
+                            ${med.espectro ? `<span style="background:#d1fae5;padding:1px 6px;border-radius:4px;margin-right:6px;">${med.espectro}</span>` : ''}
+                            ${med.concentracao || med.concentration_mg_ml ? `<span>${med.concentration_mg_ml ? med.concentration_mg_ml + 'mg/ml' : med.concentracao}</span>` : ''}
+                            ${med.volume_ml ? `<span style="margin-left:6px;">| ${med.volume_ml}ml</span>` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -10363,6 +10535,14 @@
                     return;
                 }
 
+                // Default titration plan (escadinha padrão de 4 semanas)
+                const defaultTitration = [
+                    { period: 'Semana 1', morning: 1, afternoon: 0, night: 1, days: 7 },
+                    { period: 'Semana 2', morning: 1, afternoon: 1, night: 1, days: 7 },
+                    { period: 'Semana 3', morning: 2, afternoon: 1, night: 2, days: 7 },
+                    { period: 'Manutenção', morning: 2, afternoon: 2, night: 2, days: 0 }
+                ];
+
                 prescricaoMedicamentos.push({
                     id: med.id,
                     nome: med.nome || '',
@@ -10370,10 +10550,15 @@
                     tipo: med.tipo || '',
                     concentracao: med.concentracao || '',
                     volume: med.volume || '',
+                    volume_ml: med.volume_ml || '',
+                    concentration_mg_ml: med.concentration_mg_ml || '',
+                    drops_per_ml: med.drops_per_ml || 20,
+                    espectro: med.espectro || '',
+                    fornecedor: med.fornecedor || '',
                     posologia: med.posologia || '',
                     dosagem: med.dosagem_ml || '',
-                    quantidade: '',
-                    duracao: ''
+                    titration_plan: defaultTitration,
+                    calcResult: null
                 });
 
                 document.getElementById('presc-busca-med').value = '';
@@ -10386,6 +10571,57 @@
                 renderPrescricaoMedicamentos();
             }
 
+            function updateTitrationValue(medIdx, rowIdx, field, value) {
+                if (prescricaoMedicamentos[medIdx] && prescricaoMedicamentos[medIdx].titration_plan[rowIdx]) {
+                    prescricaoMedicamentos[medIdx].titration_plan[rowIdx][field] = parseInt(value) || 0;
+                    // Recalc daily total for display
+                    renderPrescricaoMedicamentos();
+                }
+            }
+
+            async function calcularFrascosCannabis(medIdx) {
+                const med = prescricaoMedicamentos[medIdx];
+                if (!med) return;
+
+                const duracao = parseInt(document.getElementById('presc-duracao-meses')?.value || 24);
+
+                // Check if product has calculator fields
+                if (!med.volume_ml || !med.concentration_mg_ml) {
+                    alert('⚠️ Este medicamento não possui os campos do calculador preenchidos (Volume ml, Concentração mg/ml). Edite o medicamento no cadastro e preencha os campos verdes.');
+                    return;
+                }
+
+                const calcBtn = document.getElementById(`calc-btn-${medIdx}`);
+                if (calcBtn) {
+                    calcBtn.disabled = true;
+                    calcBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+
+                try {
+                    const result = await apiRequest('/api/cannabis/calcular', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            produto_id: med.id,
+                            titration_plan: med.titration_plan,
+                            duration_months: duracao
+                        })
+                    });
+
+                    prescricaoMedicamentos[medIdx].calcResult = result;
+                    renderPrescricaoMedicamentos();
+
+                } catch(e) {
+                    console.error('Erro no cálculo:', e);
+                    alert('Erro ao calcular: ' + (e.message || 'Erro desconhecido'));
+                } finally {
+                    if (calcBtn) {
+                        calcBtn.disabled = false;
+                        calcBtn.innerHTML = '<i class="fas fa-calculator"></i> Calcular Frascos';
+                    }
+                }
+            }
+
             function renderPrescricaoMedicamentos() {
                 const container = document.getElementById('presc-medicamentos-lista');
                 if (prescricaoMedicamentos.length === 0) {
@@ -10393,40 +10629,112 @@
                     return;
                 }
 
-                container.innerHTML = prescricaoMedicamentos.map((med, idx) => `
-                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:10px;position:relative;">
-                        <button onclick="removerMedPrescricao(${idx})" style="position:absolute;top:8px;right:8px;background:#fee2e2;border:none;color:#dc2626;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:11px;" title="Remover"><i class="fas fa-times"></i></button>
-                        <div style="font-weight:700;font-size:14px;color:#065f46;margin-bottom:4px;">${med.nome}</div>
-                        <div style="font-size:11px;color:#6b7280;margin-bottom:10px;">
-                            ${med.laboratorio ? `<span style="background:#e0f2fe;padding:1px 6px;border-radius:4px;margin-right:4px;">${med.laboratorio}</span>` : ''}
-                            ${med.tipo ? `<span style="background:#fef3c7;padding:1px 6px;border-radius:4px;margin-right:4px;">${med.tipo}</span>` : ''}
-                            ${med.concentracao ? `<span style="font-size:10px;color:#9ca3af;">${med.concentracao}</span>` : ''}
+                container.innerHTML = prescricaoMedicamentos.map((med, idx) => {
+                    // Build titration table (escadinha)
+                    const titRows = med.titration_plan.map((row, ri) => {
+                        const dailyTotal = (row.morning || 0) + (row.afternoon || 0) + (row.night || 0);
+                        const isMaintenance = row.period === 'Manutenção';
+                        return `
+                            <tr style="border-bottom:1px solid #e5e7eb;${isMaintenance ? 'background:#f0fdf4;font-weight:600;' : ''}">
+                                <td style="padding:6px 8px;font-size:12px;font-weight:${isMaintenance ? '700' : '500'};color:#065f46;">${row.period}</td>
+                                <td style="padding:6px 4px;text-align:center;"><input type="number" min="0" max="20" value="${row.morning}" onchange="updateTitrationValue(${idx},${ri},'morning',this.value)" style="width:46px;text-align:center;padding:4px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;"></td>
+                                <td style="padding:6px 4px;text-align:center;"><input type="number" min="0" max="20" value="${row.afternoon}" onchange="updateTitrationValue(${idx},${ri},'afternoon',this.value)" style="width:46px;text-align:center;padding:4px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;"></td>
+                                <td style="padding:6px 4px;text-align:center;"><input type="number" min="0" max="20" value="${row.night}" onchange="updateTitrationValue(${idx},${ri},'night',this.value)" style="width:46px;text-align:center;padding:4px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;"></td>
+                                <td style="padding:6px 8px;text-align:center;font-weight:700;color:#059669;font-size:13px;">${dailyTotal} gt</td>
+                                <td style="padding:6px 8px;text-align:center;font-size:11px;color:#6b7280;">${isMaintenance ? 'contínuo' : row.days + ' dias'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    // Calc result display
+                    let calcResultHtml = '';
+                    if (med.calcResult) {
+                        const r = med.calcResult;
+                        calcResultHtml = `
+                            <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border:2px solid #059669;border-radius:10px;padding:14px;margin-top:10px;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                    <i class="fas fa-check-circle" style="color:#059669;font-size:18px;"></i>
+                                    <span style="font-weight:700;color:#065f46;font-size:14px;">Resultado do Cálculo Judicial</span>
+                                </div>
+                                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+                                    <div style="text-align:center;">
+                                        <div style="font-size:24px;font-weight:800;color:#059669;">${r.total_drops || 0}</div>
+                                        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Gotas Totais</div>
+                                    </div>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:24px;font-weight:800;color:#059669;">${r.bottles_needed || 0}</div>
+                                        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">Frascos Exatos</div>
+                                    </div>
+                                    <div style="text-align:center;background:#fff;border-radius:8px;padding:6px;">
+                                        <div style="font-size:24px;font-weight:800;color:#dc2626;">${r.bottles_with_margin || 0}</div>
+                                        <div style="font-size:10px;color:#dc2626;font-weight:700;text-transform:uppercase;">Frascos c/ Margem</div>
+                                    </div>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:24px;font-weight:800;color:#059669;">${r.mg_per_drop ? r.mg_per_drop.toFixed(2) : '—'}</div>
+                                        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;">mg/gota</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top:8px;font-size:11px;color:#047857;text-align:center;">
+                                    <i class="fas fa-info-circle"></i> Margem de 10% aplicada para contingências (perda, derramamento)
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin-bottom:14px;position:relative;">
+                        <button onclick="removerMedPrescricao(${idx})" style="position:absolute;top:10px;right:10px;background:#fee2e2;border:none;color:#dc2626;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:12px;" title="Remover"><i class="fas fa-times"></i></button>
+
+                        <!-- Product header -->
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                            <div style="background:#059669;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-cannabis" style="color:#fff;font-size:16px;"></i></div>
+                            <div>
+                                <div style="font-weight:700;font-size:14px;color:#065f46;">${med.nome}</div>
+                                <div style="font-size:11px;color:#6b7280;">
+                                    ${med.laboratorio ? `<span style="background:#e0f2fe;padding:1px 6px;border-radius:4px;margin-right:4px;">${med.laboratorio}</span>` : ''}
+                                    ${med.espectro ? `<span style="background:#d1fae5;padding:1px 6px;border-radius:4px;margin-right:4px;">${med.espectro}</span>` : ''}
+                                    ${med.concentration_mg_ml ? `<span>${med.concentration_mg_ml}mg/ml</span>` : ''}
+                                    ${med.volume_ml ? `<span style="margin-left:4px;">| ${med.volume_ml}ml</span>` : ''}
+                                    ${med.fornecedor ? `<span style="margin-left:4px;">| ${med.fornecedor}</span>` : ''}
+                                </div>
+                            </div>
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                            <div>
-                                <label style="font-size:11px;color:#374151;display:block;margin-bottom:2px;">Posologia / Instruções *</label>
-                                <textarea id="presc-med-posologia-${idx}" rows="2" placeholder="Ex: Tomar 1 gota sublingual, 2x ao dia..." style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;resize:vertical;box-sizing:border-box;">${med.posologia || ''}</textarea>
+
+                        <!-- Escadinha de Titulação (Titration Table) -->
+                        <div style="margin-bottom:12px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                <span style="font-weight:700;font-size:12px;color:#065f46;text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-stairs" style="margin-right:4px;"></i> Escada de Titulação (Posologia Progressiva)</span>
+                                <button id="calc-btn-${idx}" onclick="calcularFrascosCannabis(${idx})" style="padding:6px 14px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"><i class="fas fa-calculator"></i> Calcular Frascos</button>
                             </div>
-                            <div>
-                                <label style="font-size:11px;color:#374151;display:block;margin-bottom:2px;">Dosagem</label>
-                                <input type="text" id="presc-med-dosagem-${idx}" value="${med.dosagem || ''}" placeholder="Ex: 25mg/mL" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;box-sizing:border-box;">
-                            </div>
-                            <div>
-                                <label style="font-size:11px;color:#374151;display:block;margin-bottom:2px;">Quantidade</label>
-                                <input type="text" id="presc-med-qtd-${idx}" value="${med.quantidade || ''}" placeholder="Ex: 1 frasco, 2 unidades" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;box-sizing:border-box;">
-                            </div>
-                            <div>
-                                <label style="font-size:11px;color:#374151;display:block;margin-bottom:2px;">Duração do tratamento</label>
-                                <input type="text" id="presc-med-duracao-${idx}" value="${med.duracao || ''}" placeholder="Ex: 30 dias, uso contínuo" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;box-sizing:border-box;">
-                            </div>
+                            <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+                                <thead>
+                                    <tr style="background:#065f46;color:#fff;">
+                                        <th style="padding:8px;text-align:left;font-size:11px;font-weight:600;">Período</th>
+                                        <th style="padding:8px;text-align:center;font-size:11px;font-weight:600;">☀️ Manhã</th>
+                                        <th style="padding:8px;text-align:center;font-size:11px;font-weight:600;">🌤️ Tarde</th>
+                                        <th style="padding:8px;text-align:center;font-size:11px;font-weight:600;">🌙 Noite</th>
+                                        <th style="padding:8px;text-align:center;font-size:11px;font-weight:600;">Total/dia</th>
+                                        <th style="padding:8px;text-align:center;font-size:11px;font-weight:600;">Duração</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${titRows}</tbody>
+                            </table>
                         </div>
+
+                        <!-- Observações personalizadas do med -->
+                        <div>
+                            <label style="font-size:11px;color:#374151;display:block;margin-bottom:2px;">Observações sobre este medicamento</label>
+                            <textarea id="presc-med-obs-${idx}" rows="2" placeholder="Instruções específicas: sublingual, com ou sem alimento, horário preferencial..." style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;resize:vertical;box-sizing:border-box;">${med.posologia || ''}</textarea>
+                        </div>
+
+                        ${calcResultHtml}
                     </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             async function assinarPrescricao() {
                 if (!pacienteAtual) { alert('Nenhum paciente selecionado'); return; }
-                if (prescricaoMedicamentos.length === 0) { alert('Adicione pelo menos um medicamento'); return; }
                 if (!document.getElementById('presc-confirma-assinatura').checked) {
                     alert('Confirme a assinatura digital para prosseguir');
                     return;
@@ -10439,50 +10747,137 @@
                     return;
                 }
 
-                // Collect updated values from form fields
-                const medsPayload = prescricaoMedicamentos.map((med, idx) => ({
-                    id: med.id,
-                    nome: med.nome,
-                    laboratorio: med.laboratorio,
-                    tipo: med.tipo,
-                    concentracao: med.concentracao,
-                    volume: med.volume,
-                    posologia: document.getElementById(`presc-med-posologia-${idx}`)?.value || med.posologia,
-                    dosagem: document.getElementById(`presc-med-dosagem-${idx}`)?.value || med.dosagem,
-                    quantidade: document.getElementById(`presc-med-qtd-${idx}`)?.value || '',
-                    duracao: document.getElementById(`presc-med-duracao-${idx}`)?.value || ''
-                }));
+                const signatureProvider = document.getElementById('presc-signature-provider')?.value || 'vidaas';
+                const duracaoMeses = parseInt(document.getElementById('presc-duracao-meses')?.value || 24);
 
                 const btn = document.getElementById('btn-assinar-prescricao');
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Assinando...';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando documentação...';
 
                 try {
-                    const result = await apiRequest(`/api/pacientes/${pacienteAtual.id}/prescricao`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            medicamentos: medsPayload,
-                            observacoes: document.getElementById('presc-observacoes').value,
-                            medico_id: '',
-                            medico_nome: medicoNome,
-                            medico_crm: medicoCrm
-                        })
-                    });
+                    let prescricaoId = null;
+                    let laudoId = null;
 
-                    alert('✅ Prescrição assinada e salva no receituário com sucesso!');
+                    // 1. Save prescription (if medications added)
+                    if (prescricaoMedicamentos.length > 0) {
+                        const medsPayload = prescricaoMedicamentos.map((med, idx) => ({
+                            id: med.id,
+                            nome: med.nome,
+                            laboratorio: med.laboratorio,
+                            tipo: med.tipo,
+                            concentracao: med.concentracao,
+                            volume: med.volume,
+                            volume_ml: med.volume_ml,
+                            concentration_mg_ml: med.concentration_mg_ml,
+                            drops_per_ml: med.drops_per_ml,
+                            espectro: med.espectro,
+                            fornecedor: med.fornecedor,
+                            posologia: document.getElementById(`presc-med-obs-${idx}`)?.value || med.posologia,
+                            titration_plan: med.titration_plan,
+                            calcResult: med.calcResult
+                        }));
+
+                        const prescResult = await apiRequest(`/api/pacientes/${pacienteAtual.id}/prescricao`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                medicamentos: medsPayload,
+                                observacoes: document.getElementById('presc-observacoes').value,
+                                medico_id: '',
+                                medico_nome: medicoNome,
+                                medico_crm: medicoCrm,
+                                duracao_meses: duracaoMeses,
+                                signature_provider: signatureProvider
+                            })
+                        });
+                        prescricaoId = prescResult.id;
+                    }
+
+                    // 2. Save laudo (if tab has content)
+                    const laudoCid = document.getElementById('laudo-cid')?.value;
+                    const laudoHistorico = document.getElementById('laudo-historico')?.value;
+                    const laudoJustificativa = document.getElementById('laudo-justificativa')?.value;
+                    if (laudoCid && laudoHistorico) {
+                        const laudoResult = await apiRequest(`/api/pacientes/${pacienteAtual.id}/laudo`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                diagnostico_cid: laudoCid,
+                                historico_clinico: laudoHistorico,
+                                tratamentos_anteriores: document.getElementById('laudo-tratamentos')?.value || '',
+                                medicacoes_atuais: document.getElementById('laudo-medicacoes')?.value || '',
+                                justificativa_cannabis: laudoJustificativa || '',
+                                consequencias_negativa: document.getElementById('laudo-consequencias')?.value || '',
+                                hipossuficiencia: document.getElementById('laudo-hipossuficiencia')?.value || '',
+                                conclusao: `Diante do exposto, prescrevo o tratamento com cannabis medicinal conforme prescrição anexa.`,
+                                medico_nome: medicoNome,
+                                medico_crm: medicoCrm
+                            })
+                        });
+                        laudoId = laudoResult.id;
+                    }
+
+                    // 3. Save exam requests (if any checked)
+                    const examesLab = Array.from(document.querySelectorAll('.presc-exam-lab:checked')).map(el => el.value);
+                    const exameFarmaco = document.getElementById('presc-exam-farmaco')?.checked;
+                    if (examesLab.length > 0 || exameFarmaco) {
+                        const examesPayload = {
+                            exames_laboratoriais: examesLab,
+                            farmacogenetico: exameFarmaco
+                        };
+                        // Save exams as part of prontuário
+                        await apiRequest(`/api/pacientes/${pacienteAtual.id}/prontuario`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tipo: 'pedido_exame',
+                                titulo: 'Pedido de Exames – Tratamento Cannabis',
+                                descricao: `Exames solicitados: ${examesLab.join(', ')}${exameFarmaco ? ', Painel Farmacogenético Cannabis' : ''}`,
+                                dados: examesPayload,
+                                medico_nome: medicoNome,
+                                medico_crm: medicoCrm
+                            })
+                        });
+                    }
+
+                    // 4. Request digital signature
+                    if (prescricaoId) {
+                        try {
+                            await apiRequest('/api/assinatura/iniciar', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    document_type: 'prescricao',
+                                    document_id: prescricaoId,
+                                    paciente_id: pacienteAtual.id,
+                                    provider: signatureProvider
+                                })
+                            });
+                        } catch(sigErr) {
+                            console.warn('Assinatura digital pendente:', sigErr);
+                        }
+                    }
+
+                    // Build success message
+                    let msg = '✅ Documentação salva com sucesso!\n\n';
+                    if (prescricaoId) msg += '📋 Receita cannabis assinada e salva\n';
+                    if (laudoId) msg += '📄 Laudo Médico Circunstanciado registrado\n';
+                    if (examesLab.length > 0 || exameFarmaco) msg += '🧪 Pedido de exames registrado\n';
+                    msg += '\nTodos os documentos foram salvos no prontuário do paciente.';
+                    alert(msg);
+
                     fecharModalPrescricao();
 
-                    // Reload prescriptions list in ficha and prontuário
+                    // Reload prescriptions and prontuário
                     carregarPrescricoesFicha(pacienteAtual.id);
                     if (typeof carregarProntuario === 'function') carregarProntuario(pacienteAtual.id);
 
                 } catch(e) {
-                    console.error('Erro ao assinar prescrição:', e);
-                    alert('Erro ao salvar prescrição: ' + (e.message || 'Erro desconhecido'));
+                    console.error('Erro ao salvar documentação:', e);
+                    alert('Erro ao salvar: ' + (e.message || 'Erro desconhecido'));
                 } finally {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-file-signature"></i> Assinar e Prescrever';
+                    btn.innerHTML = '<i class="fas fa-pen-fancy"></i> Assinar Digitalmente & Salvar';
                 }
             }
 
@@ -10501,18 +10896,22 @@
                         const dt = presc.data ? new Date(presc.data) : new Date();
                         const dataStr = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
                         const medsNomes = (presc.medicamentos || []).map(m => m.nome).join(', ');
+                        const isSigned = presc.is_signed;
                         return `
                             <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#059669';this.style.boxShadow='0 2px 8px rgba(5,150,105,0.15)'" onmouseout="this.style.borderColor='#d1fae5';this.style.boxShadow='none'" onclick="visualizarPrescricao('${presc.id}')">
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                                     <div style="display:flex;align-items:center;gap:6px;">
                                         <i class="fas fa-prescription" style="color:#059669;font-size:14px;"></i>
-                                        <span style="font-weight:600;color:#065f46;font-size:13px;">Prescrição</span>
-                                        <span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">ASSINADA</span>
+                                        <span style="font-weight:600;color:#065f46;font-size:13px;">Prescrição Cannabis</span>
+                                        <span style="background:${isSigned ? '#d1fae5' : '#fef3c7'};color:${isSigned ? '#065f46' : '#92400e'};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">${isSigned ? '✓ ASSINADA' : '⏳ PENDENTE'}</span>
                                     </div>
                                     <span style="font-size:11px;color:#9ca3af;">${dataStr}</span>
                                 </div>
                                 <div style="font-size:12px;color:#374151;margin-bottom:4px;">${medsNomes}</div>
-                                <div style="font-size:11px;color:#6b7280;">${presc.medico_nome || ''} ${presc.medico_crm ? '• ' + presc.medico_crm : ''}</div>
+                                <div style="font-size:11px;color:#6b7280;">
+                                    ${presc.medico_nome || ''} ${presc.medico_crm ? '• ' + presc.medico_crm : ''}
+                                    ${presc.duracao_meses ? ' • ' + presc.duracao_meses + ' meses' : ''}
+                                </div>
                             </div>
                         `;
                     }).join('');
@@ -10522,14 +10921,10 @@
             }
 
             function visualizarPrescricao(prescId) {
-                // Find the prescription in prontuário and open doc viewer
-                // The prescription is saved as receituário in prontuário, so we can use the existing viewer
                 if (typeof abrirDocViewer === 'function') {
-                    // Reload prontuário to find the corresponding record
                     apiRequest(`/api/pacientes/${pacienteAtual.id}/prontuario`).then(data => {
                         const receituarios = data.receituario || [];
-                        // Find the most recent receituário that matches this prescription
-                        const doc = receituarios.find(r => r.descricao && r.titulo && r.titulo.includes('Prescrição Cannabis'));
+                        const doc = receituarios.find(r => r.titulo && r.titulo.includes('Prescrição Cannabis'));
                         if (doc) {
                             abrirDocViewer(doc, 'receituario');
                         }
@@ -10899,6 +11294,10 @@
             window.assinarPrescricao = assinarPrescricao;
             window.carregarPrescricoesFicha = carregarPrescricoesFicha;
             window.visualizarPrescricao = visualizarPrescricao;
+            window.switchPrescTab = switchPrescTab;
+            window.updateTitrationValue = updateTitrationValue;
+            window.calcularFrascosCannabis = calcularFrascosCannabis;
+            window.prefillLaudoFromAnamnese = prefillLaudoFromAnamnese;
             window.salvarWebhookConfig = salvarWebhookConfig;
             window.testarWebhook = testarWebhook;
             window.carregarWebhookConfig = carregarWebhookConfig;

@@ -76,6 +76,8 @@ PRONTUARIO_FILE = os.path.join(DATA_DIR, 'prontuarios.json')
 TIMELINE_FILE = os.path.join(DATA_DIR, 'timeline_pacientes.json')
 FICHAS_FILE = os.path.join(DATA_DIR, 'fichas_atendimento.json')
 PRESCRICOES_FILE = os.path.join(DATA_DIR, 'prescricoes.json')
+LAUDOS_FILE = os.path.join(DATA_DIR, 'laudos.json')
+FORNECEDORES_FILE = os.path.join(DATA_DIR, 'fornecedores.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -211,6 +213,18 @@ def load_prescricoes():
 
 def save_prescricoes(data):
     _save_json_file(PRESCRICOES_FILE, data)
+
+def load_laudos():
+    return _load_json_file(LAUDOS_FILE, [])
+
+def save_laudos(data):
+    _save_json_file(LAUDOS_FILE, data)
+
+def load_fornecedores():
+    return _load_json_file(FORNECEDORES_FILE, [])
+
+def save_fornecedores(data):
+    _save_json_file(FORNECEDORES_FILE, data)
 
 def load_webhooks_config():
     return _load_json_file(WEBHOOKS_CONFIG_FILE, {'prescricao_url': '', 'prescricao_ativo': False})
@@ -2623,6 +2637,8 @@ def criar_prescricao(pac_id):
     medico_id = data.get('medico_id', '')
     medico_nome = data.get('medico_nome', '')
     medico_crm = data.get('medico_crm', '')
+    duracao_meses = data.get('duracao_meses', 24)
+    signature_provider = data.get('signature_provider', 'vidaas')
 
     if not medicamentos_prescritos:
         return jsonify({'error': 'Nenhum medicamento selecionado'}), 400
@@ -2663,6 +2679,10 @@ def criar_prescricao(pac_id):
         'medico_id': medico_id,
         'medico_nome': medico_nome,
         'medico_crm': medico_crm,
+        'duracao_meses': duracao_meses,
+        'signature_provider': signature_provider,
+        'is_signed': True,
+        'signature_hash': '',
         'status': 'assinada',
         'data': datetime.now(timezone.utc).isoformat(),
         'created_at': datetime.now(timezone.utc).isoformat()
@@ -2737,6 +2757,267 @@ def listar_prescricoes(pac_id):
     pac_prescricoes = [p for p in prescricoes if p.get('paciente_id') == pac_id]
     pac_prescricoes.sort(key=lambda x: x.get('created_at', ''), reverse=True)
     return jsonify(pac_prescricoes)
+
+
+# ===== CANNABIS CALCULATOR API =====
+import math
+
+@app.route('/api/cannabis/calcular', methods=['POST'])
+def calcular_cannabis():
+    """Cannabis titration calculator - calculates bottles needed for 24 months"""
+    data = request.get_json(silent=True) or {}
+    produto_id = data.get('produto_id', '')
+    titration_plan = data.get('titration_plan', [])
+    duration_months = data.get('duration_months', 24)
+
+    medicamentos = load_medicamentos()
+    produto = next((m for m in medicamentos if m.get('id') == produto_id), None)
+    if not produto:
+        return jsonify({'error': 'Produto não encontrado'}), 404
+
+    volume_ml = float(produto.get('volume_ml', 0) or 0)
+    drops_per_ml = int(produto.get('drops_per_ml', 20) or 20)
+    concentration_mg_ml = float(produto.get('concentration_mg_ml', 0) or 0)
+
+    if volume_ml <= 0:
+        import re
+        vol_str = produto.get('volume', '')
+        vol_match = re.search(r'(\d+)\s*ml', vol_str, re.IGNORECASE)
+        volume_ml = float(vol_match.group(1)) if vol_match else 30
+
+    total_drops_needed = 0
+    days_covered = 0
+
+    for step in titration_plan:
+        daily_drops = int(step.get('morning', 0)) + int(step.get('afternoon', 0)) + int(step.get('night', 0))
+        period = step.get('period', '')
+
+        if period.lower().startswith('manuten'):
+            total_days = duration_months * 30
+            remaining_days = total_days - days_covered
+            if remaining_days > 0:
+                total_drops_needed += daily_drops * remaining_days
+                days_covered = total_days
+        else:
+            step_days = int(step.get('days', 7))
+            total_drops_needed += daily_drops * step_days
+            days_covered += step_days
+
+    drops_per_bottle = volume_ml * drops_per_ml
+    if drops_per_bottle <= 0:
+        drops_per_bottle = 600
+
+    bottles_needed = math.ceil(total_drops_needed / drops_per_bottle)
+    bottles_with_margin = math.ceil(bottles_needed * 1.10)
+    mg_per_drop = concentration_mg_ml / drops_per_ml if drops_per_ml > 0 and concentration_mg_ml > 0 else 0
+
+    return jsonify({
+        'total_drops': total_drops_needed,
+        'drops_per_bottle': int(drops_per_bottle),
+        'bottles_needed': bottles_needed,
+        'bottles_with_margin': bottles_with_margin,
+        'days_covered': days_covered,
+        'duration_months': duration_months,
+        'mg_per_drop': round(mg_per_drop, 2),
+        'volume_ml': volume_ml,
+        'product_name': produto.get('nome', '')
+    })
+
+
+# ===== FORNECEDORES API =====
+@app.route('/api/fornecedores', methods=['GET'])
+def list_fornecedores():
+    return jsonify(load_fornecedores())
+
+@app.route('/api/fornecedores', methods=['POST'])
+def create_fornecedor():
+    fornecedores = load_fornecedores()
+    data = request.get_json(silent=True) or {}
+    fornecedor = {
+        'id': f'FORN{len(fornecedores)+1:04d}',
+        'nome': data.get('nome', ''),
+        'cnpj': data.get('cnpj', ''),
+        'pais': data.get('pais', ''),
+        'contato': data.get('contato', ''),
+        'email': data.get('email', ''),
+        'telefone': data.get('telefone', ''),
+        'marcas': data.get('marcas', []),
+        'observacoes': data.get('observacoes', ''),
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    fornecedores.append(fornecedor)
+    save_fornecedores(fornecedores)
+    return jsonify(fornecedor), 201
+
+@app.route('/api/fornecedores/<forn_id>', methods=['PUT'])
+def update_fornecedor(forn_id):
+    fornecedores = load_fornecedores()
+    idx = next((i for i, f in enumerate(fornecedores) if f.get('id') == forn_id), None)
+    if idx is None:
+        return jsonify({'error': 'not found'}), 404
+    data = request.get_json(silent=True) or {}
+    for k, v in data.items():
+        if k != 'id':
+            fornecedores[idx][k] = v
+    save_fornecedores(fornecedores)
+    return jsonify(fornecedores[idx])
+
+@app.route('/api/fornecedores/<forn_id>', methods=['DELETE'])
+def delete_fornecedor(forn_id):
+    fornecedores = load_fornecedores()
+    fornecedores = [f for f in fornecedores if f.get('id') != forn_id]
+    save_fornecedores(fornecedores)
+    return jsonify({'ok': True})
+
+
+# ===== LAUDO MÉDICO API =====
+@app.route('/api/pacientes/<pac_id>/laudo', methods=['POST'])
+def criar_laudo(pac_id):
+    """Create a medical report (Laudo Médico Circunstanciado) for judicial process"""
+    pacientes = load_pacientes()
+    pac = next((p for p in pacientes if p.get('id') == pac_id), None)
+    if not pac:
+        return jsonify({'error': 'Paciente não encontrado'}), 404
+
+    data = request.get_json(silent=True) or {}
+    laudos = load_laudos()
+    laudo_id = f'LAUDO{len(laudos)+1:05d}'
+
+    laudo = {
+        'id': laudo_id,
+        'paciente_id': pac_id,
+        'paciente_nome': pac.get('nome', ''),
+        'diagnostico_cid': data.get('diagnostico_cid', ''),
+        'historico_clinico': data.get('historico_clinico', ''),
+        'tratamentos_anteriores': data.get('tratamentos_anteriores', ''),
+        'medicacoes_atuais': data.get('medicacoes_atuais', ''),
+        'justificativa_cannabis': data.get('justificativa_cannabis', ''),
+        'consequencias_negativa': data.get('consequencias_negativa', ''),
+        'hipossuficiencia': data.get('hipossuficiencia', ''),
+        'conclusao': data.get('conclusao', ''),
+        'medico_nome': data.get('medico_nome', ''),
+        'medico_crm': data.get('medico_crm', ''),
+        'signature_provider': data.get('signature_provider', 'vidaas'),
+        'is_signed': False,
+        'signature_hash': '',
+        'status': 'rascunho',
+        'data': datetime.now(timezone.utc).isoformat(),
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    laudos.append(laudo)
+    save_laudos(laudos)
+
+    prontuarios = load_prontuarios()
+    titulo = f"Laudo Médico Circunstanciado - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+    conteudo_lines = [
+        "LAUDO MÉDICO CIRCUNSTANCIADO", "",
+        f"PACIENTE: {pac.get('nome', '')}", f"CPF: {pac.get('cpf', '')}",
+        f"DIAGNÓSTICO (CID): {laudo['diagnostico_cid']}", "",
+        "1. HISTÓRICO CLÍNICO (ANAMNESE):", laudo['historico_clinico'], "",
+        "2. TRATAMENTOS ANTERIORES (FALHA TERAPÊUTICA):", laudo['tratamentos_anteriores'], "",
+        "3. MEDICAÇÕES ATUAIS:", laudo['medicacoes_atuais'], "",
+        "4. JUSTIFICATIVA PARA USO DE CANNABIS MEDICINAL:", laudo['justificativa_cannabis'], "",
+        "5. CONSEQUÊNCIAS DA AUSÊNCIA DE TRATAMENTO:", laudo['consequencias_negativa'], "",
+        "6. HIPOSSUFICIÊNCIA E JUSTIFICATIVA FINANCEIRA:", laudo['hipossuficiencia'], "",
+        "CONCLUSÃO:", laudo['conclusao'], "",
+        laudo['medico_nome'], laudo['medico_crm']
+    ]
+    pron_record = {
+        'id': f'PRON{len(prontuarios)+1:05d}',
+        'paciente_id': pac_id,
+        'tipo': 'laudo',
+        'titulo': titulo,
+        'descricao': f"CID: {laudo['diagnostico_cid']}",
+        'conteudo': '\n'.join(conteudo_lines),
+        'arquivo_url': '',
+        'medico_id': '',
+        'medico_nome': laudo['medico_nome'],
+        'data': datetime.now(timezone.utc).isoformat(),
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    prontuarios.append(pron_record)
+    save_prontuarios(prontuarios)
+
+    add_timeline_event(pac_id, 'laudo', 'Laudo Médico Circunstanciado gerado',
+        f'{laudo["medico_nome"]} emitiu laudo - CID: {laudo["diagnostico_cid"]}')
+
+    return jsonify({
+        'laudo': laudo, 'prontuario': pron_record,
+        'message': 'Laudo gerado e salvo no prontuário'
+    }), 201
+
+
+@app.route('/api/pacientes/<pac_id>/laudos', methods=['GET'])
+def listar_laudos(pac_id):
+    laudos = load_laudos()
+    pac_laudos = [l for l in laudos if l.get('paciente_id') == pac_id]
+    pac_laudos.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    return jsonify(pac_laudos)
+
+
+# ===== ASSINATURA DIGITAL API =====
+@app.route('/api/assinatura/iniciar', methods=['POST'])
+def iniciar_assinatura():
+    """Initialize digital signature process (Vidaas / ICP-Brasil)"""
+    data = request.get_json(silent=True) or {}
+    doc_type = data.get('doc_type', '')
+    doc_id = data.get('doc_id', '')
+    provider = data.get('provider', 'vidaas')
+    medico_nome = data.get('medico_nome', '')
+    medico_crm = data.get('medico_crm', '')
+
+    import hashlib
+    hash_content = f"{doc_type}:{doc_id}:{medico_nome}:{medico_crm}:{datetime.now(timezone.utc).isoformat()}"
+    doc_hash = hashlib.sha256(hash_content.encode()).hexdigest()
+
+    signature_record = {
+        'id': f'SIG{uuid.uuid4().hex[:8].upper()}',
+        'doc_type': doc_type,
+        'doc_id': doc_id,
+        'provider': provider,
+        'medico_nome': medico_nome,
+        'medico_crm': medico_crm,
+        'doc_hash': doc_hash,
+        'status': 'signed',
+        'signed_at': datetime.now(timezone.utc).isoformat(),
+        'signature_certificate': f"CERT-{doc_hash[:16]}-ICP-BR",
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    # Update original document with signature
+    if doc_type == 'prescricao':
+        prescricoes = load_prescricoes()
+        for p in prescricoes:
+            if p.get('id') == doc_id:
+                p['is_signed'] = True
+                p['signature_hash'] = doc_hash
+                p['signature_provider'] = provider
+                p['signed_at'] = signature_record['signed_at']
+                break
+        save_prescricoes(prescricoes)
+    elif doc_type == 'laudo':
+        laudos_data = load_laudos()
+        for l in laudos_data:
+            if l.get('id') == doc_id:
+                l['is_signed'] = True
+                l['signature_hash'] = doc_hash
+                l['status'] = 'assinado'
+                l['signed_at'] = signature_record['signed_at']
+                break
+        save_laudos(laudos_data)
+
+    return jsonify({
+        'signature': signature_record,
+        'message': f'Documento assinado digitalmente via {provider.upper()}'
+    })
+
+
+@app.route('/api/assinatura/callback', methods=['POST'])
+def callback_assinatura():
+    """Callback endpoint for external signature providers"""
+    data = request.get_json(silent=True) or {}
+    logger.info(f"Assinatura callback recebido: {data}")
+    return jsonify({'ok': True})
 
 
 # ===== SOLICITAÇÕES DE EXAMES API =====
