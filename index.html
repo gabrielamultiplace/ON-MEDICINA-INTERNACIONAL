@@ -3023,6 +3023,20 @@
                             </div>
                         </div>
 
+                        <!-- Documentos enviados para assinatura do paciente (Intellisign) -->
+                        <div style="background:#f0f9ff;border:1px solid #93c5fd;border-radius:10px;padding:16px;margin-bottom:16px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                <h4 style="margin:0;color:#1e40af;font-size:14px;"><i class="fas fa-file-signature" style="margin-right:4px;"></i> Assinaturas do Paciente</h4>
+                                <span style="font-size:10px;color:#3b82f6;font-weight:600;">INTELLISIGN</span>
+                            </div>
+                            <div id="envelopes-paciente-lista">
+                                <div style="text-align:center;padding:14px;color:#9ca3af;font-size:12px;">
+                                    <i class="fas fa-paper-plane" style="font-size:22px;margin-bottom:6px;display:block;color:#93c5fd;"></i>
+                                    Nenhum documento enviado para assinatura
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Observações / Anotações do Médico -->
                         <div style="background:#f8f5ff;border:1px solid #c4b5fd;border-radius:10px;padding:16px;margin-bottom:16px;">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -3847,11 +3861,12 @@
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ session_id: sessionId })
                                 });
-                                if (execRes.success) {
+                                if (execRes.status === 'signed') {
                                     alert('✅ Documento assinado digitalmente com certificado ICP-Brasil!\n\n' +
-                                          (execRes.certificado?.titular || 'Assinatura confirmada'));
+                                          'Titular: ' + (execRes.certificate_subject || 'Certificado confirmado') + '\n' +
+                                          'Emissor: ' + (execRes.certificate_issuer || ''));
                                 } else {
-                                    alert('⚠️ Assinatura pendente: ' + (execRes.message || 'Erro desconhecido'));
+                                    alert('⚠️ Assinatura pendente: ' + (execRes.message || execRes.error || 'Erro desconhecido'));
                                 }
                             } catch(sigErr) {
                                 console.warn('Erro ao finalizar assinatura:', sigErr);
@@ -9890,6 +9905,9 @@
 
                     // Render prescrições
                     carregarPrescricoesFicha(pacId);
+
+                    // Render envelopes de assinatura do paciente
+                    carregarEnvelopesPaciente(pacId);
                 } catch(e) {
                     console.log('Ficha não encontrada, preenchendo com anamnese');
                     if (pacData) carregarFichaAtendimento(pacId, null);
@@ -10934,6 +10952,75 @@
                 }).join('');
             }
 
+            // ── Seleção de Provedor ICP-Brasil (Passo 2 do diagrama IntegraICP) ──
+            function showClearanceSelection(clearances, sessionId) {
+                // Se apenas 1 provedor, abrir direto
+                if (clearances.length === 1) {
+                    window.open(clearances[0].clearanceEndpoint, 'integraicp_auth', 'width=600,height=700,scrollbars=yes');
+                    alert('🔐 Autenticação ICP-Brasil iniciada via ' + clearances[0].productName + '.\n\nApós autenticar com seu certificado digital, a assinatura será finalizada automaticamente.');
+                    return;
+                }
+
+                // Múltiplos provedores: mostrar modal de seleção
+                let overlay = document.getElementById('clearance-overlay');
+                if (overlay) overlay.remove();
+
+                overlay = document.createElement('div');
+                overlay.id = 'clearance-overlay';
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+
+                let html = `<div style="background:#fff;border-radius:16px;padding:32px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="text-align:center;margin-bottom:24px;">
+                        <i class="fas fa-shield-alt" style="font-size:36px;color:#1e293b;margin-bottom:12px;display:block;"></i>
+                        <h3 style="margin:0 0 8px;color:#1e293b;font-size:18px;">Selecione o Provedor de Certificado Digital</h3>
+                        <p style="margin:0;color:#64748b;font-size:13px;">Escolha o provedor onde seu certificado ICP-Brasil está cadastrado</p>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:12px;">`;
+
+                clearances.forEach((c, idx) => {
+                    const iconMap = {
+                        'VIDaaS': 'fa-id-badge',
+                        'BirdID': 'fa-dove',
+                        'SafeID': 'fa-lock',
+                        'RemoteID': 'fa-cloud'
+                    };
+                    const icon = iconMap[c.productName] || 'fa-certificate';
+                    html += `<button onclick="selectClearance(${idx})" style="display:flex;align-items:center;gap:16px;padding:16px 20px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all 0.2s;text-align:left;" onmouseover="this.style.borderColor='#1e293b';this.style.background='#f1f5f9'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#f8fafc'">
+                        <i class="fas ${icon}" style="font-size:24px;color:#1e293b;width:32px;text-align:center;"></i>
+                        <div>
+                            <div style="font-weight:700;color:#1e293b;font-size:15px;">${c.productName}</div>
+                            <div style="color:#64748b;font-size:12px;">${c.providerName}${c.clearanceType === 'IDENTIFICATION' ? ' — Certificado em Nuvem' : ''}</div>
+                        </div>
+                        <i class="fas fa-chevron-right" style="margin-left:auto;color:#94a3b8;"></i>
+                    </button>`;
+                });
+
+                html += `</div>
+                    <button onclick="document.getElementById('clearance-overlay').remove()" style="width:100%;margin-top:16px;padding:12px;background:none;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;color:#64748b;font-size:13px;">Cancelar</button>
+                </div>`;
+
+                overlay.innerHTML = html;
+                document.body.appendChild(overlay);
+
+                // Guardar clearances para uso no callback
+                window._pendingClearances = clearances;
+                window._pendingSessionId = sessionId;
+            }
+
+            function selectClearance(idx) {
+                const clearances = window._pendingClearances || [];
+                const c = clearances[idx];
+                if (!c) return;
+
+                // Remover overlay
+                const overlay = document.getElementById('clearance-overlay');
+                if (overlay) overlay.remove();
+
+                // Passo 3 do diagrama: browser abre clearanceEndpoint → 302 → provedor
+                window.open(c.clearanceEndpoint, 'integraicp_auth', 'width=600,height=700,scrollbars=yes');
+                alert('🔐 Autenticação iniciada via ' + c.productName + ' (' + c.providerName + ').\n\nAutentique-se com seu certificado digital (QR Code ou OTP).\nApós a autenticação, a assinatura será finalizada automaticamente.');
+            }
+
             async function assinarPrescricao() {
                 if (!pacienteAtual) { alert('Nenhum paciente selecionado'); return; }
                 if (!document.getElementById('presc-confirma-assinatura').checked) {
@@ -11056,10 +11143,13 @@
                                 })
                             });
 
-                            if (sigResult.mode === 'integraicp' && sigResult.auth_url) {
-                                // Fluxo IntegraICP: abrir janela de autenticação
-                                window.open(sigResult.auth_url, 'integraicp_auth', 'width=600,height=700,scrollbars=yes');
-                                alert('🔐 Uma janela de autenticação ICP-Brasil foi aberta.\n\nApós autenticar com seu certificado digital, a assinatura será finalizada automaticamente.\n\nSession ID: ' + sigResult.session_id);
+                            if (sigResult.mode === 'integraicp' && sigResult.clearances && sigResult.clearances.length > 0) {
+                                // Passo 2 do diagrama: mostrar provedores para seleção
+                                showClearanceSelection(sigResult.clearances, sigResult.session_id);
+                            } else if (sigResult.mode === 'integraicp' && sigResult.redirect_url) {
+                                // Autostart: redirect direto
+                                window.open(sigResult.redirect_url, 'integraicp_auth', 'width=600,height=700,scrollbars=yes');
+                                alert('🔐 Autenticação ICP-Brasil iniciada.\n\nApós autenticar com seu certificado digital, a assinatura será finalizada automaticamente.');
                             }
                         } catch(sigErr) {
                             console.warn('Assinatura digital pendente:', sigErr);
@@ -11069,7 +11159,7 @@
                     // Also sign laudo if exists
                     if (laudoId) {
                         try {
-                            await apiRequest('/api/assinatura/iniciar', {
+                            const laudoSigResult = await apiRequest('/api/assinatura/iniciar', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -11080,6 +11170,17 @@
                                     medico_crm: medicoCrm
                                 })
                             });
+                            if (laudoSigResult.mode === 'integraicp' && laudoSigResult.clearances) {
+                                // Se prescrição não iniciou auth, usar clearances do laudo
+                                if (!prescricaoId) {
+                                    showClearanceSelection(laudoSigResult.clearances, laudoSigResult.session_id);
+                                }
+                                // Se prescricao já iniciou, laudo será assinado na mesma sessão futuramente
+                            } else if (laudoSigResult.mode === 'integraicp' && laudoSigResult.redirect_url) {
+                                if (!prescricaoId) {
+                                    window.open(laudoSigResult.redirect_url, 'integraicp_auth', 'width=600,height=700,scrollbars=yes');
+                                }
+                            }
                         } catch(sigErr) {
                             console.warn('Assinatura laudo pendente:', sigErr);
                         }
@@ -11125,16 +11226,21 @@
                         const medsNomes = (presc.medicamentos || []).map(m => m.nome).join(', ');
                         const isSigned = presc.is_signed;
                         return `
-                            <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#059669';this.style.boxShadow='0 2px 8px rgba(5,150,105,0.15)'" onmouseout="this.style.borderColor='#d1fae5';this.style.boxShadow='none'" onclick="visualizarPrescricao('${presc.id}')">
+                            <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:12px;margin-bottom:8px;transition:all 0.15s;" onmouseover="this.style.borderColor='#059669';this.style.boxShadow='0 2px 8px rgba(5,150,105,0.15)'" onmouseout="this.style.borderColor='#d1fae5';this.style.boxShadow='none'">
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                                    <div style="display:flex;align-items:center;gap:6px;">
+                                    <div style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="visualizarPrescricao('${presc.id}')">
                                         <i class="fas fa-prescription" style="color:#059669;font-size:14px;"></i>
                                         <span style="font-weight:600;color:#065f46;font-size:13px;">Prescrição Cannabis</span>
                                         <span style="background:${isSigned ? '#d1fae5' : '#fef3c7'};color:${isSigned ? '#065f46' : '#92400e'};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;">${isSigned ? '✓ ASSINADA' : '⏳ PENDENTE'}</span>
                                     </div>
-                                    <span style="font-size:11px;color:#9ca3af;">${dataStr}</span>
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <button onclick="event.stopPropagation();abrirEnviarAssinatura('prescricao','${presc.id}')" title="Enviar para assinatura do paciente" style="background:#1e293b;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;">
+                                            <i class="fas fa-paper-plane"></i> Enviar p/ Paciente
+                                        </button>
+                                        <span style="font-size:11px;color:#9ca3af;">${dataStr}</span>
+                                    </div>
                                 </div>
-                                <div style="font-size:12px;color:#374151;margin-bottom:4px;">${medsNomes}</div>
+                                <div style="font-size:12px;color:#374151;margin-bottom:4px;cursor:pointer;" onclick="visualizarPrescricao('${presc.id}')">${medsNomes}</div>
                                 <div style="font-size:11px;color:#6b7280;">
                                     ${presc.medico_nome || ''} ${presc.medico_crm ? '• ' + presc.medico_crm : ''}
                                     ${presc.duracao_meses ? ' • ' + presc.duracao_meses + ' meses' : ''}
@@ -11157,6 +11263,179 @@
                         }
                     }).catch(e => console.error('Erro:', e));
                 }
+            }
+
+            // ===== INTELLISIGN — Enviar documentos para assinatura do paciente =====
+            function abrirEnviarAssinatura(docType, docId) {
+                if (!pacienteAtual) { alert('Nenhum paciente selecionado'); return; }
+
+                let overlay = document.getElementById('intellisign-overlay');
+                if (overlay) overlay.remove();
+
+                const pacEmail = pacienteAtual.email || '';
+                const pacTel = pacienteAtual.telefone || '';
+
+                overlay = document.createElement('div');
+                overlay.id = 'intellisign-overlay';
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+                overlay.innerHTML = `<div style="background:#fff;border-radius:16px;padding:32px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="text-align:center;margin-bottom:20px;">
+                        <i class="fas fa-paper-plane" style="font-size:32px;color:#1e293b;margin-bottom:10px;display:block;"></i>
+                        <h3 style="margin:0 0 6px;color:#1e293b;font-size:17px;">Enviar para Assinatura do Paciente</h3>
+                        <p style="margin:0;color:#64748b;font-size:12px;">O paciente receberá um link para assinar eletronicamente via Intellisign</p>
+                    </div>
+
+                    <div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;">
+                        <div style="font-weight:600;color:#1e293b;font-size:13px;margin-bottom:4px;"><i class="fas fa-user" style="margin-right:6px;color:#059669;"></i>${pacienteAtual.nome || 'Paciente'}</div>
+                        <div style="font-size:12px;color:#64748b;">${docType === 'prescricao' ? 'Prescrição Cannabis' : 'Laudo Médico'} — ${docId}</div>
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block;font-weight:600;color:#374151;font-size:12px;margin-bottom:6px;">Canal de envio:</label>
+                        <div style="display:flex;gap:8px;">
+                            <label style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all 0.2s;" id="lbl-canal-email" onclick="document.getElementById('canal-email').checked=true;document.getElementById('lbl-canal-email').style.borderColor='#1e293b';document.getElementById('lbl-canal-whats').style.borderColor='#e2e8f0'">
+                                <input type="radio" name="envio-canal" id="canal-email" value="email" checked style="display:none;">
+                                <i class="fas fa-envelope" style="font-size:18px;color:#1e293b;"></i>
+                                <div>
+                                    <div style="font-weight:600;font-size:12px;color:#1e293b;">Email</div>
+                                    <div style="font-size:11px;color:#64748b;">${pacEmail || 'Não cadastrado'}</div>
+                                </div>
+                            </label>
+                            <label style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all 0.2s;" id="lbl-canal-whats" onclick="document.getElementById('canal-whatsapp').checked=true;document.getElementById('lbl-canal-whats').style.borderColor='#25d366';document.getElementById('lbl-canal-email').style.borderColor='#e2e8f0'">
+                                <input type="radio" name="envio-canal" id="canal-whatsapp" value="whatsapp" style="display:none;">
+                                <i class="fab fa-whatsapp" style="font-size:20px;color:#25d366;"></i>
+                                <div>
+                                    <div style="font-weight:600;font-size:12px;color:#1e293b;">WhatsApp</div>
+                                    <div style="font-size:11px;color:#64748b;">${pacTel || 'Não cadastrado'}</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block;font-weight:600;color:#374151;font-size:12px;margin-bottom:4px;">Mensagem personalizada (opcional):</label>
+                        <textarea id="envio-mensagem" rows="3" style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;resize:vertical;box-sizing:border-box;" placeholder="Mensagem adicional para o paciente..."></textarea>
+                    </div>
+
+                    <div style="display:flex;gap:10px;">
+                        <button onclick="document.getElementById('intellisign-overlay').remove()" style="flex:1;padding:12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;color:#64748b;font-size:13px;font-weight:600;">Cancelar</button>
+                        <button onclick="executarEnvioAssinatura('${docType}','${docId}')" id="btn-enviar-assinatura" style="flex:2;padding:12px;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;">
+                            <i class="fas fa-paper-plane"></i> Enviar para Assinatura
+                        </button>
+                    </div>
+                </div>`;
+                document.body.appendChild(overlay);
+            }
+
+            async function executarEnvioAssinatura(docType, docId) {
+                const btn = document.getElementById('btn-enviar-assinatura');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+                const canal = document.getElementById('canal-whatsapp')?.checked ? 'whatsapp' : 'email';
+                const mensagem = document.getElementById('envio-mensagem')?.value || '';
+
+                try {
+                    const result = await apiRequest('/api/intellisign/enviar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            paciente_id: pacienteAtual.id,
+                            doc_type: docType,
+                            doc_id: docId,
+                            canal: canal,
+                            mensagem: mensagem
+                        })
+                    });
+
+                    if (result.success) {
+                        document.getElementById('intellisign-overlay').remove();
+                        alert('✅ Documento enviado para assinatura!\n\nEnviado para: ' + result.enviado_para + '\n\nO paciente receberá um link para assinar eletronicamente.');
+                        // Reload envelope tracking
+                        if (typeof carregarEnvelopesPaciente === 'function') {
+                            carregarEnvelopesPaciente(pacienteAtual.id);
+                        }
+                    } else {
+                        alert('⚠️ Erro: ' + (result.error || result.message || 'Erro desconhecido'));
+                    }
+                } catch(e) {
+                    alert('❌ Erro ao enviar: ' + (e.message || 'Erro de conexão'));
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar para Assinatura';
+                }
+            }
+
+            async function carregarEnvelopesPaciente(pacId) {
+                const container = document.getElementById('envelopes-paciente-lista');
+                if (!container) return;
+
+                try {
+                    const envelopes = await apiRequest(`/api/intellisign/envelopes?paciente_id=${pacId}`);
+                    if (!envelopes || envelopes.length === 0) {
+                        container.innerHTML = '<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;">Nenhum documento enviado para assinatura</div>';
+                        return;
+                    }
+
+                    const statusMap = {
+                        'draft': { label: 'Rascunho', color: '#6b7280', bg: '#f3f4f6', icon: 'fa-file' },
+                        'in-transit': { label: 'Aguardando', color: '#d97706', bg: '#fef3c7', icon: 'fa-clock' },
+                        'completed': { label: 'Assinado', color: '#059669', bg: '#d1fae5', icon: 'fa-check-circle' },
+                        'cancelled': { label: 'Cancelado', color: '#dc2626', bg: '#fee2e2', icon: 'fa-times-circle' },
+                        'expired': { label: 'Expirado', color: '#9333ea', bg: '#f3e8ff', icon: 'fa-hourglass-end' }
+                    };
+
+                    container.innerHTML = envelopes.map(env => {
+                        const st = statusMap[env.status] || statusMap['in-transit'];
+                        const dt = env.enviado_em ? new Date(env.enviado_em).toLocaleDateString('pt-BR') : '';
+                        return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                                    <i class="fas ${st.icon}" style="color:${st.color};font-size:12px;"></i>
+                                    <span style="font-weight:600;color:#1e293b;font-size:12px;">${env.doc_titulo || env.doc_type}</span>
+                                    <span style="background:${st.bg};color:${st.color};padding:1px 6px;border-radius:8px;font-size:9px;font-weight:600;">${st.label}</span>
+                                </div>
+                                <div style="font-size:11px;color:#6b7280;">${env.canal === 'whatsapp' ? '📱' : '📧'} ${env.enviado_para} • ${dt}</div>
+                            </div>
+                            <div style="display:flex;gap:4px;">
+                                ${env.status === 'in-transit' ? `<button onclick="reenviarNotificacao('${env.id}')" title="Reenviar" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;"><i class="fas fa-redo"></i></button>` : ''}
+                                ${env.status === 'completed' ? `<button onclick="downloadEnvelopeAssinado('${env.id}')" title="Download" style="background:#d1fae5;border:1px solid #a7f3d0;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;color:#065f46;"><i class="fas fa-download"></i></button>` : ''}
+                                <button onclick="consultarStatusEnvelope('${env.id}')" title="Atualizar status" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;"><i class="fas fa-sync-alt"></i></button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } catch(e) {
+                    console.error('Erro ao carregar envelopes:', e);
+                }
+            }
+
+            async function reenviarNotificacao(envelopeId) {
+                if (!confirm('Reenviar notificação para o paciente?')) return;
+                try {
+                    const result = await apiRequest(`/api/intellisign/reenviar/${envelopeId}`, { method: 'POST' });
+                    if (result.success) {
+                        alert('✅ Notificação reenviada ao paciente!');
+                    } else {
+                        alert('⚠️ ' + (result.error || 'Erro ao reenviar'));
+                    }
+                } catch(e) {
+                    alert('Erro: ' + e.message);
+                }
+            }
+
+            async function consultarStatusEnvelope(envelopeId) {
+                try {
+                    const result = await apiRequest(`/api/intellisign/envelope/${envelopeId}`);
+                    const state = result.envelope?.state || result.envelope?.status || result.local?.status || 'desconhecido';
+                    alert('Status: ' + state.toUpperCase());
+                    if (pacienteAtual) carregarEnvelopesPaciente(pacienteAtual.id);
+                } catch(e) {
+                    alert('Erro: ' + e.message);
+                }
+            }
+
+            function downloadEnvelopeAssinado(envelopeId) {
+                window.open(`/api/intellisign/download/${envelopeId}`, '_blank');
             }
 
             // ===== WEBHOOK CONFIG =====
@@ -11519,8 +11798,16 @@
             window.adicionarMedPrescricao = adicionarMedPrescricao;
             window.removerMedPrescricao = removerMedPrescricao;
             window.assinarPrescricao = assinarPrescricao;
+            window.showClearanceSelection = showClearanceSelection;
+            window.selectClearance = selectClearance;
             window.carregarPrescricoesFicha = carregarPrescricoesFicha;
             window.visualizarPrescricao = visualizarPrescricao;
+            window.abrirEnviarAssinatura = abrirEnviarAssinatura;
+            window.executarEnvioAssinatura = executarEnvioAssinatura;
+            window.carregarEnvelopesPaciente = carregarEnvelopesPaciente;
+            window.reenviarNotificacao = reenviarNotificacao;
+            window.consultarStatusEnvelope = consultarStatusEnvelope;
+            window.downloadEnvelopeAssinado = downloadEnvelopeAssinado;
             window.switchPrescTab = switchPrescTab;
             window.updateTitrationValue = updateTitrationValue;
             window.calcularFrascosCannabis = calcularFrascosCannabis;

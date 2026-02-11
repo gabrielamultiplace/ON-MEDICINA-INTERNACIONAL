@@ -2979,9 +2979,11 @@ except ImportError:
 @app.route('/api/assinatura/iniciar', methods=['POST'])
 def iniciar_assinatura():
     """
-    Inicia o fluxo de assinatura digital.
-    Se IntegraICP estiver configurado, retorna URL de autenticação.
-    Caso contrário, assina localmente (modo simulado).
+    Inicia o fluxo de assinatura digital conforme diagrama IntegraICP:
+    1. Server chama GET /authentications → lista de Clearances
+    2. Retorna clearances ao frontend para seleção do provedor
+    3. Usuário seleciona → browser abre clearanceEndpoint → 302 → auth no provedor
+    Se IntegraICP não configurado, assina em modo simulado.
     """
     data = request.get_json(silent=True) or {}
     doc_type = data.get('doc_type', '')
@@ -3000,6 +3002,71 @@ def iniciar_assinatura():
         pkce = integraicp.generate_pkce_pair()
         session_id = uuid.uuid4().hex[:12]
 
+        callback_uri = integraicp.build_callback_uri(doc_type, doc_id, session_id)
+
+        # Passo 1 do diagrama: GET /authentications → lista de Clearances (server-side)
+        try:
+            clearances_result = integraicp.get_clearances(
+                code_challenge=pkce['code_challenge'],
+                callback_uri=callback_uri,
+                subject_key=medico_cpf if medico_cpf else None,
+                credential_lifetime=3600
+            )
+        except Exception as e:
+            logger.error(f"Erro ao consultar IntegraICP /authentications: {e}")
+            return jsonify({'error': f'Erro ao consultar provedores ICP-Brasil: {str(e)}'}), 502
+
+        # Verificar erros da API
+        if 'error' in clearances_result and 'data' not in clearances_result:
+            return jsonify({
+                'mode': 'integraicp',
+                'error': 'Erro ao consultar provedores ICP-Brasil',
+                'detail': clearances_result.get('error', {}),
+                'status_code': clearances_result.get('status_code', 400)
+            }), 400
+
+        # HTTP 302 → autostart ativado, retorna URL de redirect direto
+        if clearances_result.get('redirect'):
+            # Salvar sessão antes do redirect
+            sig_session = {
+                'id': f'SIG{uuid.uuid4().hex[:8].upper()}',
+                'session_id': session_id,
+                'doc_type': doc_type,
+                'doc_id': doc_id,
+                'medico_nome': medico_nome,
+                'medico_crm': medico_crm,
+                'medico_cpf': medico_cpf,
+                'doc_hash': doc_hash,
+                'code_verifier': pkce['code_verifier'],
+                'code_challenge': pkce['code_challenge'],
+                'status': 'pending_authentication',
+                'credential_id': None,
+                'signature_data': None,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            }
+            sigs = load_assinaturas()
+            sigs.append(sig_session)
+            save_assinaturas(sigs)
+
+            return jsonify({
+                'mode': 'integraicp',
+                'session_id': session_id,
+                'redirect_url': clearances_result['redirect_url'],
+                'message': 'Redirecionando para autenticação'
+            })
+
+        # Extrair clearances da resposta
+        data_obj = clearances_result.get('data', {})
+        clearances = data_obj.get('clearances', [])
+        exec_status = data_obj.get('executionStatus', {})
+
+        if not clearances or exec_status.get('currentStatus') == 'UNAVAILABLE_CLEARANCES':
+            return jsonify({
+                'mode': 'integraicp',
+                'error': 'Nenhum provedor ICP-Brasil disponível',
+                'message': 'O CPF informado não possui certificado digital em nuvem cadastrado nos provedores disponíveis (VIDaaS, BirdID, etc). Cadastre-se em um provedor primeiro.'
+            }), 404
+
         # Salvar sessão de assinatura pendente
         sig_session = {
             'id': f'SIG{uuid.uuid4().hex[:8].upper()}',
@@ -3015,25 +3082,22 @@ def iniciar_assinatura():
             'status': 'pending_authentication',
             'credential_id': None,
             'signature_data': None,
+            'request_id': data_obj.get('requestId', ''),
             'created_at': datetime.now(timezone.utc).isoformat()
         }
         sigs = load_assinaturas()
         sigs.append(sig_session)
         save_assinaturas(sigs)
 
-        callback_uri = integraicp.build_callback_uri(doc_type, doc_id, session_id)
-        auth_url = integraicp.get_authentications_url(
-            code_challenge=pkce['code_challenge'],
-            callback_uri=callback_uri,
-            subject_key=medico_cpf if medico_cpf else None,
-            credential_lifetime=3600
-        )
+        logger.info(f"IntegraICP: {len(clearances)} provedor(es) encontrado(s) para session={session_id}")
 
+        # Retorna clearances para o frontend selecionar provedor (Passo 2 do diagrama)
         return jsonify({
             'mode': 'integraicp',
             'session_id': session_id,
-            'auth_url': auth_url,
-            'message': 'Redirecionar o médico para autenticação no provedor ICP-Brasil'
+            'clearances': clearances,
+            'expire_timestamp': data_obj.get('expireTimestamp', ''),
+            'message': 'Selecione o provedor de certificado digital para autenticação'
         })
 
     # ── Modo Simulado (fallback) ──
@@ -3540,6 +3604,459 @@ def test_webhook():
         return jsonify({'success': True, 'status_code': resp.status_code, 'message': f'Webhook enviado com status {resp.status_code}'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ===== INTELLISIGN — Assinatura Eletrônica de Documentos (Pacientes) =====
+ENVELOPES_FILE = os.path.join(DATA_DIR, 'intellisign_envelopes.json')
+
+def load_envelopes():
+    return _load_json_file(ENVELOPES_FILE, [])
+
+def save_envelopes(data):
+    _save_json_file(ENVELOPES_FILE, data)
+
+try:
+    from intellisign_service import IntellisignService
+    intellisign = IntellisignService()
+    if intellisign.is_configured():
+        logger.info("✅ Intellisign configurado — assinatura de pacientes ativa")
+    else:
+        logger.warning("⚠️ Intellisign sem credenciais — modo desabilitado")
+        intellisign = None
+except ImportError:
+    intellisign = None
+    logger.warning("⚠️ intellisign_service.py não encontrado — assinatura de pacientes indisponível")
+
+
+def _gerar_pdf_prescricao(prescricao, paciente) -> bytes:
+    """Gera PDF simples de prescrição usando reportlab ou fallback texto."""
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import mm
+        from reportlab.pdfgen import canvas as pdf_canvas
+        from io import BytesIO
+
+        buf = BytesIO()
+        c = pdf_canvas.Canvas(buf, pagesize=A4)
+        w, h = A4
+
+        # Header
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(w/2, h - 40*mm, "ON Medicina Internacional")
+        c.setFont("Helvetica", 10)
+        c.drawCentredString(w/2, h - 47*mm, "Receituário Médico")
+
+        # Line separator
+        c.setStrokeColorRGB(0.1, 0.1, 0.1)
+        c.line(20*mm, h - 52*mm, w - 20*mm, h - 52*mm)
+
+        # Patient info
+        y = h - 62*mm
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(20*mm, y, f"Paciente: {paciente.get('nome', 'N/A').upper()}")
+        c.setFont("Helvetica", 9)
+        y -= 6*mm
+        c.drawString(20*mm, y, f"CPF: {paciente.get('cpf', 'N/A')}     Data de Nascimento: {paciente.get('data_nascimento', 'N/A')}")
+        y -= 6*mm
+        c.drawString(20*mm, y, f"Data: {prescricao.get('data', '')[:10]}     Médico: {prescricao.get('medico_nome', '')} — {prescricao.get('medico_crm', '')}")
+
+        # Medications
+        y -= 12*mm
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(20*mm, y, "Prescrição:")
+        y -= 8*mm
+
+        medicamentos = prescricao.get('medicamentos', [])
+        for i, med in enumerate(medicamentos, 1):
+            c.setFont("Helvetica-Bold", 10)
+            nome = med.get('nome', f'Medicamento {i}')
+            c.drawString(22*mm, y, f"{i}. {nome}")
+            y -= 5*mm
+
+            c.setFont("Helvetica", 9)
+            detalhes = []
+            if med.get('concentracao'):
+                detalhes.append(f"Concentração: {med['concentracao']}")
+            if med.get('volume'):
+                detalhes.append(f"Volume: {med['volume']}")
+            if med.get('laboratorio'):
+                detalhes.append(f"Laboratório: {med['laboratorio']}")
+            if med.get('tipo'):
+                detalhes.append(f"Tipo: {med['tipo']}")
+            if detalhes:
+                c.drawString(28*mm, y, " | ".join(detalhes))
+                y -= 5*mm
+
+            posologia = med.get('posologia', '')
+            if posologia:
+                c.drawString(28*mm, y, f"Posologia: {posologia}")
+                y -= 5*mm
+
+            y -= 3*mm
+            if y < 40*mm:
+                c.showPage()
+                y = h - 30*mm
+
+        # Observations
+        obs = prescricao.get('observacoes', '')
+        if obs:
+            y -= 5*mm
+            c.setFont("Helvetica-Bold", 10)
+            c.drawString(20*mm, y, "Observações:")
+            y -= 5*mm
+            c.setFont("Helvetica", 9)
+            for line in obs.split('\n')[:10]:
+                c.drawString(22*mm, y, line[:90])
+                y -= 4.5*mm
+
+        # Signature area
+        y -= 15*mm
+        if y < 60*mm:
+            c.showPage()
+            y = h - 80*mm
+
+        c.line(w/2 - 40*mm, y, w/2 + 40*mm, y)
+        y -= 5*mm
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(w/2, y, f"{prescricao.get('medico_nome', '')}")
+        y -= 4*mm
+        c.drawCentredString(w/2, y, f"{prescricao.get('medico_crm', '')}")
+
+        # Footer
+        c.setFont("Helvetica", 7)
+        c.drawCentredString(w/2, 15*mm, "ON Medicina Internacional — Documento gerado eletronicamente")
+        c.drawCentredString(w/2, 11*mm, f"Válido por {prescricao.get('duracao_meses', 24)} meses a partir de {prescricao.get('data', '')[:10]}")
+
+        c.save()
+        return buf.getvalue()
+
+    except ImportError:
+        # Fallback: gerar texto simples como PDF-like content
+        content = f"RECEITUÁRIO MÉDICO — ON Medicina Internacional\n\n"
+        content += f"Paciente: {paciente.get('nome', 'N/A')}\n"
+        content += f"CPF: {paciente.get('cpf', 'N/A')}\n"
+        content += f"Data: {prescricao.get('data', '')}\n"
+        content += f"Médico: {prescricao.get('medico_nome', '')} — {prescricao.get('medico_crm', '')}\n\n"
+        for med in prescricao.get('medicamentos', []):
+            content += f"- {med.get('nome', '')}: {med.get('posologia', '')}\n"
+        return content.encode('utf-8')
+
+
+def _gerar_pdf_laudo(laudo, paciente) -> bytes:
+    """Gera PDF de laudo médico circunstanciado."""
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import mm
+        from reportlab.pdfgen import canvas as pdf_canvas
+        from io import BytesIO
+
+        buf = BytesIO()
+        c = pdf_canvas.Canvas(buf, pagesize=A4)
+        w, h = A4
+
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredString(w/2, h - 40*mm, "ON Medicina Internacional")
+        c.setFont("Helvetica", 11)
+        c.drawCentredString(w/2, h - 48*mm, "Laudo Médico Circunstanciado")
+
+        c.line(20*mm, h - 53*mm, w - 20*mm, h - 53*mm)
+
+        y = h - 63*mm
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(20*mm, y, f"Paciente: {paciente.get('nome', 'N/A').upper()}")
+        y -= 6*mm
+        c.setFont("Helvetica", 9)
+        c.drawString(20*mm, y, f"CPF: {paciente.get('cpf', 'N/A')}")
+
+        campos = [
+            ('Diagnóstico (CID)', laudo.get('diagnostico_cid', '')),
+            ('Histórico Clínico', laudo.get('historico_clinico', '')),
+            ('Tratamentos Anteriores', laudo.get('tratamentos_anteriores', '')),
+            ('Medicações Atuais', laudo.get('medicacoes_atuais', '')),
+            ('Justificativa Cannabis', laudo.get('justificativa_cannabis', '')),
+            ('Conclusão', laudo.get('conclusao', ''))
+        ]
+
+        for label, val in campos:
+            if not val:
+                continue
+            y -= 10*mm
+            c.setFont("Helvetica-Bold", 10)
+            c.drawString(20*mm, y, f"{label}:")
+            y -= 5*mm
+            c.setFont("Helvetica", 9)
+            # Wrap text
+            words = val.split()
+            line = ''
+            for word in words:
+                test = line + ' ' + word if line else word
+                if len(test) > 85:
+                    c.drawString(22*mm, y, line)
+                    y -= 4.5*mm
+                    line = word
+                    if y < 35*mm:
+                        c.showPage()
+                        y = h - 30*mm
+                else:
+                    line = test
+            if line:
+                c.drawString(22*mm, y, line)
+                y -= 4.5*mm
+
+        # Signature
+        y -= 15*mm
+        if y < 50*mm:
+            c.showPage()
+            y = h - 80*mm
+        c.line(w/2 - 40*mm, y, w/2 + 40*mm, y)
+        y -= 5*mm
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(w/2, y, laudo.get('medico_nome', ''))
+        y -= 4*mm
+        c.drawCentredString(w/2, y, laudo.get('medico_crm', ''))
+
+        c.setFont("Helvetica", 7)
+        c.drawCentredString(w/2, 15*mm, "ON Medicina Internacional — Documento gerado eletronicamente")
+
+        c.save()
+        return buf.getvalue()
+
+    except ImportError:
+        content = f"LAUDO MÉDICO CIRCUNSTANCIADO\n\nPaciente: {paciente.get('nome', '')}\n"
+        for k in ('diagnostico_cid', 'historico_clinico', 'justificativa_cannabis', 'conclusao'):
+            content += f"\n{k}: {laudo.get(k, '')}\n"
+        return content.encode('utf-8')
+
+
+@app.route('/api/intellisign/enviar', methods=['POST'])
+def intellisign_enviar():
+    """
+    Envia documento para assinatura do paciente via Intellisign.
+    Gera PDF, faz upload, cria envelope, adiciona destinatário e envia.
+    """
+    if not intellisign:
+        return jsonify({'error': 'Intellisign não configurado. Adicione INTELLISIGN_CLIENT_ID e INTELLISIGN_CLIENT_SECRET no .env'}), 503
+
+    data = request.get_json(silent=True) or {}
+    paciente_id = data.get('paciente_id', '')
+    doc_type = data.get('doc_type', '')  # 'prescricao' ou 'laudo'
+    doc_id = data.get('doc_id', '')
+    canal = data.get('canal', 'email')  # 'email' ou 'whatsapp'
+    mensagem_extra = data.get('mensagem', '')
+    signature_type = data.get('signature_type', 'simple')
+
+    # Buscar paciente
+    pacientes = load_pacientes()
+    pac = next((p for p in pacientes if p.get('id') == paciente_id), None)
+    if not pac:
+        return jsonify({'error': 'Paciente não encontrado'}), 404
+
+    pac_email = pac.get('email', '')
+    pac_telefone = pac.get('telefone', '')
+    pac_nome = pac.get('nome', '')
+
+    if canal == 'email' and not pac_email:
+        return jsonify({'error': 'Paciente não possui email cadastrado'}), 400
+    if canal == 'whatsapp' and not pac_telefone:
+        return jsonify({'error': 'Paciente não possui telefone cadastrado'}), 400
+
+    # Buscar documento e gerar PDF
+    pdf_bytes = None
+    filename = ''
+    doc_titulo = ''
+
+    if doc_type == 'prescricao':
+        prescricoes = load_prescricoes()
+        presc = next((p for p in prescricoes if p.get('id') == doc_id), None)
+        if not presc:
+            return jsonify({'error': 'Prescrição não encontrada'}), 404
+        pdf_bytes = _gerar_pdf_prescricao(presc, pac)
+        filename = f"Prescricao_{pac_nome.replace(' ', '_')}_{doc_id}.pdf"
+        doc_titulo = f"Prescrição Cannabis — {pac_nome}"
+
+    elif doc_type == 'laudo':
+        laudos = load_laudos()
+        laudo = next((l for l in laudos if l.get('id') == doc_id), None)
+        if not laudo:
+            return jsonify({'error': 'Laudo não encontrado'}), 404
+        pdf_bytes = _gerar_pdf_laudo(laudo, pac)
+        filename = f"Laudo_{pac_nome.replace(' ', '_')}_{doc_id}.pdf"
+        doc_titulo = f"Laudo Médico — {pac_nome}"
+
+    else:
+        return jsonify({'error': 'Tipo de documento inválido. Use: prescricao ou laudo'}), 400
+
+    if not pdf_bytes:
+        return jsonify({'error': 'Erro ao gerar PDF'}), 500
+
+    # Enviar via Intellisign
+    try:
+        assunto = f"ON Medicina — {doc_titulo} — Assinatura necessária"
+        msg = mensagem_extra or (
+            f"Olá {pac_nome},\n\n"
+            f"Segue o documento '{doc_titulo}' para sua assinatura.\n"
+            f"Por favor, clique no link abaixo para assinar eletronicamente.\n\n"
+            f"Atenciosamente,\nON Medicina Internacional"
+        )
+
+        result = intellisign.enviar_para_assinatura(
+            pdf_bytes=pdf_bytes,
+            filename=filename,
+            paciente_nome=pac_nome,
+            paciente_email=pac_email if canal == 'email' else None,
+            paciente_telefone=pac_telefone if canal == 'whatsapp' else None,
+            assunto=assunto,
+            mensagem=msg,
+            titulo=doc_titulo,
+            expire_days=30,
+            signature_type=signature_type
+        )
+
+        if result.get('error'):
+            return jsonify(result), result.get('status_code', 500)
+
+        # Salvar registro do envelope
+        envelope_record = {
+            'id': result.get('envelope_id', ''),
+            'hashid': result.get('hashid', ''),
+            'paciente_id': paciente_id,
+            'paciente_nome': pac_nome,
+            'doc_type': doc_type,
+            'doc_id': doc_id,
+            'doc_titulo': doc_titulo,
+            'canal': canal,
+            'enviado_para': result.get('enviado_para', ''),
+            'status': 'in-transit',
+            'signature_type': signature_type,
+            'file_item_id': result.get('file_item_id', ''),
+            'document_id': result.get('document_id', ''),
+            'recipient_id': result.get('recipient_id', ''),
+            'action_token': result.get('action_token', ''),
+            'enviado_em': datetime.now(timezone.utc).isoformat(),
+            'atualizado_em': datetime.now(timezone.utc).isoformat()
+        }
+        envelopes = load_envelopes()
+        envelopes.append(envelope_record)
+        save_envelopes(envelopes)
+
+        # Adicionar evento na timeline do paciente
+        add_timeline_event(
+            paciente_id, 'documento',
+            f'Documento enviado para assinatura',
+            f'{doc_titulo} enviado via {canal} para {result.get("enviado_para", "")}'
+        )
+
+        logger.info(f"✅ Intellisign: {doc_titulo} enviado para {pac_nome} via {canal}")
+
+        return jsonify({
+            'success': True,
+            'envelope_id': result.get('envelope_id', ''),
+            'message': f'Documento enviado para assinatura via {canal}',
+            'enviado_para': result.get('enviado_para', '')
+        })
+
+    except Exception as e:
+        logger.error(f"Intellisign erro: {e}")
+        return jsonify({'error': f'Erro ao enviar documento: {str(e)}'}), 500
+
+
+@app.route('/api/intellisign/envelopes', methods=['GET'])
+def intellisign_listar():
+    """Lista todos os envelopes de assinatura salvos localmente."""
+    paciente_id = request.args.get('paciente_id')
+    envelopes = load_envelopes()
+    if paciente_id:
+        envelopes = [e for e in envelopes if e.get('paciente_id') == paciente_id]
+    return jsonify(envelopes)
+
+
+@app.route('/api/intellisign/envelope/<envelope_id>', methods=['GET'])
+def intellisign_status(envelope_id):
+    """Consulta status de um envelope na API Intellisign e atualiza local."""
+    envelopes = load_envelopes()
+    env_local = next((e for e in envelopes if e.get('id') == envelope_id), None)
+
+    if intellisign and intellisign.is_configured():
+        try:
+            remote = intellisign.get_envelope(envelope_id, extended=True)
+            if 'error' not in remote:
+                new_state = remote.get('state', '')
+                # Atualizar registro local
+                if env_local:
+                    env_local['status'] = new_state
+                    env_local['atualizado_em'] = datetime.now(timezone.utc).isoformat()
+                    if new_state == 'completed':
+                        env_local['assinado_em'] = datetime.now(timezone.utc).isoformat()
+                    save_envelopes(envelopes)
+                return jsonify({
+                    'envelope': remote,
+                    'local': env_local
+                })
+        except Exception as e:
+            logger.error(f"Erro ao consultar Intellisign: {e}")
+
+    if env_local:
+        return jsonify({'envelope': env_local, 'local': env_local})
+
+    return jsonify({'error': 'Envelope não encontrado'}), 404
+
+
+@app.route('/api/intellisign/reenviar/<envelope_id>', methods=['POST'])
+def intellisign_reenviar(envelope_id):
+    """Reenvia notificação ao paciente."""
+    if not intellisign or not intellisign.is_configured():
+        return jsonify({'error': 'Intellisign não configurado'}), 503
+
+    try:
+        result = intellisign.renotify_envelope(envelope_id)
+        if result.get('success'):
+            return jsonify({'success': True, 'message': 'Notificação reenviada ao paciente'})
+        return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/intellisign/cancelar/<envelope_id>', methods=['POST'])
+def intellisign_cancelar(envelope_id):
+    """Cancela um envelope pendente."""
+    if not intellisign or not intellisign.is_configured():
+        return jsonify({'error': 'Intellisign não configurado'}), 503
+
+    try:
+        result = intellisign.cancel_envelope(envelope_id)
+        if result.get('success'):
+            envelopes = load_envelopes()
+            for e in envelopes:
+                if e.get('id') == envelope_id:
+                    e['status'] = 'cancelled'
+                    e['atualizado_em'] = datetime.now(timezone.utc).isoformat()
+            save_envelopes(envelopes)
+            return jsonify({'success': True, 'message': 'Envelope cancelado'})
+        return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/intellisign/download/<envelope_id>', methods=['GET'])
+def intellisign_download(envelope_id):
+    """Download do documento assinado."""
+    if not intellisign or not intellisign.is_configured():
+        return jsonify({'error': 'Intellisign não configurado'}), 503
+
+    try:
+        content = intellisign.download_envelope(envelope_id)
+        if content:
+            from flask import send_file
+            from io import BytesIO
+            return send_file(
+                BytesIO(content),
+                mimetype='application/zip',
+                as_attachment=True,
+                download_name=f'envelope_{envelope_id[:8]}_assinado.zip'
+            )
+        return jsonify({'error': 'Erro ao baixar documento'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # ===== CANNABIS MEDICINAL MODULE =====
