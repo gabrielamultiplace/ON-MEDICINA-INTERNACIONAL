@@ -611,6 +611,15 @@ def seed_admin() -> None:
         conn.commit()
 
 
+def ensure_db_ready() -> None:
+    try:
+        init_db()
+        seed_admin()
+        logger.info("✅ Banco de dados inicializado")
+    except Exception as exc:
+        logger.error(f"❌ Falha ao inicializar o banco: {exc}")
+
+
 def user_from_row(row: sqlite3.Row) -> Dict[str, Any]:
     return {
         "id": row["id"],
@@ -2846,6 +2855,9 @@ except ImportError as e:
     logger.warning(f"⚠️ Cannabis Medicinal não disponível: {e}")
 except Exception as e:
     logger.error(f"❌ Erro ao registrar Cannabis Medicinal: {e}")
+
+
+ensure_db_ready()
 
 
 if __name__ == "__main__":
