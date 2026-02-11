@@ -254,8 +254,12 @@
             border-radius: 16px;
             width: 100%;
             max-width: 860px;
+            max-height: calc(100vh - 48px);
             padding: 28px;
             box-shadow: var(--sombra-forte);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .settings-header {
@@ -263,6 +267,7 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 20px;
+            flex-shrink: 0;
         }
 
         .settings-header h3 {
@@ -326,6 +331,13 @@
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .settings-content {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
         }
 
         .settings-tab {
