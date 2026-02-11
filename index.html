@@ -1539,7 +1539,7 @@
         </div>
         
         <nav class="sidebar-nav">
-            <a class="nav-item active" data-page="painel">
+            <a class="nav-item active" href="#" data-page="painel" onclick="navigateTo('painel');return false;">
                 <i class="fas fa-columns"></i>
                 <span>Painel</span>
             </a>
@@ -1551,7 +1551,7 @@
             </a>
             -->
             
-            <a class="nav-item" data-page="gestao-pacientes">
+            <a class="nav-item" href="#" data-page="gestao-pacientes" onclick="navigateTo('gestao-pacientes');return false;">
                 <i class="fas fa-hospital-user"></i>
                 <span>Pacientes</span>
             </a>
@@ -1563,7 +1563,7 @@
             </a>
             -->
             
-            <a class="nav-item" data-page="financeiro">
+            <a class="nav-item" href="#" data-page="financeiro" onclick="navigateTo('financeiro');return false;">
                 <i class="fas fa-dollar-sign"></i>
                 <span>Financeiro</span>
             </a>
@@ -1575,7 +1575,7 @@
             </a>
             -->
             
-            <a class="nav-item" data-page="importacao">
+            <a class="nav-item" href="#" data-page="importacao" onclick="navigateTo('importacao');return false;">
                 <i class="fas fa-pills"></i>
                 <span>Medicamentos</span>
             </a>
@@ -1587,7 +1587,7 @@
             </a>
             -->
             
-            <a class="nav-item" data-page="administrativo">
+            <a class="nav-item" href="#" data-page="administrativo" onclick="navigateTo('administrativo');return false;">
                 <i class="fas fa-cog"></i>
                 <span>Administrativo</span>
             </a>
@@ -3729,6 +3729,28 @@
         // Constante de BASE_URL padronizada - usa URL atual automaticamente
         const BASE_URL = window.location.origin;
         
+        // Navegação global (inline onclick fallback)
+        function navigateTo(pageId) {
+            try {
+                // Remove active from all nav items 
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                // Add active to clicked
+                const clickedNav = document.querySelector('.nav-item[data-page="' + pageId + '"]');
+                if (clickedNav) clickedNav.classList.add('active');
+                // Switch pages
+                document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+                const target = document.getElementById(pageId);
+                if (target) target.classList.add('active');
+                // Load data for specific pages
+                if (pageId === 'gestao-pacientes' && typeof carregarListaPacientes === 'function') {
+                    carregarListaPacientes();
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch(err) {
+                console.error('Navigation error:', err);
+            }
+        }
+
         // Navegação entre páginas
         document.addEventListener('DOMContentLoaded', function() {
             const navItems = document.querySelectorAll('.nav-item');
@@ -3844,21 +3866,30 @@
             navItems.forEach(item => {
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
-                    
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const pageId = this.getAttribute('data-page');
-                    
-                    pages.forEach(page => page.classList.remove('active'));
-                    document.getElementById(pageId).classList.add('active');
-                    
-                    // Load data when navigating to specific pages
-                    if (pageId === 'gestao-pacientes') {
-                        carregarListaPacientes();
+                    try {
+                        navItems.forEach(nav => nav.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        const pageId = this.getAttribute('data-page');
+                        console.log('Nav click:', pageId);
+                        
+                        pages.forEach(page => page.classList.remove('active'));
+                        const targetPage = document.getElementById(pageId);
+                        if (targetPage) {
+                            targetPage.classList.add('active');
+                        } else {
+                            console.error('Page not found:', pageId);
+                        }
+                        
+                        // Load data when navigating to specific pages
+                        if (pageId === 'gestao-pacientes') {
+                            carregarListaPacientes();
+                        }
+                        
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } catch(err) {
+                        console.error('Nav error:', err);
                     }
-                    
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
             });
 
