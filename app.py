@@ -2955,21 +2955,88 @@ def listar_laudos(pac_id):
     return jsonify(pac_laudos)
 
 
-# ===== ASSINATURA DIGITAL API =====
+# ===== ASSINATURA DIGITAL API (IntegraICP) =====
+ASSINATURAS_FILE = os.path.join(DATA_DIR, 'assinaturas.json')
+
+def load_assinaturas():
+    return _load_json_file(ASSINATURAS_FILE, [])
+
+def save_assinaturas(data):
+    _save_json_file(ASSINATURAS_FILE, data)
+
+try:
+    from integraicp_service import IntegraICPService
+    integraicp = IntegraICPService()
+    if integraicp.is_configured():
+        logger.info("✅ IntegraICP configurado — assinatura digital real habilitada")
+    else:
+        logger.warning("⚠️ IntegraICP sem channel_id — modo simulado ativo")
+except ImportError:
+    integraicp = None
+    logger.warning("⚠️ integraicp_service.py não encontrado — modo simulado ativo")
+
+
 @app.route('/api/assinatura/iniciar', methods=['POST'])
 def iniciar_assinatura():
-    """Initialize digital signature process (Vidaas / ICP-Brasil)"""
+    """
+    Inicia o fluxo de assinatura digital.
+    Se IntegraICP estiver configurado, retorna URL de autenticação.
+    Caso contrário, assina localmente (modo simulado).
+    """
     data = request.get_json(silent=True) or {}
     doc_type = data.get('doc_type', '')
     doc_id = data.get('doc_id', '')
-    provider = data.get('provider', 'vidaas')
+    provider = data.get('provider', 'integraicp')
     medico_nome = data.get('medico_nome', '')
     medico_crm = data.get('medico_crm', '')
+    medico_cpf = data.get('medico_cpf', '')
 
     import hashlib
     hash_content = f"{doc_type}:{doc_id}:{medico_nome}:{medico_crm}:{datetime.now(timezone.utc).isoformat()}"
     doc_hash = hashlib.sha256(hash_content.encode()).hexdigest()
 
+    # ── Modo IntegraICP (real) ──
+    if integraicp and integraicp.is_configured() and provider == 'integraicp':
+        pkce = integraicp.generate_pkce_pair()
+        session_id = uuid.uuid4().hex[:12]
+
+        # Salvar sessão de assinatura pendente
+        sig_session = {
+            'id': f'SIG{uuid.uuid4().hex[:8].upper()}',
+            'session_id': session_id,
+            'doc_type': doc_type,
+            'doc_id': doc_id,
+            'medico_nome': medico_nome,
+            'medico_crm': medico_crm,
+            'medico_cpf': medico_cpf,
+            'doc_hash': doc_hash,
+            'code_verifier': pkce['code_verifier'],
+            'code_challenge': pkce['code_challenge'],
+            'status': 'pending_authentication',
+            'credential_id': None,
+            'signature_data': None,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        }
+        sigs = load_assinaturas()
+        sigs.append(sig_session)
+        save_assinaturas(sigs)
+
+        callback_uri = integraicp.build_callback_uri(doc_type, doc_id, session_id)
+        auth_url = integraicp.get_authentications_url(
+            code_challenge=pkce['code_challenge'],
+            callback_uri=callback_uri,
+            subject_key=medico_cpf if medico_cpf else None,
+            credential_lifetime=3600
+        )
+
+        return jsonify({
+            'mode': 'integraicp',
+            'session_id': session_id,
+            'auth_url': auth_url,
+            'message': 'Redirecionar o médico para autenticação no provedor ICP-Brasil'
+        })
+
+    # ── Modo Simulado (fallback) ──
     signature_record = {
         'id': f'SIG{uuid.uuid4().hex[:8].upper()}',
         'doc_type': doc_type,
@@ -2984,7 +3051,161 @@ def iniciar_assinatura():
         'created_at': datetime.now(timezone.utc).isoformat()
     }
 
-    # Update original document with signature
+    _update_document_signature(doc_type, doc_id, doc_hash, provider, signature_record['signed_at'])
+
+    sigs = load_assinaturas()
+    sigs.append(signature_record)
+    save_assinaturas(sigs)
+
+    return jsonify({
+        'mode': 'simulated',
+        'signature': signature_record,
+        'message': f'Documento assinado digitalmente via {provider.upper()} (modo simulado)'
+    })
+
+
+@app.route('/api/assinatura/callback', methods=['GET', 'POST'])
+def callback_assinatura():
+    """
+    Callback do IntegraICP após autenticação do médico.
+    Recebe credentialId via query string ou JSON body.
+    """
+    # IntegraICP envia credentialId como query param
+    credential_id = request.args.get('credentialId') or request.args.get('credential_id', '')
+    session_id = request.args.get('session_id', '')
+    doc_type = request.args.get('doc_type', '')
+    doc_id = request.args.get('doc_id', '')
+
+    # Também aceita via JSON body
+    if not credential_id and request.is_json:
+        body = request.get_json(silent=True) or {}
+        credential_id = body.get('credentialId', body.get('credential_id', ''))
+        session_id = session_id or body.get('session_id', '')
+
+    logger.info(f"Assinatura callback: credential_id={credential_id}, session_id={session_id}")
+
+    if credential_id and session_id:
+        sigs = load_assinaturas()
+        for sig in sigs:
+            if sig.get('session_id') == session_id:
+                sig['credential_id'] = credential_id
+                sig['status'] = 'authenticated'
+                sig['authenticated_at'] = datetime.now(timezone.utc).isoformat()
+                break
+        save_assinaturas(sigs)
+
+    # Redirecionar de volta para a plataforma com status
+    return redirect(f'/?signature_callback=true&session_id={session_id}&status=authenticated')
+
+
+@app.route('/api/assinatura/executar', methods=['POST'])
+def executar_assinatura():
+    """
+    Executa a assinatura digital após autenticação via IntegraICP.
+    Chamado pelo frontend após o callback com credentialId.
+    """
+    data = request.get_json(silent=True) or {}
+    session_id = data.get('session_id', '')
+
+    sigs = load_assinaturas()
+    sig = next((s for s in sigs if s.get('session_id') == session_id), None)
+    if not sig:
+        return jsonify({'error': 'Sessão de assinatura não encontrada'}), 404
+    if sig.get('status') != 'authenticated':
+        return jsonify({'error': f'Status inválido: {sig.get("status")}. Médico precisa autenticar primeiro.'}), 400
+
+    credential_id = sig.get('credential_id')
+    code_verifier = sig.get('code_verifier')
+
+    if not credential_id or not code_verifier:
+        return jsonify({'error': 'Credenciais incompletas'}), 400
+
+    # Montar URLs para o frontend fazer as chamadas à IntegraICP
+    credentials_url = integraicp.get_credentials_url(credential_id, code_verifier)
+    signatures_url = integraicp.get_signatures_url()
+    signature_payload = integraicp.build_signature_request(
+        credential_id=credential_id,
+        code_verifier=code_verifier,
+        documents=[{
+            'content_id': sig.get('doc_id', ''),
+            'content_hash_hex': sig.get('doc_hash', ''),
+            'description': f"{sig.get('doc_type', 'documento')} - {sig.get('medico_nome', '')}"
+        }]
+    )
+
+    # Atualizar status
+    sig['status'] = 'signing'
+    save_assinaturas(sigs)
+
+    return jsonify({
+        'session_id': session_id,
+        'credentials_url': credentials_url,
+        'signatures_url': signatures_url,
+        'signature_payload': signature_payload,
+        'message': 'Pronto para assinar. Execute POST para signatures_url com o payload.'
+    })
+
+
+@app.route('/api/assinatura/confirmar', methods=['POST'])
+def confirmar_assinatura():
+    """
+    Confirma a assinatura após resposta da IntegraICP.
+    Chamado pelo frontend com os dados de retorno do POST /signatures.
+    """
+    data = request.get_json(silent=True) or {}
+    session_id = data.get('session_id', '')
+    signature_result = data.get('signature_result', {})
+
+    sigs = load_assinaturas()
+    sig = next((s for s in sigs if s.get('session_id') == session_id), None)
+    if not sig:
+        return jsonify({'error': 'Sessão não encontrada'}), 404
+
+    # Extrair dados da resposta IntegraICP
+    signatures = signature_result.get('data', {}).get('signatures', [])
+    cert_info = signature_result.get('data', {}).get('certificateInformation', {})
+    subject_info = signature_result.get('data', {}).get('subjectIdentification', {})
+
+    signed_content = signatures[0].get('signedContent', '') if signatures else ''
+    signature_timestamp = signatures[0].get('signatureTimestamp', '') if signatures else ''
+
+    sig['status'] = 'signed'
+    sig['signed_at'] = signature_timestamp or datetime.now(timezone.utc).isoformat()
+    sig['signed_content'] = signed_content
+    sig['certificate_subject'] = cert_info.get('subjectName', '')
+    sig['certificate_issuer'] = cert_info.get('issuerName', '')
+    sig['certificate_serial'] = cert_info.get('serialNumber', '')
+    sig['certificate_fingerprint'] = cert_info.get('fingerprint256', '')
+    sig['signer_cpf'] = subject_info.get('identificationKey', '')
+    sig['signature_data'] = signature_result
+    save_assinaturas(sigs)
+
+    # Atualizar documento original
+    _update_document_signature(
+        sig.get('doc_type'), sig.get('doc_id'),
+        sig.get('doc_hash'), 'integraicp', sig['signed_at']
+    )
+
+    return jsonify({
+        'signature': sig,
+        'message': 'Documento assinado digitalmente via ICP-Brasil (IntegraICP)'
+    })
+
+
+@app.route('/api/assinatura/status/<session_id>', methods=['GET'])
+def status_assinatura(session_id):
+    """Consulta o status de uma sessão de assinatura."""
+    sigs = load_assinaturas()
+    sig = next((s for s in sigs if s.get('session_id') == session_id), None)
+    if not sig:
+        return jsonify({'error': 'Sessão não encontrada'}), 404
+    # Não expor code_verifier na resposta
+    safe = {k: v for k, v in sig.items() if k not in ('code_verifier', 'code_challenge')}
+    return jsonify(safe)
+
+
+def _update_document_signature(doc_type, doc_id, doc_hash, provider, signed_at):
+    """Atualiza o documento original com dados da assinatura."""
     if doc_type == 'prescricao':
         prescricoes = load_prescricoes()
         for p in prescricoes:
@@ -2992,7 +3213,7 @@ def iniciar_assinatura():
                 p['is_signed'] = True
                 p['signature_hash'] = doc_hash
                 p['signature_provider'] = provider
-                p['signed_at'] = signature_record['signed_at']
+                p['signed_at'] = signed_at
                 break
         save_prescricoes(prescricoes)
     elif doc_type == 'laudo':
@@ -3002,22 +3223,146 @@ def iniciar_assinatura():
                 l['is_signed'] = True
                 l['signature_hash'] = doc_hash
                 l['status'] = 'assinado'
-                l['signed_at'] = signature_record['signed_at']
+                l['signed_at'] = signed_at
                 break
         save_laudos(laudos_data)
 
+
+# ===== CERTIFICADO DIGITAL DO MÉDICO =====
+@app.route('/api/doctors/<doc_id>/certificado', methods=['GET'])
+def get_certificado_medico(doc_id):
+    """Retorna dados do certificado digital do médico."""
+    docs = load_doctors()
+    doc = next((d for d in docs if d.get('id') == doc_id), None)
+    if not doc:
+        return jsonify({'error': 'Médico não encontrado'}), 404
+    cert = doc.get('certificado_digital', {})
+    return jsonify(cert)
+
+
+@app.route('/api/doctors/<doc_id>/certificado', methods=['PUT'])
+def update_certificado_medico(doc_id):
+    """Atualiza dados do certificado digital do médico."""
+    docs = load_doctors()
+    idx = next((i for i, d in enumerate(docs) if d.get('id') == doc_id), None)
+    if idx is None:
+        return jsonify({'error': 'Médico não encontrado'}), 404
+
+    data = request.get_json(silent=True) or {}
+    cert = docs[idx].get('certificado_digital', {})
+    cert.update({
+        'cpf': data.get('cpf', cert.get('cpf', '')),
+        'provedor_preferido': data.get('provedor_preferido', cert.get('provedor_preferido', 'integraicp')),
+        'credential_id': data.get('credential_id', cert.get('credential_id', '')),
+        'certificado_nome': data.get('certificado_nome', cert.get('certificado_nome', '')),
+        'certificado_emissor': data.get('certificado_emissor', cert.get('certificado_emissor', '')),
+        'certificado_validade': data.get('certificado_validade', cert.get('certificado_validade', '')),
+        'certificado_serial': data.get('certificado_serial', cert.get('certificado_serial', '')),
+        'status': data.get('status', cert.get('status', 'pendente')),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    })
+    docs[idx]['certificado_digital'] = cert
+    save_doctors(docs)
+    return jsonify(cert)
+
+
+@app.route('/api/doctors/<doc_id>/certificado/vincular', methods=['POST'])
+def vincular_certificado_medico(doc_id):
+    """
+    Inicia o processo de vinculação do certificado digital do médico.
+    Retorna a URL de autenticação IntegraICP para o médico se autenticar.
+    """
+    docs = load_doctors()
+    doc = next((d for d in docs if d.get('id') == doc_id), None)
+    if not doc:
+        return jsonify({'error': 'Médico não encontrado'}), 404
+
+    data = request.get_json(silent=True) or {}
+    cpf = data.get('cpf', '')
+    if not cpf:
+        return jsonify({'error': 'CPF é obrigatório para vincular certificado'}), 400
+
+    if not integraicp or not integraicp.is_configured():
+        # Modo simulado
+        cert = doc.get('certificado_digital', {})
+        cert.update({
+            'cpf': cpf,
+            'status': 'vinculado_simulado',
+            'provedor_preferido': 'simulado',
+            'certificado_nome': doc.get('nome', doc.get('name', '')),
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        })
+        docs_list = load_doctors()
+        for d in docs_list:
+            if d.get('id') == doc_id:
+                d['certificado_digital'] = cert
+                break
+        save_doctors(docs_list)
+        return jsonify({'mode': 'simulated', 'certificado': cert, 'message': 'Certificado vinculado (modo simulado)'})
+
+    pkce = integraicp.generate_pkce_pair()
+    session_id = f'CERT_{uuid.uuid4().hex[:12]}'
+    callback_uri = f"{integraicp.callback_base_url}/api/doctors/{doc_id}/certificado/callback?session_id={session_id}"
+
+    auth_url = integraicp.get_authentications_url(
+        code_challenge=pkce['code_challenge'],
+        callback_uri=callback_uri,
+        subject_key=cpf,
+        credential_lifetime=600
+    )
+
+    # Salvar sessão temporária
+    sigs = load_assinaturas()
+    sigs.append({
+        'id': session_id,
+        'session_id': session_id,
+        'type': 'certificate_binding',
+        'doctor_id': doc_id,
+        'cpf': cpf,
+        'code_verifier': pkce['code_verifier'],
+        'status': 'pending_authentication',
+        'created_at': datetime.now(timezone.utc).isoformat()
+    })
+    save_assinaturas(sigs)
+
     return jsonify({
-        'signature': signature_record,
-        'message': f'Documento assinado digitalmente via {provider.upper()}'
+        'mode': 'integraicp',
+        'session_id': session_id,
+        'auth_url': auth_url,
+        'message': 'Redirecionar o médico para autenticação'
     })
 
 
-@app.route('/api/assinatura/callback', methods=['POST'])
-def callback_assinatura():
-    """Callback endpoint for external signature providers"""
-    data = request.get_json(silent=True) or {}
-    logger.info(f"Assinatura callback recebido: {data}")
-    return jsonify({'ok': True})
+@app.route('/api/doctors/<doc_id>/certificado/callback', methods=['GET'])
+def callback_certificado_medico(doc_id):
+    """Callback após autenticação do médico para vinculação de certificado."""
+    credential_id = request.args.get('credentialId', request.args.get('credential_id', ''))
+    session_id = request.args.get('session_id', '')
+
+    if credential_id and session_id:
+        sigs = load_assinaturas()
+        sig = next((s for s in sigs if s.get('session_id') == session_id), None)
+        if sig:
+            sig['credential_id'] = credential_id
+            sig['status'] = 'authenticated'
+            save_assinaturas(sigs)
+
+            # Atualizar certificado do médico
+            docs = load_doctors()
+            for d in docs:
+                if d.get('id') == doc_id:
+                    d['certificado_digital'] = d.get('certificado_digital', {})
+                    d['certificado_digital'].update({
+                        'cpf': sig.get('cpf', ''),
+                        'credential_id': credential_id,
+                        'status': 'vinculado',
+                        'provedor_preferido': 'integraicp',
+                        'updated_at': datetime.now(timezone.utc).isoformat()
+                    })
+                    break
+            save_doctors(docs)
+
+    return redirect(f'/?cert_callback=true&doctor_id={doc_id}&status=vinculado')
 
 
 # ===== SOLICITAÇÕES DE EXAMES API =====
