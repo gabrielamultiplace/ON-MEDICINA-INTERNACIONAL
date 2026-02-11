@@ -3067,19 +3067,24 @@ def iniciar_assinatura():
 @app.route('/api/assinatura/callback', methods=['GET', 'POST'])
 def callback_assinatura():
     """
-    Callback do IntegraICP após autenticação do médico.
-    Recebe credentialId via query string ou JSON body.
+    Callback do IntegraICP após autenticação do médico no provedor.
+    Conforme diagrama: GET myapp.com/callback?code={CredentialId}
+    O param 'code' contém o CredentialId retornado pelo IntegraICP.
     """
-    # IntegraICP envia credentialId como query param
-    credential_id = request.args.get('credentialId') or request.args.get('credential_id', '')
+    # IntegraICP envia CredentialId como ?code={CredentialId} conforme diagrama
+    credential_id = (
+        request.args.get('code') or
+        request.args.get('credentialId') or
+        request.args.get('credential_id', '')
+    )
     session_id = request.args.get('session_id', '')
     doc_type = request.args.get('doc_type', '')
     doc_id = request.args.get('doc_id', '')
 
-    # Também aceita via JSON body
+    # Também aceita via JSON body (fallback)
     if not credential_id and request.is_json:
         body = request.get_json(silent=True) or {}
-        credential_id = body.get('credentialId', body.get('credential_id', ''))
+        credential_id = body.get('code', body.get('credentialId', body.get('credential_id', '')))
         session_id = session_id or body.get('session_id', '')
 
     logger.info(f"Assinatura callback: credential_id={credential_id}, session_id={session_id}")
@@ -3101,8 +3106,12 @@ def callback_assinatura():
 @app.route('/api/assinatura/executar', methods=['POST'])
 def executar_assinatura():
     """
-    Executa a assinatura digital após autenticação via IntegraICP.
-    Chamado pelo frontend após o callback com credentialId.
+    Executa a assinatura digital completa SERVER-SIDE após callback com CredentialId.
+    Conforme diagrama de sequência IntegraICP:
+    1. GET /credentials/{credentialId}?secret_data={code_verifier} → dados do certificado
+    2. POST /signatures com credentialId + code_verifier + SHA256 Base64 → assinatura digital
+    
+    Tudo feito server-side (sem expor code_verifier ao browser).
     """
     data = request.get_json(silent=True) or {}
     session_id = data.get('session_id', '')
@@ -3111,7 +3120,7 @@ def executar_assinatura():
     sig = next((s for s in sigs if s.get('session_id') == session_id), None)
     if not sig:
         return jsonify({'error': 'Sessão de assinatura não encontrada'}), 404
-    if sig.get('status') != 'authenticated':
+    if sig.get('status') not in ('authenticated', 'signing'):
         return jsonify({'error': f'Status inválido: {sig.get("status")}. Médico precisa autenticar primeiro.'}), 400
 
     credential_id = sig.get('credential_id')
@@ -3120,76 +3129,132 @@ def executar_assinatura():
     if not credential_id or not code_verifier:
         return jsonify({'error': 'Credenciais incompletas'}), 400
 
-    # Montar URLs para o frontend fazer as chamadas à IntegraICP
-    credentials_url = integraicp.get_credentials_url(credential_id, code_verifier)
-    signatures_url = integraicp.get_signatures_url()
-    signature_payload = integraicp.build_signature_request(
-        credential_id=credential_id,
-        code_verifier=code_verifier,
-        documents=[{
-            'content_id': sig.get('doc_id', ''),
-            'content_hash_hex': sig.get('doc_hash', ''),
-            'description': f"{sig.get('doc_type', 'documento')} - {sig.get('medico_nome', '')}"
-        }]
-    )
+    if not integraicp or not integraicp.is_configured():
+        return jsonify({'error': 'IntegraICP não configurado'}), 500
 
-    # Atualizar status
     sig['status'] = 'signing'
     save_assinaturas(sigs)
 
-    return jsonify({
-        'session_id': session_id,
-        'credentials_url': credentials_url,
-        'signatures_url': signatures_url,
-        'signature_payload': signature_payload,
-        'message': 'Pronto para assinar. Execute POST para signatures_url com o payload.'
-    })
+    try:
+        # ── Passo 1: GET /credentials — obter dados do certificado ──
+        cred_result = integraicp.get_credential(credential_id, code_verifier)
+        if 'error' in cred_result:
+            sig['status'] = 'error'
+            sig['error_detail'] = str(cred_result.get('error', ''))
+            save_assinaturas(sigs)
+            return jsonify({
+                'error': 'Erro ao obter credenciais do certificado',
+                'detail': cred_result
+            }), 400
+
+        cert_info = cred_result.get('data', {}).get('certificateInformation', {})
+        subject_info = cred_result.get('data', {}).get('subjectIdentification', {})
+
+        # Salvar dados do certificado na sessão
+        sig['certificate_subject'] = cert_info.get('subjectName', '')
+        sig['certificate_issuer'] = cert_info.get('issuerName', '')
+        sig['certificate_serial'] = cert_info.get('serialNumber', '')
+        sig['certificate_fingerprint'] = cert_info.get('fingerprint256', '')
+        sig['certificate_validity'] = cert_info.get('validity', {})
+        sig['signer_cpf'] = subject_info.get('identificationKey', '')
+        save_assinaturas(sigs)
+
+        # ── Passo 2: POST /signatures — assinar documento ──
+        sig_result = integraicp.sign_documents(
+            credential_id=credential_id,
+            code_verifier=code_verifier,
+            documents=[{
+                'content_id': sig.get('doc_id', ''),
+                'content_hash_hex': sig.get('doc_hash', ''),
+                'description': f"{sig.get('doc_type', 'documento')} - {sig.get('medico_nome', '')}"
+            }],
+            signature_policy='CMS'
+        )
+
+        if 'error' in sig_result:
+            sig['status'] = 'error'
+            sig['error_detail'] = str(sig_result.get('error', ''))
+            save_assinaturas(sigs)
+            return jsonify({
+                'error': 'Erro ao executar assinatura digital',
+                'detail': sig_result
+            }), 400
+
+        # ── Sucesso: extrair dados da assinatura ──
+        exec_status = sig_result.get('data', {}).get('executionStatus', {})
+        signatures = sig_result.get('data', {}).get('signatures', [])
+
+        signed_content = signatures[0].get('signedContent', '') if signatures else ''
+        signature_timestamp = signatures[0].get('signatureTimestamp', '') if signatures else ''
+        signature_id = signatures[0].get('signatureId', '') if signatures else ''
+
+        sig['status'] = 'signed'
+        sig['signed_at'] = signature_timestamp or datetime.now(timezone.utc).isoformat()
+        sig['signed_content'] = signed_content
+        sig['signature_id_icp'] = signature_id
+        sig['integraicp_status'] = exec_status.get('currentStatus', '')
+        sig['signature_data'] = sig_result
+        save_assinaturas(sigs)
+
+        # Atualizar documento original (prescrição/laudo)
+        _update_document_signature(
+            sig.get('doc_type'), sig.get('doc_id'),
+            sig.get('doc_hash'), 'integraicp', sig['signed_at']
+        )
+
+        # Também atualizar certificado do médico (se tiver doctor_id)
+        if sig.get('medico_cpf'):
+            docs = load_doctors()
+            for d in docs:
+                cpf_cert = (d.get('certificado_digital', {}).get('cpf', '') or d.get('cpf', ''))
+                if cpf_cert == sig['medico_cpf']:
+                    d['certificado_digital'] = d.get('certificado_digital', {})
+                    d['certificado_digital'].update({
+                        'certificado_nome': cert_info.get('subjectName', ''),
+                        'certificado_emissor': cert_info.get('issuerName', ''),
+                        'certificado_serial': cert_info.get('serialNumber', ''),
+                        'certificado_validade': cert_info.get('validity', {}).get('notAfter', ''),
+                        'status': 'vinculado',
+                        'updated_at': datetime.now(timezone.utc).isoformat()
+                    })
+                    break
+            save_doctors(docs)
+
+        logger.info(f"✅ Assinatura digital concluída: session={session_id}, doc={sig.get('doc_id')}")
+
+        return jsonify({
+            'status': 'signed',
+            'session_id': session_id,
+            'certificate_subject': sig.get('certificate_subject', ''),
+            'certificate_issuer': sig.get('certificate_issuer', ''),
+            'signer_cpf': sig.get('signer_cpf', ''),
+            'signed_at': sig.get('signed_at', ''),
+            'message': 'Documento assinado digitalmente via ICP-Brasil (IntegraICP)'
+        })
+
+    except Exception as e:
+        logger.error(f"Erro na assinatura digital: {e}")
+        sig['status'] = 'error'
+        sig['error_detail'] = str(e)
+        save_assinaturas(sigs)
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
 
 
 @app.route('/api/assinatura/confirmar', methods=['POST'])
 def confirmar_assinatura():
     """
-    Confirma a assinatura após resposta da IntegraICP.
-    Chamado pelo frontend com os dados de retorno do POST /signatures.
+    Endpoint legado — a confirmação agora é feita automaticamente em /executar.
+    Mantido para compatibilidade.
     """
     data = request.get_json(silent=True) or {}
     session_id = data.get('session_id', '')
-    signature_result = data.get('signature_result', {})
-
     sigs = load_assinaturas()
     sig = next((s for s in sigs if s.get('session_id') == session_id), None)
     if not sig:
         return jsonify({'error': 'Sessão não encontrada'}), 404
-
-    # Extrair dados da resposta IntegraICP
-    signatures = signature_result.get('data', {}).get('signatures', [])
-    cert_info = signature_result.get('data', {}).get('certificateInformation', {})
-    subject_info = signature_result.get('data', {}).get('subjectIdentification', {})
-
-    signed_content = signatures[0].get('signedContent', '') if signatures else ''
-    signature_timestamp = signatures[0].get('signatureTimestamp', '') if signatures else ''
-
-    sig['status'] = 'signed'
-    sig['signed_at'] = signature_timestamp or datetime.now(timezone.utc).isoformat()
-    sig['signed_content'] = signed_content
-    sig['certificate_subject'] = cert_info.get('subjectName', '')
-    sig['certificate_issuer'] = cert_info.get('issuerName', '')
-    sig['certificate_serial'] = cert_info.get('serialNumber', '')
-    sig['certificate_fingerprint'] = cert_info.get('fingerprint256', '')
-    sig['signer_cpf'] = subject_info.get('identificationKey', '')
-    sig['signature_data'] = signature_result
-    save_assinaturas(sigs)
-
-    # Atualizar documento original
-    _update_document_signature(
-        sig.get('doc_type'), sig.get('doc_id'),
-        sig.get('doc_hash'), 'integraicp', sig['signed_at']
-    )
-
-    return jsonify({
-        'signature': sig,
-        'message': 'Documento assinado digitalmente via ICP-Brasil (IntegraICP)'
-    })
+    # Retornar status atual
+    safe = {k: v for k, v in sig.items() if k not in ('code_verifier', 'code_challenge')}
+    return jsonify({'signature': safe, 'message': f'Status: {sig.get("status")}'})
 
 
 @app.route('/api/assinatura/status/<session_id>', methods=['GET'])
@@ -3336,7 +3401,12 @@ def vincular_certificado_medico(doc_id):
 @app.route('/api/doctors/<doc_id>/certificado/callback', methods=['GET'])
 def callback_certificado_medico(doc_id):
     """Callback após autenticação do médico para vinculação de certificado."""
-    credential_id = request.args.get('credentialId', request.args.get('credential_id', ''))
+    # IntegraICP envia ?code={CredentialId} conforme diagrama
+    credential_id = (
+        request.args.get('code') or
+        request.args.get('credentialId') or
+        request.args.get('credential_id', '')
+    )
     session_id = request.args.get('session_id', '')
 
     if credential_id and session_id:

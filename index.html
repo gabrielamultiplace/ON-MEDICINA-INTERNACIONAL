@@ -3840,31 +3840,22 @@
                         const sessionId = urlParams.get('session_id');
                         const status = urlParams.get('status');
                         if (status === 'authenticated' && sessionId) {
-                            // Executar assinatura automaticamente
+                            // Backend faz tudo server-side: GET /credentials + POST /signatures
                             try {
                                 const execRes = await apiRequest('/api/assinatura/executar', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ session_id: sessionId })
                                 });
-                                if (execRes.signatures_url && execRes.signature_payload) {
-                                    // Fazer request de assinatura à IntegraICP
-                                    const sigResponse = await fetch(execRes.signatures_url, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify(execRes.signature_payload)
-                                    });
-                                    const sigData = await sigResponse.json();
-                                    // Confirmar assinatura no backend
-                                    await apiRequest('/api/assinatura/confirmar', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ session_id: sessionId, signature_result: sigData })
-                                    });
-                                    alert('✅ Documento assinado digitalmente com certificado ICP-Brasil!');
+                                if (execRes.success) {
+                                    alert('✅ Documento assinado digitalmente com certificado ICP-Brasil!\n\n' +
+                                          (execRes.certificado?.titular || 'Assinatura confirmada'));
+                                } else {
+                                    alert('⚠️ Assinatura pendente: ' + (execRes.message || 'Erro desconhecido'));
                                 }
                             } catch(sigErr) {
                                 console.warn('Erro ao finalizar assinatura:', sigErr);
+                                alert('⚠️ Erro ao finalizar assinatura. Tente novamente.');
                             }
                         }
                         // Limpar query string
