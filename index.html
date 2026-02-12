@@ -2253,33 +2253,28 @@
                     </button>
                     <h1 class="page-title">
                         <i class="fas fa-pills"></i>
-                        Importacao de Medicamentos
+                        Importação de Medicamentos
                     </h1>
-                    <div style="display:flex;gap:10px;">
-                        <button class="btn-hero" id="btn-novo-medicamento" style="background:#0E4D42;">
-                            <i class="fas fa-plus-circle"></i>
-                            Novo Medicamento
-                        </button>
-                        <button class="btn-hero" id="btn-nova-importacao" style="background:#e67e22;">
-                            <i class="fas fa-truck"></i>
-                            Nova Importacao
-                        </button>
-                    </div>
                 </div>
                 <!-- Sub-tabs -->
                 <div style="display:flex;gap:8px;margin-top:12px;">
-                    <button class="btn-hero imp-tab-btn active" data-imp-tab="medicamentos" style="font-size:13px;padding:6px 16px;">
+                    <button class="btn-hero imp-tab-btn active" data-imp-tab="medicamentos" style="font-size:13px;padding:8px 20px;">
                         <i class="fas fa-capsules"></i> Cadastro de Medicamentos
                     </button>
-                    <button class="btn-hero imp-tab-btn" data-imp-tab="importacoes" style="font-size:13px;padding:6px 16px;background:#e67e22;">
-                        <i class="fas fa-truck"></i> Importacoes
+                    <button class="btn-hero imp-tab-btn" data-imp-tab="importacoes" style="font-size:13px;padding:8px 20px;background:#e67e22;">
+                        <i class="fas fa-truck"></i> Importações
                     </button>
                 </div>
             </div>
             <div class="page-body">
                 <!-- Tab: Cadastro de Medicamentos -->
                 <div id="imp-tab-medicamentos" class="imp-tab-content active">
-                    <div id="medicamentos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:16px 0;">
+                    <div style="display:flex;justify-content:flex-end;padding:12px 0;">
+                        <button class="btn-hero" id="btn-novo-medicamento" style="background:#0E4D42;font-size:13px;padding:8px 20px;">
+                            <i class="fas fa-plus-circle"></i> Novo Medicamento
+                        </button>
+                    </div>
+                    <div id="medicamentos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:0 0 16px 0;">
                         <div style="text-align:center;padding:40px;color:#888;">
                             <i class="fas fa-spinner fa-spin" style="font-size:24px;"></i>
                             <p>Carregando medicamentos...</p>
