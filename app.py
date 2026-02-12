@@ -948,34 +948,88 @@ def debug_medicamentos():
 _cotacao_cache = {}  # {moeda: {data, timestamp}}
 
 def _fetch_cotacoes_batch(moedas_list):
-    """Fetch multiple currencies in a single AwesomeAPI call"""
+    """Fetch multiple currencies - tries AwesomeAPI first, then fallbacks"""
     import time
-    pairs = ','.join([f'{m}-BRL' for m in moedas_list])
+    results = {}
+
+    # Strategy 1: AwesomeAPI (batch call)
     try:
+        pairs = ','.join([f'{m}-BRL' for m in moedas_list])
         url = f'https://economia.awesomeapi.com.br/last/{pairs}'
-        resp = http_requests.get(url, timeout=15)
-        resp.raise_for_status()
-        data = resp.json()
-        results = {}
-        for moeda in moedas_list:
-            key = f'{moeda}BRL'
-            if key in data:
-                info = data[key]
-                result = {
-                    'moeda': moeda,
-                    'bid': float(info.get('bid', 0)),
-                    'ask': float(info.get('ask', 0)),
-                    'high': float(info.get('high', 0)),
-                    'low': float(info.get('low', 0)),
-                    'nome': info.get('name', ''),
-                    'timestamp': info.get('create_date', datetime.now(timezone.utc).isoformat())
-                }
-                results[moeda] = result
-                _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
-        return results
+        resp = http_requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            for moeda in moedas_list:
+                key = f'{moeda}BRL'
+                if key in data:
+                    info = data[key]
+                    result = {
+                        'moeda': moeda,
+                        'bid': float(info.get('bid', 0)),
+                        'ask': float(info.get('ask', 0)),
+                        'high': float(info.get('high', 0)),
+                        'low': float(info.get('low', 0)),
+                        'nome': info.get('name', ''),
+                        'timestamp': info.get('create_date', datetime.now(timezone.utc).isoformat())
+                    }
+                    results[moeda] = result
+                    _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
+            if results:
+                return results
     except Exception as e:
-        logger.error(f'Erro batch cotação: {e}')
-        return {}
+        logger.warning(f'AwesomeAPI falhou: {e}')
+
+    # Strategy 2: ExchangeRate-API (free, no key)
+    try:
+        url = 'https://open.er-api.com/v6/latest/BRL'
+        resp = http_requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            rates = data.get('rates', {})
+            for moeda in moedas_list:
+                if moeda in rates and rates[moeda] > 0:
+                    bid = 1.0 / rates[moeda]  # Convert from BRL-per-foreign to foreign-per-BRL
+                    result = {
+                        'moeda': moeda,
+                        'bid': round(bid, 4),
+                        'ask': round(bid, 4),
+                        'high': 0, 'low': 0,
+                        'nome': f'{moeda}/BRL',
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    }
+                    results[moeda] = result
+                    _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
+            if results:
+                return results
+    except Exception as e:
+        logger.warning(f'ExchangeRate-API falhou: {e}')
+
+    # Strategy 3: exchangerate-api.com (free tier)
+    try:
+        url = 'https://api.exchangerate-api.com/v4/latest/BRL'
+        resp = http_requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            rates = data.get('rates', {})
+            for moeda in moedas_list:
+                if moeda in rates and rates[moeda] > 0:
+                    bid = 1.0 / rates[moeda]
+                    result = {
+                        'moeda': moeda,
+                        'bid': round(bid, 4),
+                        'ask': round(bid, 4),
+                        'high': 0, 'low': 0,
+                        'nome': f'{moeda}/BRL',
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    }
+                    results[moeda] = result
+                    _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
+            if results:
+                return results
+    except Exception as e:
+        logger.warning(f'exchangerate-api.com falhou: {e}')
+
+    return results
 
 
 @app.route('/api/cotacao/<moeda>', methods=['GET'])
