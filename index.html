@@ -2473,7 +2473,7 @@
                         Gestão Administrativa
                     </h2>
                     <div class="hero-actions">
-                        <button class="btn-hero" id="btn-add-admin-module">
+                        <button class="btn-hero" id="btn-add-admin-module-hero">
                             <i class="fas fa-plus-square"></i>
                             Adicionar Módulo
                         </button>
@@ -4266,8 +4266,12 @@
 
                 // Botão adicionar módulo
                 const addModuleBtn = document.getElementById('btn-add-admin-module');
+                const addModuleBtnHero = document.getElementById('btn-add-admin-module-hero');
                 if (addModuleBtn) {
                     addModuleBtn.addEventListener('click', openAddModuleModal);
+                }
+                if (addModuleBtnHero) {
+                    addModuleBtnHero.addEventListener('click', openAddModuleModal);
                 }
             }
 
@@ -4336,19 +4340,29 @@
             }
 
             function loadAdminModulesOrder() {
-                const savedOrder = localStorage.getItem('adminModulesOrder');
-                if (!savedOrder) return;
+                try {
+                    const savedOrder = localStorage.getItem('adminModulesOrder');
+                    if (!savedOrder) return;
 
-                const order = JSON.parse(savedOrder);
-                const adminBoard = document.querySelector('.admin-kanban-board');
-                const addBtn = document.getElementById('btn-add-admin-module');
-                
-                order.forEach(moduleId => {
-                    const card = adminBoard.querySelector(`.admin-card[data-module="${moduleId}"]`);
-                    if (card) {
-                        adminBoard.insertBefore(card, addBtn);
-                    }
-                });
+                    const order = JSON.parse(savedOrder);
+                    const adminBoard = document.querySelector('.admin-kanban-board');
+                    if (!adminBoard) return;
+                    // Use querySelector inside adminBoard to get the correct button (avoid duplicate ID issue)
+                    const addBtn = adminBoard.querySelector('.btn-add-module');
+                    
+                    order.forEach(moduleId => {
+                        const card = adminBoard.querySelector(`.admin-card[data-module="${moduleId}"]`);
+                        if (card && adminBoard.contains(card)) {
+                            if (addBtn && adminBoard.contains(addBtn)) {
+                                adminBoard.insertBefore(card, addBtn);
+                            } else {
+                                adminBoard.appendChild(card);
+                            }
+                        }
+                    });
+                } catch(e) {
+                    console.warn('Erro ao carregar ordem dos módulos:', e);
+                }
             }
 
             function openEditModuleModal(card) {
@@ -7343,8 +7357,8 @@
             });
 
             // Inicializar Admin Kanban
-            initAdminKanban();
-            loadAdminModulesOrder();
+            try { initAdminKanban(); } catch(e) { console.warn('Erro initAdminKanban:', e); }
+            try { loadAdminModulesOrder(); } catch(e) { console.warn('Erro loadAdminModulesOrder:', e); }
 
             // Limpar duplicatas acumuladas no localStorage
             (function cleanupLocalStorageKanbans() {
@@ -9549,9 +9563,9 @@
             }
 
             // ===== GESTÃO DE PACIENTES - JAVASCRIPT =====
-            let pacientesData = [];
-            let pacienteAtual = null;
-            let pacViewMode = 'lista';
+            var pacientesData = [];
+            var pacienteAtual = null;
+            var pacViewMode = 'lista';
             let draggedPacCard = null;
 
             const KANBAN_ETAPA_LABELS = {
