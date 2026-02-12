@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 import json
 import uuid
 import logging
+import requests as http_requests
 
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -941,6 +942,83 @@ def debug_medicamentos():
         'file_exists': os.path.exists(MEDICAMENTOS_FILE),
         'file_size': os.path.getsize(MEDICAMENTOS_FILE) if os.path.exists(MEDICAMENTOS_FILE) else 0
     })
+
+
+# ===== COTAÇÃO / EXCHANGE RATE API =====
+_cotacao_cache = {}  # {moeda: {rate, timestamp}}
+
+@app.route('/api/cotacao/<moeda>', methods=['GET'])
+def get_cotacao(moeda):
+    """Fetch exchange rate from AwesomeAPI. moeda = USD, EUR, GBP, CAD, etc."""
+    import time
+    moeda = moeda.upper()
+
+    if moeda == 'BRL':
+        return jsonify({'moeda': 'BRL', 'bid': 1.0, 'ask': 1.0, 'nome': 'Real Brasileiro', 'timestamp': datetime.now(timezone.utc).isoformat()})
+
+    # Cache for 30 min to avoid excessive API calls
+    cached = _cotacao_cache.get(moeda)
+    if cached and (time.time() - cached['timestamp']) < 1800:
+        return jsonify(cached['data'])
+
+    try:
+        url = f'https://economia.awesomeapi.com.br/last/{moeda}-BRL'
+        resp = http_requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        key = f'{moeda}BRL'
+        if key not in data:
+            return jsonify({'error': f'Moeda {moeda} não encontrada'}), 404
+        info = data[key]
+        result = {
+            'moeda': moeda,
+            'bid': float(info.get('bid', 0)),
+            'ask': float(info.get('ask', 0)),
+            'high': float(info.get('high', 0)),
+            'low': float(info.get('low', 0)),
+            'nome': info.get('name', ''),
+            'timestamp': info.get('create_date', datetime.now(timezone.utc).isoformat())
+        }
+        _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
+        return jsonify(result)
+    except http_requests.exceptions.RequestException as e:
+        logger.error(f'Erro ao buscar cotação {moeda}: {e}')
+        return jsonify({'error': f'Erro ao buscar cotação: {str(e)}'}), 502
+
+
+@app.route('/api/cotacao', methods=['GET'])
+def get_cotacoes_all():
+    """Fetch exchange rates for main currencies"""
+    import time
+    moedas = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF']
+    results = {'BRL': {'moeda': 'BRL', 'bid': 1.0, 'nome': 'Real Brasileiro'}}
+
+    for moeda in moedas:
+        cached = _cotacao_cache.get(moeda)
+        if cached and (time.time() - cached['timestamp']) < 1800:
+            results[moeda] = cached['data']
+            continue
+        try:
+            url = f'https://economia.awesomeapi.com.br/last/{moeda}-BRL'
+            resp = http_requests.get(url, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            key = f'{moeda}BRL'
+            if key in data:
+                info = data[key]
+                result = {
+                    'moeda': moeda,
+                    'bid': float(info.get('bid', 0)),
+                    'ask': float(info.get('ask', 0)),
+                    'nome': info.get('name', ''),
+                    'timestamp': info.get('create_date', '')
+                }
+                results[moeda] = result
+                _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
+        except Exception:
+            pass
+
+    return jsonify(results)
 
 
 # ===== CENTROS DE CUSTO API =====

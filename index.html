@@ -6647,9 +6647,15 @@
                                     <div style="font-size:12px;color:#666;margin-bottom:4px;"><i class="fas fa-tag"></i> ${med.tipo || 'N/A'} | ${med.volume || ''}</div>
                                     <div style="font-size:11px;color:#999;">${med.concentracao ? med.concentracao.substring(0, 60) + '...' : ''}</div>
                                 </div>
-                                <div style="display:flex;gap:4px;">
-                                    <button class="btn-med-edit" data-id="${med.id}" style="background:#0E4D42;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;" title="Editar"><i class="fas fa-edit"></i></button>
-                                    <button class="btn-med-delete" data-id="${med.id}" style="background:#D81B60;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;" title="Excluir"><i class="fas fa-trash"></i></button>
+                                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                                    <div style="display:flex;gap:4px;">
+                                        <button class="btn-med-edit" data-id="${med.id}" style="background:#0E4D42;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;" title="Editar"><i class="fas fa-edit"></i></button>
+                                        <button class="btn-med-delete" data-id="${med.id}" style="background:#D81B60;color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;" title="Excluir"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                    ${med.preco ? `<div style="background:${med.moeda && med.moeda !== 'BRL' ? '#fef3c7' : '#d1fae5'};padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;color:${med.moeda && med.moeda !== 'BRL' ? '#92400e' : '#065f46'};">
+                                        ${med.moeda && med.moeda !== 'BRL' ? (med.moeda + ' ' + parseFloat(med.preco).toFixed(2)) : ''}
+                                        ${med.preco_brl ? '<span style="color:#059669;font-weight:800;">' + (med.moeda && med.moeda !== 'BRL' ? ' → ' : '') + 'R$ ' + parseFloat(med.preco_brl).toFixed(2).replace('.', ',') + '</span>' : ''}
+                                    </div>` : '<div style="font-size:10px;color:#d97706;"><i class="fas fa-exclamation-circle"></i> Sem preço</div>'}
                                 </div>
                             </div>
                             <div style="margin-top:8px;font-size:11px;color:#888;">ID: ${med.id}</div>
@@ -6682,6 +6688,9 @@
                                 <tr><td style="padding:8px;font-weight:bold;color:#0E4D42;">Concentracao</td><td style="padding:8px;font-size:12px;">${med.concentracao || 'N/A'}</td></tr>
                                 <tr style="background:#f9f9f9;"><td style="padding:8px;font-weight:bold;color:#0E4D42;">Posologia</td><td style="padding:8px;font-size:12px;">${med.posologia || 'N/A'}</td></tr>
                                 <tr><td style="padding:8px;font-weight:bold;color:#0E4D42;">Dosagem/ml</td><td style="padding:8px;">${med.dosagem_ml || 'N/A'}</td></tr>
+                                <tr style="background:#fef3c7;"><td style="padding:8px;font-weight:bold;color:#92400e;"><i class="fas fa-dollar-sign" style="margin-right:4px;"></i> Preço</td><td style="padding:8px;font-weight:700;">${med.preco ? ((med.moeda || 'BRL') + ' ' + parseFloat(med.preco).toFixed(2)) : '<span style="color:#d97706;">Não cadastrado</span>'}</td></tr>
+                                ${med.preco && med.moeda && med.moeda !== 'BRL' ? `<tr style="background:#d1fae5;"><td style="padding:8px;font-weight:bold;color:#065f46;"><i class="fas fa-exchange-alt" style="margin-right:4px;"></i> Valor em BRL</td><td style="padding:8px;font-weight:800;color:#059669;font-size:16px;">R$ ${med.preco_brl ? parseFloat(med.preco_brl).toFixed(2).replace('.', ',') : '—'}</td></tr>
+                                <tr><td style="padding:8px;font-weight:bold;color:#0E4D42;">Cotação</td><td style="padding:8px;font-size:12px;color:#6b7280;">1 ${med.moeda} = R$ ${med.cotacao_usada ? parseFloat(med.cotacao_usada).toFixed(4) : '—'} (${med.cotacao_data || ''})</td></tr>` : ''}
                                 <tr style="background:#f9f9f9;"><td style="padding:8px;font-weight:bold;color:#0E4D42;">Observacoes</td><td style="padding:8px;">${med.observacoes || 'N/A'}</td></tr>
                             </table>
                         </div>
@@ -6737,6 +6746,45 @@
                             <div class="form-group"><label>Dosagem/ml</label><input id="med-dos" value="${m.dosagem_ml || ''}"></div>
                             <div class="form-group"><label>Fornecedor</label><input id="med-fornecedor" value="${m.fornecedor || ''}" placeholder="Nome do fornecedor para importação"></div>
                             <div class="form-group"><label>Observações</label><textarea id="med-obs" rows="2">${m.observacoes || ''}</textarea></div>
+                            
+                            <!-- PREÇO / CURRENCY SECTION -->
+                            <div style="background:#fef3c7;padding:14px;border-radius:8px;border:1px solid #fbbf24;margin-bottom:12px;">
+                                <div style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:10px;"><i class="fas fa-dollar-sign" style="margin-right:4px;"></i> Preço do Medicamento</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label style="color:#92400e;font-weight:600;">Moeda</label>
+                                        <select id="med-moeda" style="width:100%;padding:8px;border:1px solid #f59e0b;border-radius:6px;" onchange="onMoedaChange()">
+                                            <option value="BRL" ${(m.moeda||'BRL')==='BRL'?'selected':''}>🇧🇷 BRL - Real</option>
+                                            <option value="USD" ${(m.moeda||'')==='USD'?'selected':''}>🇺🇸 USD - Dólar</option>
+                                            <option value="EUR" ${(m.moeda||'')==='EUR'?'selected':''}>🇪🇺 EUR - Euro</option>
+                                            <option value="GBP" ${(m.moeda||'')==='GBP'?'selected':''}>🇬🇧 GBP - Libra</option>
+                                            <option value="CAD" ${(m.moeda||'')==='CAD'?'selected':''}>🇨🇦 CAD - Dólar Canadense</option>
+                                            <option value="CHF" ${(m.moeda||'')==='CHF'?'selected':''}>🇨🇭 CHF - Franco Suíço</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label style="color:#92400e;font-weight:600;">Preço Unitário</label>
+                                        <input id="med-preco" type="number" step="0.01" min="0" value="${m.preco || ''}" placeholder="Ex: 89.90" style="border-color:#f59e0b;" oninput="onPrecoChange()">
+                                    </div>
+                                </div>
+                                <div id="med-conversao-brl" style="margin-top:10px;display:${(m.moeda && m.moeda !== 'BRL' && m.preco) ? 'block' : 'none'};">
+                                    <div style="background:#fff;border:1px solid #fbbf24;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+                                        <div>
+                                            <div style="font-size:11px;color:#92400e;font-weight:600;">Valor em Reais (BRL)</div>
+                                            <div id="med-preco-brl-display" style="font-size:20px;font-weight:800;color:#059669;">R$ ${m.preco_brl ? m.preco_brl.toFixed(2).replace('.', ',') : '—'}</div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div style="font-size:10px;color:#92400e;">Cotação utilizada</div>
+                                            <div id="med-cotacao-display" style="font-size:12px;color:#6b7280;">${m.cotacao_usada ? ('1 ' + (m.moeda||'') + ' = R$ ' + m.cotacao_usada.toFixed(4)) : ''}</div>
+                                            <div id="med-cotacao-data" style="font-size:10px;color:#9ca3af;">${m.cotacao_data || ''}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="med-preco-brl" value="${m.preco_brl || ''}">
+                                <input type="hidden" id="med-cotacao-usada" value="${m.cotacao_usada || ''}">
+                                <input type="hidden" id="med-cotacao-data" value="${m.cotacao_data || ''}">
+                                <button type="button" id="med-btn-atualizar-cotacao" onclick="atualizarCotacaoMed()" style="margin-top:8px;padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;display:${(m.moeda && m.moeda !== 'BRL') ? 'inline-flex' : 'none'};align-items:center;gap:4px;"><i class="fas fa-sync-alt"></i> Atualizar Cotação</button>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button class="btn-secondary btn-cancel-med">Cancelar</button>
@@ -6763,7 +6811,12 @@
                         posologia: modal.querySelector('#med-pos').value.trim(),
                         dosagem_ml: modal.querySelector('#med-dos').value.trim(),
                         fornecedor: modal.querySelector('#med-fornecedor').value.trim(),
-                        observacoes: modal.querySelector('#med-obs').value.trim()
+                        observacoes: modal.querySelector('#med-obs').value.trim(),
+                        moeda: modal.querySelector('#med-moeda').value.trim(),
+                        preco: parseFloat(modal.querySelector('#med-preco').value) || 0,
+                        preco_brl: parseFloat(modal.querySelector('#med-preco-brl').value) || 0,
+                        cotacao_usada: parseFloat(modal.querySelector('#med-cotacao-usada').value) || 0,
+                        cotacao_data: modal.querySelector('#med-cotacao-data').textContent.trim()
                     };
                     try {
                         const url = isNew ? '/api/medicamentos' : '/api/medicamentos/' + m.id;
@@ -6790,6 +6843,78 @@
                     } else { alert('Erro ao excluir'); }
                 } catch(e) { alert('Erro de conexao'); }
             }
+
+            // ===== COTAÇÃO / PRICE CONVERSION =====
+            async function atualizarCotacaoMed() {
+                const moeda = document.getElementById('med-moeda')?.value;
+                const preco = parseFloat(document.getElementById('med-preco')?.value) || 0;
+                if (!moeda || moeda === 'BRL') {
+                    document.getElementById('med-conversao-brl').style.display = 'none';
+                    document.getElementById('med-preco-brl').value = preco;
+                    return;
+                }
+                if (preco <= 0) return;
+
+                const btn = document.getElementById('med-btn-atualizar-cotacao');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...'; }
+
+                try {
+                    const resp = await fetch('/api/cotacao/' + moeda);
+                    if (!resp.ok) throw new Error('Erro na API');
+                    const data = await resp.json();
+                    const cotacao = data.bid || 0;
+                    const precoBrl = preco * cotacao;
+                    
+                    document.getElementById('med-preco-brl').value = precoBrl.toFixed(2);
+                    document.getElementById('med-cotacao-usada').value = cotacao;
+                    document.getElementById('med-preco-brl-display').textContent = 'R$ ' + precoBrl.toFixed(2).replace('.', ',');
+                    document.getElementById('med-cotacao-display').textContent = '1 ' + moeda + ' = R$ ' + cotacao.toFixed(4);
+                    const agora = new Date().toLocaleString('pt-BR');
+                    document.getElementById('med-cotacao-data').textContent = agora;
+                    document.getElementById('med-conversao-brl').style.display = 'block';
+                } catch(e) {
+                    alert('Erro ao buscar cotação. Verifique a conexão.');
+                    console.error('Cotação error:', e);
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Cotação'; }
+                }
+            }
+
+            function onMoedaChange() {
+                const moeda = document.getElementById('med-moeda')?.value;
+                const btnCotacao = document.getElementById('med-btn-atualizar-cotacao');
+                const conversaoDiv = document.getElementById('med-conversao-brl');
+                if (moeda === 'BRL') {
+                    if (btnCotacao) btnCotacao.style.display = 'none';
+                    if (conversaoDiv) conversaoDiv.style.display = 'none';
+                    const preco = parseFloat(document.getElementById('med-preco')?.value) || 0;
+                    document.getElementById('med-preco-brl').value = preco;
+                    document.getElementById('med-cotacao-usada').value = 1;
+                } else {
+                    if (btnCotacao) btnCotacao.style.display = 'inline-flex';
+                    atualizarCotacaoMed();
+                }
+            }
+
+            function onPrecoChange() {
+                const moeda = document.getElementById('med-moeda')?.value;
+                const preco = parseFloat(document.getElementById('med-preco')?.value) || 0;
+                if (moeda === 'BRL') {
+                    document.getElementById('med-preco-brl').value = preco;
+                } else {
+                    const cotacao = parseFloat(document.getElementById('med-cotacao-usada')?.value) || 0;
+                    if (cotacao > 0 && preco > 0) {
+                        const precoBrl = preco * cotacao;
+                        document.getElementById('med-preco-brl').value = precoBrl.toFixed(2);
+                        document.getElementById('med-preco-brl-display').textContent = 'R$ ' + precoBrl.toFixed(2).replace('.', ',');
+                        document.getElementById('med-conversao-brl').style.display = 'block';
+                    }
+                }
+            }
+
+            window.atualizarCotacaoMed = atualizarCotacaoMed;
+            window.onMoedaChange = onMoedaChange;
+            window.onPrecoChange = onPrecoChange;
 
             // Buttons
             const btnNovoMed = document.getElementById('btn-novo-medicamento');
@@ -10899,7 +11024,10 @@
 
                 container.innerHTML = resultados.map(med => `
                     <div onclick="adicionarMedPrescricao('${med.id}')" style="padding:12px 16px;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
-                        <div style="font-weight:600;font-size:13px;color:#065f46;">${med.nome || ''}</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div style="font-weight:600;font-size:13px;color:#065f46;">${med.nome || ''}</div>
+                            ${med.preco_brl ? `<div style="font-weight:700;font-size:13px;color:#059669;">R$ ${parseFloat(med.preco_brl).toFixed(2).replace('.', ',')}</div>` : '<div style="font-size:11px;color:#d97706;">Sem preço</div>'}
+                        </div>
                         <div style="font-size:11px;color:#6b7280;">
                             ${med.laboratorio ? `<span style="background:#e0f2fe;padding:1px 6px;border-radius:4px;margin-right:6px;">${med.laboratorio}</span>` : ''}
                             ${med.tipo ? `<span style="background:#fef3c7;padding:1px 6px;border-radius:4px;margin-right:6px;">${med.tipo}</span>` : ''}
@@ -10944,6 +11072,9 @@
                     fornecedor: med.fornecedor || '',
                     posologia: med.posologia || '',
                     dosagem: med.dosagem_ml || '',
+                    preco: med.preco || 0,
+                    moeda: med.moeda || 'BRL',
+                    preco_brl: med.preco_brl || 0,
                     titration_plan: defaultTitration,
                     calcResult: null
                 });
@@ -11075,7 +11206,7 @@
                         <!-- Product header -->
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
                             <div style="background:#059669;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-cannabis" style="color:#fff;font-size:16px;"></i></div>
-                            <div>
+                            <div style="flex:1;">
                                 <div style="font-weight:700;font-size:14px;color:#065f46;">${med.nome}</div>
                                 <div style="font-size:11px;color:#6b7280;">
                                     ${med.laboratorio ? `<span style="background:#e0f2fe;padding:1px 6px;border-radius:4px;margin-right:4px;">${med.laboratorio}</span>` : ''}
@@ -11084,6 +11215,11 @@
                                     ${med.volume_ml ? `<span style="margin-left:4px;">| ${med.volume_ml}ml</span>` : ''}
                                     ${med.fornecedor ? `<span style="margin-left:4px;">| ${med.fornecedor}</span>` : ''}
                                 </div>
+                            </div>
+                            <div style="text-align:right;">
+                                ${med.preco_brl ? `<div style="font-weight:800;font-size:16px;color:#059669;">R$ ${parseFloat(med.preco_brl).toFixed(2).replace('.', ',')}</div>
+                                ${med.moeda && med.moeda !== 'BRL' ? `<div style="font-size:10px;color:#92400e;">${med.moeda} ${parseFloat(med.preco).toFixed(2)}</div>` : ''}
+                                <div style="font-size:10px;color:#9ca3af;">por frasco</div>` : '<div style="font-size:11px;color:#d97706;"><i class="fas fa-exclamation-circle"></i> Sem preço</div>'}
                             </div>
                         </div>
 
@@ -11115,9 +11251,48 @@
                         </div>
 
                         ${calcResultHtml}
+
+                        ${med.calcResult && med.preco_brl ? `
+                        <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:10px 14px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="font-size:12px;color:#92400e;font-weight:600;"><i class="fas fa-receipt" style="margin-right:4px;"></i> Custo estimado (${med.calcResult.bottles_with_margin || med.calcResult.bottles_needed || 0} frascos)</div>
+                            <div style="font-size:18px;font-weight:800;color:#059669;">R$ ${((med.calcResult.bottles_with_margin || med.calcResult.bottles_needed || 1) * parseFloat(med.preco_brl)).toFixed(2).replace('.', ',')}</div>
+                        </div>` : ''}
                     </div>
                     `;
                 }).join('');
+
+                // Budget total (orçamento)
+                const medsComPreco = prescricaoMedicamentos.filter(m => m.preco_brl > 0);
+                if (medsComPreco.length > 0) {
+                    let totalBrl = 0;
+                    let totalComFrascos = 0;
+                    let temCalculo = false;
+                    medsComPreco.forEach(m => {
+                        const precoBrl = parseFloat(m.preco_brl) || 0;
+                        totalBrl += precoBrl;
+                        if (m.calcResult) {
+                            temCalculo = true;
+                            const frascos = m.calcResult.bottles_with_margin || m.calcResult.bottles_needed || 1;
+                            totalComFrascos += precoBrl * frascos;
+                        } else {
+                            totalComFrascos += precoBrl;
+                        }
+                    });
+                    container.innerHTML += `
+                    <div style="background:linear-gradient(135deg,#065f46,#059669);border-radius:12px;padding:16px;margin-top:10px;color:#fff;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.8;margin-bottom:2px;"><i class="fas fa-calculator" style="margin-right:4px;"></i> Orçamento da Prescrição</div>
+                                <div style="font-size:12px;opacity:0.7;">${medsComPreco.length} medicamento(s) com preço cadastrado</div>
+                            </div>
+                            <div style="text-align:right;">
+                                ${temCalculo ? `<div style="font-size:11px;opacity:0.7;">Valor unitário: R$ ${totalBrl.toFixed(2).replace('.', ',')}</div>` : ''}
+                                <div style="font-size:26px;font-weight:800;">R$ ${temCalculo ? totalComFrascos.toFixed(2).replace('.', ',') : totalBrl.toFixed(2).replace('.', ',')}</div>
+                                <div style="font-size:10px;opacity:0.7;">${temCalculo ? 'Total estimado (com frascos calculados)' : 'Valor por frasco/unidade'}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                }
             }
 
             // ── Seleção de Provedor ICP-Brasil (Passo 2 do diagrama IntegraICP) ──
