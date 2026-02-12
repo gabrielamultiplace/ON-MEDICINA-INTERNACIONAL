@@ -79,6 +79,7 @@ FICHAS_FILE = os.path.join(DATA_DIR, 'fichas_atendimento.json')
 PRESCRICOES_FILE = os.path.join(DATA_DIR, 'prescricoes.json')
 LAUDOS_FILE = os.path.join(DATA_DIR, 'laudos.json')
 FORNECEDORES_FILE = os.path.join(DATA_DIR, 'fornecedores.json')
+JUDICIAL_FILE = os.path.join(DATA_DIR, 'judicial_processos.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -226,6 +227,12 @@ def load_fornecedores():
 
 def save_fornecedores(data):
     _save_json_file(FORNECEDORES_FILE, data)
+
+def load_judicial():
+    return _load_json_file(JUDICIAL_FILE, [])
+
+def save_judicial(data):
+    _save_json_file(JUDICIAL_FILE, data)
 
 def load_webhooks_config():
     return _load_json_file(WEBHOOKS_CONFIG_FILE, {'prescricao_url': '', 'prescricao_ativo': False})
@@ -3016,6 +3023,139 @@ def delete_fornecedor(forn_id):
     fornecedores = [f for f in fornecedores if f.get('id') != forn_id]
     save_fornecedores(fornecedores)
     return jsonify({'ok': True})
+
+
+# ===== PROCESSOS JUDICIAIS API =====
+@app.route('/api/judicial', methods=['GET'])
+def list_judicial():
+    return jsonify(load_judicial())
+
+
+@app.route('/api/judicial', methods=['POST'])
+def create_judicial():
+    processos = load_judicial()
+    data = request.get_json(silent=True) or {}
+    proc_id = f'JUD{len(processos)+1:05d}'
+    processo = {
+        'id': proc_id,
+        'paciente_id': data.get('paciente_id', ''),
+        'paciente_nome': data.get('paciente_nome', ''),
+        'numero_processo': data.get('numero_processo', ''),
+        'tribunal': data.get('tribunal', ''),
+        'vara': data.get('vara', ''),
+        'comarca': data.get('comarca', ''),
+        'advogado_nome': data.get('advogado_nome', ''),
+        'advogado_oab': data.get('advogado_oab', ''),
+        'advogado_email': data.get('advogado_email', ''),
+        'advogado_telefone': data.get('advogado_telefone', ''),
+        'tipo_acao': data.get('tipo_acao', 'Obrigação de Fazer c/ Tutela Antecipada'),
+        'diagnostico_cid': data.get('diagnostico_cid', ''),
+        'medicamentos': data.get('medicamentos', []),
+        'valor_causa': data.get('valor_causa', 0),
+        'honorarios_iniciais': data.get('honorarios_iniciais', 0),
+        'honorarios_exito_percent': data.get('honorarios_exito_percent', 0),
+        'hipossuficiente': data.get('hipossuficiente', False),
+        'etapa': data.get('etapa', 'coleta_documentos'),
+        'status': data.get('status', 'ativo'),
+        'prioridade': data.get('prioridade', 'media'),
+        'observacoes': data.get('observacoes', ''),
+        'documentos_gerados': data.get('documentos_gerados', []),
+        'movimentacoes': [],
+        'anvisa_status': '',
+        'anvisa_protocolo': '',
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    processos.append(processo)
+    save_judicial(processos)
+
+    # Add timeline event for patient
+    if processo['paciente_id']:
+        add_timeline_event(processo['paciente_id'], 'judicial',
+            'Processo Judicial Iniciado',
+            f"Processo {processo['numero_processo'] or 'em preparação'} - {processo['tipo_acao']}")
+
+    return jsonify(processo), 201
+
+
+@app.route('/api/judicial/<proc_id>', methods=['GET'])
+def get_judicial(proc_id):
+    processos = load_judicial()
+    proc = next((p for p in processos if p.get('id') == proc_id), None)
+    if not proc:
+        return jsonify({'error': 'Processo não encontrado'}), 404
+    return jsonify(proc)
+
+
+@app.route('/api/judicial/<proc_id>', methods=['PUT'])
+def update_judicial(proc_id):
+    processos = load_judicial()
+    idx = next((i for i, p in enumerate(processos) if p.get('id') == proc_id), None)
+    if idx is None:
+        return jsonify({'error': 'Processo não encontrado'}), 404
+    data = request.get_json(silent=True) or {}
+    for k, v in data.items():
+        if k != 'id':
+            processos[idx][k] = v
+    processos[idx]['updated_at'] = datetime.now(timezone.utc).isoformat()
+    save_judicial(processos)
+    return jsonify(processos[idx])
+
+
+@app.route('/api/judicial/<proc_id>/movimentacao', methods=['POST'])
+def add_movimentacao_judicial(proc_id):
+    """Add a case movement/update to a judicial process"""
+    processos = load_judicial()
+    idx = next((i for i, p in enumerate(processos) if p.get('id') == proc_id), None)
+    if idx is None:
+        return jsonify({'error': 'Processo não encontrado'}), 404
+    data = request.get_json(silent=True) or {}
+    mov = {
+        'id': str(uuid.uuid4())[:8],
+        'data': datetime.now(timezone.utc).isoformat(),
+        'tipo': data.get('tipo', 'movimentacao'),
+        'descricao_juridica': data.get('descricao_juridica', ''),
+        'descricao_simplificada': data.get('descricao_simplificada', ''),
+        'responsavel': data.get('responsavel', ''),
+        'automatica': data.get('automatica', False)
+    }
+    processos[idx].setdefault('movimentacoes', []).insert(0, mov)
+    processos[idx]['updated_at'] = datetime.now(timezone.utc).isoformat()
+    save_judicial(processos)
+
+    # Timeline for patient
+    pac_id = processos[idx].get('paciente_id')
+    if pac_id:
+        add_timeline_event(pac_id, 'judicial',
+            f"Movimentação Judicial",
+            mov['descricao_simplificada'] or mov['descricao_juridica'])
+
+    return jsonify(mov), 201
+
+
+@app.route('/api/judicial/<proc_id>', methods=['DELETE'])
+def delete_judicial(proc_id):
+    processos = load_judicial()
+    processos = [p for p in processos if p.get('id') != proc_id]
+    save_judicial(processos)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/judicial/stats', methods=['GET'])
+def judicial_stats():
+    """Dashboard stats for judicial module"""
+    processos = load_judicial()
+    ativos = [p for p in processos if p.get('status') == 'ativo']
+    etapas = {}
+    for p in ativos:
+        et = p.get('etapa', 'coleta_documentos')
+        etapas[et] = etapas.get(et, 0) + 1
+    return jsonify({
+        'total': len(processos),
+        'ativos': len(ativos),
+        'por_etapa': etapas,
+        'valor_total_causas': sum(p.get('valor_causa', 0) for p in ativos)
+    })
 
 
 # ===== LAUDO MÉDICO API =====

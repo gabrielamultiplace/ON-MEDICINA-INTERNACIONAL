@@ -1348,6 +1348,23 @@
         .kanban-pac-exportacao    { border-top-color:#4527A0; background:linear-gradient(135deg,rgba(69,39,160,0.04) 0%,#F5F5F5 100%); }
         .kanban-pac-acompanhamento{ border-top-color:#00695C; background:linear-gradient(135deg,rgba(0,105,92,0.04) 0%,#F5F5F5 100%); }
 
+        /* ===== JUDICIAL KANBAN ===== */
+        .kanban-jud-coleta        { border-top-color:#FF6F00; background:linear-gradient(135deg,rgba(255,111,0,0.04) 0%,#F5F5F5 100%); }
+        .kanban-jud-anvisa        { border-top-color:#C62828; background:linear-gradient(135deg,rgba(198,40,40,0.04) 0%,#F5F5F5 100%); }
+        .kanban-jud-peticao       { border-top-color:#5E35B1; background:linear-gradient(135deg,rgba(94,53,177,0.04) 0%,#F5F5F5 100%); }
+        .kanban-jud-liminar       { border-top-color:#D84315; background:linear-gradient(135deg,rgba(216,67,21,0.04) 0%,#F5F5F5 100%); }
+        .kanban-jud-cumprimento   { border-top-color:#1565C0; background:linear-gradient(135deg,rgba(21,101,192,0.04) 0%,#F5F5F5 100%); }
+        .kanban-jud-entregue      { border-top-color:#2E7D32; background:linear-gradient(135deg,rgba(46,125,50,0.04) 0%,#F5F5F5 100%); }
+        .kanban-jud-arquivado     { border-top-color:#546E7A; background:linear-gradient(135deg,rgba(84,110,122,0.04) 0%,#F5F5F5 100%); }
+        .jud-card { background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); cursor:grab; transition:all .25s ease; border-left:4px solid #5E35B1; margin-bottom:0; }
+        .jud-card:hover { box-shadow:0 4px 12px rgba(0,0,0,0.12); transform:translateY(-2px); }
+        .jud-card.dragging { opacity:.5; cursor:grabbing; }
+        .jud-card.prioridade-alta { border-left-color:#C62828; }
+        .jud-card.prioridade-media { border-left-color:#FF6F00; }
+        .jud-card.prioridade-baixa { border-left-color:#2E7D32; }
+        .jud-card.alerta-vermelho { animation: pulseAlert 1.5s infinite; }
+        @keyframes pulseAlert { 0%,100% { box-shadow:0 1px 4px rgba(0,0,0,0.08); } 50% { box-shadow:0 0 12px rgba(198,40,40,0.4); } }
+
         /* Kanban patient card */
         .kanban-pac-card { background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); cursor:grab; transition:all .25s ease; border-left:4px solid #667eea; margin-bottom:0; }
         .kanban-pac-card:hover { box-shadow:0 4px 12px rgba(0,0,0,0.12); transform:translateY(-2px); }
@@ -1580,12 +1597,10 @@
                 <span>Financeiro</span>
             </a>
             
-            <!--
-            <a class="nav-item" data-page="judicial">
+            <a class="nav-item" href="#" data-page="judicial" onclick="navigateTo('judicial');return false;">
                 <i class="fas fa-gavel"></i>
                 <span>Judicial</span>
             </a>
-            -->
             
             <a class="nav-item" href="#" data-page="importacao" onclick="navigateTo('importacao');return false;">
                 <i class="fas fa-pills"></i>
@@ -2171,74 +2186,111 @@
                     </button>
                     <h1 class="page-title">
                         <i class="fas fa-gavel"></i>
-                        Judicial
+                        Módulo Judicial
                     </h1>
-                    <button class="btn-hero btn-toggle-view" title="Alternar visualização">
-                        <i class="fas fa-arrows-alt-v"></i>
-                        Alternar Visual
-                    </button>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn-hero" id="btn-novo-processo" style="background:#5E35B1;font-size:13px;padding:8px 20px;">
+                            <i class="fas fa-plus-circle"></i> Novo Processo
+                        </button>
+                    </div>
+                </div>
+                <!-- Stats bar -->
+                <div id="judicial-stats-bar" style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+                    <div style="background:linear-gradient(135deg,#5E35B1,#7C4DFF);color:#fff;padding:10px 18px;border-radius:10px;min-width:120px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;" id="jud-stat-total">0</div>
+                        <div style="font-size:10px;opacity:.8;text-transform:uppercase;">Processos Ativos</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#C62828,#E53935);color:#fff;padding:10px 18px;border-radius:10px;min-width:120px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;" id="jud-stat-liminar">0</div>
+                        <div style="font-size:10px;opacity:.8;text-transform:uppercase;">Aguardando Liminar</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#2E7D32,#43A047);color:#fff;padding:10px 18px;border-radius:10px;min-width:120px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;" id="jud-stat-entregue">0</div>
+                        <div style="font-size:10px;opacity:.8;text-transform:uppercase;">Concluídos</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#1565C0,#1E88E5);color:#fff;padding:10px 18px;border-radius:10px;min-width:160px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;" id="jud-stat-valor">R$ 0</div>
+                        <div style="font-size:10px;opacity:.8;text-transform:uppercase;">Valor Total Causas</div>
+                    </div>
                 </div>
             </div>
             <div class="page-body">
                 <div class="kanban-board" id="kanban-judicial">
-                    <!-- Coluna: Abertos -->
-                    <div class="kanban-column kanban-comercial" data-column-title="Abertos">
+                    <!-- 1. Coleta de Documentos -->
+                    <div class="kanban-column kanban-jud-coleta" data-column-title="coleta_documentos" data-etapa="coleta_documentos">
                         <div class="kanban-column-header">
                             <div class="kanban-column-title">
-                                Abertos
+                                <i class="fas fa-folder-open" style="color:#FF6F00;"></i> Coleta de Documentos
                                 <span class="kanban-column-count">0</span>
                             </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
                         </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
+                        <div class="kanban-cards" data-etapa="coleta_documentos"></div>
                     </div>
 
-                    <!-- Coluna: Em análise -->
-                    <div class="kanban-column kanban-consultas" data-column-title="Em análise">
+                    <!-- 2. Análise ANVISA -->
+                    <div class="kanban-column kanban-jud-anvisa" data-column-title="analise_anvisa" data-etapa="analise_anvisa">
                         <div class="kanban-column-header">
                             <div class="kanban-column-title">
-                                Em análise
+                                <i class="fas fa-shield-alt" style="color:#C62828;"></i> Análise ANVISA
                                 <span class="kanban-column-count">0</span>
                             </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
                         </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
+                        <div class="kanban-cards" data-etapa="analise_anvisa"></div>
                     </div>
 
-                    <!-- Coluna: Protocolados -->
-                    <div class="kanban-column kanban-acompanhamento" data-column-title="Protocolados">
+                    <!-- 3. Petição Inicial -->
+                    <div class="kanban-column kanban-jud-peticao" data-column-title="peticao_inicial" data-etapa="peticao_inicial">
                         <div class="kanban-column-header">
                             <div class="kanban-column-title">
-                                Protocolados
+                                <i class="fas fa-file-signature" style="color:#5E35B1;"></i> Petição Inicial
                                 <span class="kanban-column-count">0</span>
                             </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
                         </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
+                        <div class="kanban-cards" data-etapa="peticao_inicial"></div>
                     </div>
 
-                    <!-- Coluna: Concluídos -->
-                    <div class="kanban-column kanban-financeiro" data-column-title="Concluídos">
+                    <!-- 4. Liminar / Tutela -->
+                    <div class="kanban-column kanban-jud-liminar" data-column-title="liminar_tutela" data-etapa="liminar_tutela">
                         <div class="kanban-column-header">
                             <div class="kanban-column-title">
-                                Concluídos
+                                <i class="fas fa-exclamation-triangle" style="color:#D84315;"></i> Liminar / Tutela
                                 <span class="kanban-column-count">0</span>
                             </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
+                        </div>
+                        <div class="kanban-cards" data-etapa="liminar_tutela"></div>
+                    </div>
+
+                    <!-- 5. Aguardando Cumprimento -->
+                    <div class="kanban-column kanban-jud-cumprimento" data-column-title="aguardando_cumprimento" data-etapa="aguardando_cumprimento">
+                        <div class="kanban-column-header">
+                            <div class="kanban-column-title">
+                                <i class="fas fa-hourglass-half" style="color:#1565C0;"></i> Aguardando Cumprimento
+                                <span class="kanban-column-count">0</span>
                             </div>
                         </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
+                        <div class="kanban-cards" data-etapa="aguardando_cumprimento"></div>
+                    </div>
+
+                    <!-- 6. Medicamento Entregue -->
+                    <div class="kanban-column kanban-jud-entregue" data-column-title="medicamento_entregue" data-etapa="medicamento_entregue">
+                        <div class="kanban-column-header">
+                            <div class="kanban-column-title">
+                                <i class="fas fa-check-circle" style="color:#2E7D32;"></i> Medicamento Entregue
+                                <span class="kanban-column-count">0</span>
+                            </div>
+                        </div>
+                        <div class="kanban-cards" data-etapa="medicamento_entregue"></div>
+                    </div>
+
+                    <!-- 7. Arquivado -->
+                    <div class="kanban-column kanban-jud-arquivado" data-column-title="arquivado" data-etapa="arquivado">
+                        <div class="kanban-column-header">
+                            <div class="kanban-column-title">
+                                <i class="fas fa-archive" style="color:#546E7A;"></i> Arquivado
+                                <span class="kanban-column-count">0</span>
+                            </div>
+                        </div>
+                        <div class="kanban-cards" data-etapa="arquivado"></div>
                     </div>
                 </div>
             </div>
@@ -3907,6 +3959,9 @@
                 // Load data for specific pages
                 if (pageId === 'gestao-pacientes' && typeof carregarListaPacientes === 'function') {
                     carregarListaPacientes();
+                }
+                if (pageId === 'judicial' && typeof loadJudicialProcessos === 'function') {
+                    loadJudicialProcessos();
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch(err) {
@@ -6129,245 +6184,639 @@
             // Stub save function for column reorder compatibility
             function saveFinanceiroKanbanData() { /* no-op - financeiro uses API now */ }
 
-            // ========== KANBAN JUDICIAL ==========
+            // ========== KANBAN JUDICIAL (API-DRIVEN) ==========
             let draggedJudicialCard = null;
+            let judicialProcessos = [];
 
-            function initJudicialKanban() {
+            const JUDICIAL_ETAPAS = {
+                'coleta_documentos': 'Coleta de Documentos',
+                'analise_anvisa': 'Análise ANVISA',
+                'peticao_inicial': 'Petição Inicial',
+                'liminar_tutela': 'Liminar / Tutela',
+                'aguardando_cumprimento': 'Aguardando Cumprimento',
+                'medicamento_entregue': 'Medicamento Entregue',
+                'arquivado': 'Arquivado'
+            };
+
+            async function initJudicialKanban() {
                 const kanbanBoard = document.getElementById('kanban-judicial');
                 if (!kanbanBoard) return;
 
-                const columns = kanbanBoard.querySelectorAll('.kanban-column');
-                const cards = kanbanBoard.querySelectorAll('.kanban-card');
-
-                cards.forEach(card => {
-                    card.addEventListener('dragstart', handleJudicialDragStart);
-                    card.addEventListener('dragend', handleJudicialDragEnd);
-                });
-
-                columns.forEach(column => {
+                // Setup drag & drop on columns
+                kanbanBoard.querySelectorAll('.kanban-column').forEach(column => {
                     const cardsContainer = column.querySelector('.kanban-cards');
-                    cardsContainer.addEventListener('dragover', handleJudicialDragOver);
-                    cardsContainer.addEventListener('drop', (e) => handleJudicialDrop(e, cardsContainer));
-                    cardsContainer.addEventListener('dragleave', handleJudicialDragLeave);
-
-                    const addCardBtn = column.querySelector('.btn-add-card');
-                    if (addCardBtn) {
-                        addCardBtn.addEventListener('click', () => openAddJudicialCardModal(cardsContainer, column.getAttribute('data-column-title')));
-                    }
+                    cardsContainer.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; cardsContainer.classList.add('drag-over'); });
+                    cardsContainer.addEventListener('dragleave', (e) => { if (e.target === cardsContainer) cardsContainer.classList.remove('drag-over'); });
+                    cardsContainer.addEventListener('drop', (e) => {
+                        e.stopPropagation();
+                        cardsContainer.classList.remove('drag-over');
+                        if (draggedJudicialCard) {
+                            const newEtapa = cardsContainer.getAttribute('data-etapa');
+                            const procId = draggedJudicialCard.getAttribute('data-proc-id');
+                            cardsContainer.appendChild(draggedJudicialCard);
+                            updateColumnCounts();
+                            // Update backend
+                            fetch('/api/judicial/' + procId, {
+                                method: 'PUT',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ etapa: newEtapa })
+                            });
+                            // Update local data
+                            const proc = judicialProcessos.find(p => p.id === procId);
+                            if (proc) proc.etapa = newEtapa;
+                            updateJudicialStats();
+                        }
+                    });
                 });
 
-                loadJudicialKanbanData();
-                updateColumnCounts();
-                setupColumnReordering('kanban-judicial', 'judicial');
+                // Btn novo processo
+                const btnNovo = document.getElementById('btn-novo-processo');
+                if (btnNovo) btnNovo.addEventListener('click', () => openNovoProcessoModal());
 
                 const btnBack = document.getElementById('btn-back-judicial');
-                if (btnBack) {
-                    btnBack.addEventListener('click', () => {
-                        document.getElementById('judicial').classList.remove('active');
-                        document.getElementById('administrativo').classList.add('active');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (btnBack) btnBack.addEventListener('click', () => navigateTo('painel'));
+
+                await loadJudicialProcessos();
+            }
+
+            async function loadJudicialProcessos() {
+                try {
+                    const res = await fetch('/api/judicial');
+                    judicialProcessos = await res.json();
+                    renderJudicialKanban();
+                    updateJudicialStats();
+                } catch(e) { console.error('Erro judicial:', e); }
+            }
+
+            function renderJudicialKanban() {
+                // Clear all columns
+                document.querySelectorAll('#kanban-judicial .kanban-cards').forEach(c => c.innerHTML = '');
+
+                judicialProcessos.forEach(proc => {
+                    if (proc.status === 'cancelado') return;
+                    const etapa = proc.etapa || 'coleta_documentos';
+                    const container = document.querySelector(`#kanban-judicial .kanban-cards[data-etapa="${etapa}"]`);
+                    if (!container) return;
+
+                    // Check if > 15 days in liminar_tutela
+                    const isAlerta = etapa === 'liminar_tutela' && proc.updated_at &&
+                        ((Date.now() - new Date(proc.updated_at).getTime()) > 15 * 24 * 60 * 60 * 1000);
+
+                    const card = document.createElement('div');
+                    card.className = `jud-card prioridade-${proc.prioridade || 'media'}${isAlerta ? ' alerta-vermelho' : ''}`;
+                    card.draggable = true;
+                    card.setAttribute('data-proc-id', proc.id);
+                    card.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
+                            <div style="flex:1;cursor:pointer;" onclick="openProcessoDetalheModal('${proc.id}')">
+                                <div style="font-weight:700;font-size:13px;color:#1a1a2e;">${proc.paciente_nome || 'Sem paciente'}</div>
+                                <div style="font-size:11px;color:#666;margin-top:2px;">${proc.numero_processo || '<i>Nº pendente</i>'}</div>
+                            </div>
+                            ${isAlerta ? '<span style="background:#C62828;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;">⚠ ALERTA</span>' : ''}
+                        </div>
+                        <div style="font-size:11px;color:#5E35B1;font-weight:600;margin-bottom:4px;">${proc.tipo_acao || ''}</div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:10px;">
+                            ${proc.diagnostico_cid ? `<span style="background:#ede7f6;color:#5E35B1;padding:2px 6px;border-radius:4px;">CID: ${proc.diagnostico_cid}</span>` : ''}
+                            ${proc.tribunal ? `<span style="background:#e3f2fd;color:#1565C0;padding:2px 6px;border-radius:4px;">${proc.tribunal}</span>` : ''}
+                            ${proc.valor_causa ? `<span style="background:#e8f5e9;color:#2E7D32;padding:2px 6px;border-radius:4px;">R$ ${parseFloat(proc.valor_causa).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>` : ''}
+                        </div>
+                        ${proc.advogado_nome ? `<div style="font-size:10px;color:#888;margin-top:6px;"><i class="fas fa-user-tie" style="margin-right:3px;"></i>${proc.advogado_nome}${proc.advogado_oab ? ' - OAB ' + proc.advogado_oab : ''}</div>` : ''}
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid #eee;">
+                            <span style="font-size:9px;color:#aaa;">${proc.id}</span>
+                            <div style="display:flex;gap:4px;">
+                                <button onclick="event.stopPropagation();openProcessoDetalheModal('${proc.id}')" style="background:#5E35B1;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;" title="Ver detalhes"><i class="fas fa-eye"></i></button>
+                                <button onclick="event.stopPropagation();excluirProcesso('${proc.id}')" style="background:#C62828;color:#fff;border:none;padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;" title="Excluir"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    card.addEventListener('dragstart', function(e) {
+                        draggedJudicialCard = this;
+                        this.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'move';
                     });
-                }
-            }
-
-            function handleJudicialDragStart(e) {
-                draggedJudicialCard = this;
-                this.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', this.innerHTML);
-            }
-
-            function handleJudicialDragEnd(e) {
-                this.classList.remove('dragging');
-                document.querySelectorAll('#kanban-judicial .kanban-cards').forEach(container => {
-                    container.classList.remove('drag-over');
+                    card.addEventListener('dragend', function() {
+                        this.classList.remove('dragging');
+                        document.querySelectorAll('#kanban-judicial .kanban-cards').forEach(c => c.classList.remove('drag-over'));
+                    });
+                    container.appendChild(card);
                 });
-                saveJudicialKanbanData();
+                updateColumnCounts();
             }
 
-            function handleJudicialDragOver(e) {
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-                e.dataTransfer.dropEffect = 'move';
-                this.classList.add('drag-over');
-                return false;
+            function updateJudicialStats() {
+                const ativos = judicialProcessos.filter(p => p.status !== 'cancelado');
+                const liminar = ativos.filter(p => p.etapa === 'liminar_tutela');
+                const entregue = ativos.filter(p => p.etapa === 'medicamento_entregue' || p.etapa === 'arquivado');
+                const valorTotal = ativos.reduce((s, p) => s + (parseFloat(p.valor_causa) || 0), 0);
+
+                const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+                el('jud-stat-total', ativos.length);
+                el('jud-stat-liminar', liminar.length);
+                el('jud-stat-entregue', entregue.length);
+                el('jud-stat-valor', 'R$ ' + valorTotal.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0}));
             }
 
-            function handleJudicialDragLeave(e) {
-                if (e.target === this) {
-                    this.classList.remove('drag-over');
-                }
-            }
-
-            function handleJudicialDrop(e, container) {
-                if (e.stopPropagation) {
-                    e.stopPropagation();
-                }
-                container.classList.remove('drag-over');
-
-                if (draggedJudicialCard && draggedJudicialCard.parentNode !== container) {
-                    container.appendChild(draggedJudicialCard);
-                    updateColumnCounts();
-                    saveJudicialKanbanData();
-                }
-                return false;
-            }
-
-            function openAddJudicialCardModal(container, columnTitle) {
+            function openNovoProcessoModal(prefilledPaciente) {
                 const modal = document.createElement('div');
                 modal.className = 'modal-overlay';
                 modal.innerHTML = `
-                    <div class="modal-content" style="max-width: 500px;">
-                        <div class="modal-header">
-                            <h2><i class="fas fa-plus"></i> Adicionar Card - ${columnTitle}</h2>
-                            <button class="btn-close-modal"><i class="fas fa-times"></i></button>
+                    <div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#5E35B1,#7C4DFF);color:#fff;">
+                            <h2><i class="fas fa-gavel"></i> Novo Processo Judicial</h2>
+                            <button class="btn-close-modal" style="color:#fff;"><i class="fas fa-times"></i></button>
                         </div>
                         <div class="modal-body">
-                            <div class="form-group">
-                                <label for="card-title-jud">Título do Card</label>
-                                <input type="text" id="card-title-jud" placeholder="Ex: Processo ANVISA" required>
+                            <!-- Dados do Paciente -->
+                            <div style="background:#ede7f6;padding:14px;border-radius:10px;margin-bottom:16px;">
+                                <div style="font-weight:700;font-size:13px;color:#5E35B1;margin-bottom:8px;"><i class="fas fa-user" style="margin-right:4px;"></i> Dados do Paciente</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Paciente</label>
+                                        <select id="jud-paciente" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;">
+                                            <option value="">Selecionar paciente...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Diagnóstico (CID)</label><input id="jud-cid" placeholder="Ex: G40.3"></div>
+                                </div>
+                                <div class="form-group" style="margin-top:8px;margin-bottom:0;">
+                                    <label><input type="checkbox" id="jud-hipossuficiente" style="margin-right:6px;">Paciente Hipossuficiente (Declaração de hipossuficiência)</label>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="card-description-jud">Descrição</label>
-                                <textarea id="card-description-jud" placeholder="Detalhes do processo" rows="3"></textarea>
+
+                            <!-- Dados do Processo -->
+                            <div style="background:#f3e5f5;padding:14px;border-radius:10px;margin-bottom:16px;">
+                                <div style="font-weight:700;font-size:13px;color:#7B1FA2;margin-bottom:8px;"><i class="fas fa-file-alt" style="margin-right:4px;"></i> Dados do Processo</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nº do Processo</label><input id="jud-numero" placeholder="0000000-00.0000.0.00.0000"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Tipo de Ação</label>
+                                        <select id="jud-tipo-acao" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;">
+                                            <option value="Obrigação de Fazer c/ Tutela Antecipada">Obrigação de Fazer c/ Tutela Antecipada</option>
+                                            <option value="Mandado de Segurança">Mandado de Segurança</option>
+                                            <option value="Ação Civil Pública">Ação Civil Pública</option>
+                                            <option value="Habeas Corpus">Habeas Corpus</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Tribunal</label>
+                                        <select id="jud-tribunal" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;">
+                                            <option value="">Selecionar...</option>
+                                            <option value="TJMG">TJMG</option><option value="TJSP">TJSP</option><option value="TJRJ">TJRJ</option>
+                                            <option value="TJRS">TJRS</option><option value="TJPR">TJPR</option><option value="TJSC">TJSC</option>
+                                            <option value="TJBA">TJBA</option><option value="TJDF">TJDF</option><option value="TJGO">TJGO</option>
+                                            <option value="TJPE">TJPE</option><option value="TJCE">TJCE</option><option value="TJPA">TJPA</option>
+                                            <option value="TJMA">TJMA</option><option value="TJES">TJES</option><option value="TJMT">TJMT</option>
+                                            <option value="TJMS">TJMS</option><option value="TRF1">TRF1</option><option value="TRF2">TRF2</option>
+                                            <option value="TRF3">TRF3</option><option value="TRF4">TRF4</option><option value="TRF5">TRF5</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Vara</label><input id="jud-vara" placeholder="Ex: 2ª Vara da Fazenda"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Comarca</label><input id="jud-comarca" placeholder="Ex: Belo Horizonte"></div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Valor da Causa (R$)</label><input id="jud-valor-causa" type="number" step="0.01" placeholder="Ex: 50000"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Prioridade</label>
+                                        <select id="jud-prioridade" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;">
+                                            <option value="baixa">Baixa</option>
+                                            <option value="media" selected>Média</option>
+                                            <option value="alta">Alta</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="card-priority-jud">Prioridade</label>
-                                <select id="card-priority-jud">
-                                    <option value="priority-low">Baixa</option>
-                                    <option value="priority-medium" selected>Média</option>
-                                    <option value="priority-high">Alta</option>
-                                </select>
+
+                            <!-- Advogado -->
+                            <div style="background:#e8eaf6;padding:14px;border-radius:10px;margin-bottom:16px;">
+                                <div style="font-weight:700;font-size:13px;color:#283593;margin-bottom:8px;"><i class="fas fa-user-tie" style="margin-right:4px;"></i> Advogado Parceiro</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nome</label><input id="jud-adv-nome" placeholder="Nome completo"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>OAB</label><input id="jud-adv-oab" placeholder="Ex: 123456/MG"></div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Email</label><input id="jud-adv-email" type="email" placeholder="advogado@email.com"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Telefone</label><input id="jud-adv-tel" placeholder="(31) 99999-9999"></div>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="card-responsible-jud">Responsável</label>
-                                <input type="text" id="card-responsible-jud" placeholder="Nome do responsável">
+
+                            <!-- Financeiro -->
+                            <div style="background:#e8f5e9;padding:14px;border-radius:10px;margin-bottom:16px;">
+                                <div style="font-weight:700;font-size:13px;color:#2E7D32;margin-bottom:8px;"><i class="fas fa-dollar-sign" style="margin-right:4px;"></i> Honorários</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Honorários Iniciais (R$)</label><input id="jud-honorarios" type="number" step="0.01" placeholder="0.00"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Honorários de Êxito (%)</label><input id="jud-honorarios-exito" type="number" step="0.1" placeholder="Ex: 20" min="0" max="100"></div>
+                                </div>
                             </div>
+
+                            <!-- Medicamentos -->
+                            <div style="background:#fff3e0;padding:14px;border-radius:10px;margin-bottom:16px;">
+                                <div style="font-weight:700;font-size:13px;color:#E65100;margin-bottom:8px;"><i class="fas fa-pills" style="margin-right:4px;"></i> Medicamentos (Orçamento)</div>
+                                <div id="jud-meds-lista" style="margin-bottom:8px;"></div>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <input id="jud-med-busca" placeholder="Buscar medicamento..." style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:6px;">
+                                    <button onclick="buscarMedJudicial()" style="background:#E65100;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;"><i class="fas fa-search"></i></button>
+                                </div>
+                                <div id="jud-med-resultados" style="display:none;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #ddd;border-radius:6px;margin-top:4px;"></div>
+                            </div>
+
+                            <div class="form-group"><label>Observações</label><textarea id="jud-obs" rows="2" placeholder="Notas adicionais..."></textarea></div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn-secondary" id="btn-cancel-card-jud">Cancelar</button>
-                            <button class="btn-primary" id="btn-save-card-jud">Adicionar Card</button>
+                            <button class="btn-secondary btn-cancel-jud">Cancelar</button>
+                            <button class="btn-primary btn-save-jud" style="background:#5E35B1;">
+                                <i class="fas fa-gavel" style="margin-right:4px;"></i> Criar Processo
+                            </button>
                         </div>
                     </div>
                 `;
-
                 document.body.appendChild(modal);
 
-                const closeBtn = modal.querySelector('.btn-close-modal');
-                const cancelBtn = modal.querySelector('#btn-cancel-card-jud');
-                closeBtn.addEventListener('click', () => modal.remove());
-                cancelBtn.addEventListener('click', () => modal.remove());
+                // Load patients into select
+                fetch('/api/pacientes').then(r => r.json()).then(pacs => {
+                    const sel = modal.querySelector('#jud-paciente');
+                    (pacs || []).forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = `${p.nome || ''} - ${p.cpf || ''} (${p.id})`;
+                        if (prefilledPaciente && p.id === prefilledPaciente) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                });
 
-                const saveBtn = modal.querySelector('#btn-save-card-jud');
-                saveBtn.addEventListener('click', () => {
-                    const title = modal.querySelector('#card-title-jud').value.trim();
-                    const description = modal.querySelector('#card-description-jud').value.trim();
-                    const priority = modal.querySelector('#card-priority-jud').value;
-                    const responsible = modal.querySelector('#card-responsible-jud').value.trim();
+                modal.querySelector('.btn-close-modal').addEventListener('click', () => modal.remove());
+                modal.querySelector('.btn-cancel-jud').addEventListener('click', () => modal.remove());
 
-                    if (!title) {
-                        alert('Título é obrigatório.');
-                        return;
-                    }
+                modal.querySelector('.btn-save-jud').addEventListener('click', async () => {
+                    const pacSel = modal.querySelector('#jud-paciente');
+                    const pacOpt = pacSel.options[pacSel.selectedIndex];
+                    const body = {
+                        paciente_id: pacSel.value,
+                        paciente_nome: pacOpt ? pacOpt.textContent.split(' - ')[0] : '',
+                        numero_processo: modal.querySelector('#jud-numero').value.trim(),
+                        tipo_acao: modal.querySelector('#jud-tipo-acao').value,
+                        tribunal: modal.querySelector('#jud-tribunal').value,
+                        vara: modal.querySelector('#jud-vara').value.trim(),
+                        comarca: modal.querySelector('#jud-comarca').value.trim(),
+                        diagnostico_cid: modal.querySelector('#jud-cid').value.trim(),
+                        valor_causa: parseFloat(modal.querySelector('#jud-valor-causa').value) || 0,
+                        prioridade: modal.querySelector('#jud-prioridade').value,
+                        hipossuficiente: modal.querySelector('#jud-hipossuficiente').checked,
+                        advogado_nome: modal.querySelector('#jud-adv-nome').value.trim(),
+                        advogado_oab: modal.querySelector('#jud-adv-oab').value.trim(),
+                        advogado_email: modal.querySelector('#jud-adv-email').value.trim(),
+                        advogado_telefone: modal.querySelector('#jud-adv-tel').value.trim(),
+                        honorarios_iniciais: parseFloat(modal.querySelector('#jud-honorarios').value) || 0,
+                        honorarios_exito_percent: parseFloat(modal.querySelector('#jud-honorarios-exito').value) || 0,
+                        medicamentos: window._judMedsSelecionados || [],
+                        observacoes: modal.querySelector('#jud-obs').value.trim(),
+                        etapa: 'coleta_documentos',
+                        status: 'ativo'
+                    };
+                    try {
+                        const res = await fetch('/api/judicial', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                        if (res.ok) {
+                            alert('Processo judicial criado com sucesso!');
+                            modal.remove();
+                            window._judMedsSelecionados = [];
+                            await loadJudicialProcessos();
+                        } else { alert('Erro ao criar processo'); }
+                    } catch(e) { alert('Erro de conexão'); }
+                });
 
-                    const newCard = document.createElement('div');
-                    newCard.className = `kanban-card ${priority}`;
-                    newCard.draggable = true;
-                    newCard.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                            <div style="flex: 1;">
-                                <div class="card-title">${title}</div>
-                                ${description ? `<div class="card-description">${description}</div>` : ''}
-                            </div>
-                            <button class="btn-card-delete" style="background: #D81B60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                window._judMedsSelecionados = [];
+            }
+
+            function buscarMedJudicial() {
+                const q = document.getElementById('jud-med-busca')?.value.toLowerCase();
+                if (!q || q.length < 2) return;
+                const container = document.getElementById('jud-med-resultados');
+                fetch('/api/medicamentos').then(r => r.json()).then(meds => {
+                    const results = meds.filter(m => (m.nome||'').toLowerCase().includes(q) || (m.laboratorio||'').toLowerCase().includes(q));
+                    if (!results.length) { container.innerHTML = '<div style="padding:10px;color:#999;text-align:center;">Nenhum encontrado</div>'; container.style.display='block'; return; }
+                    container.innerHTML = results.map(m => `
+                        <div onclick="adicionarMedJudicial('${m.id}','${(m.nome||'').replace(/'/g,"\\'")}',${m.preco_brl||0})" style="padding:8px 12px;border-bottom:1px solid #f3f4f6;cursor:pointer;font-size:12px;display:flex;justify-content:space-between;" onmouseover="this.style.background='#fff3e0'" onmouseout="this.style.background=''">
+                            <span><b>${m.nome}</b> - ${m.laboratorio||''}</span>
+                            <span style="color:#2E7D32;font-weight:700;">${m.preco_brl ? 'R$ '+parseFloat(m.preco_brl).toFixed(2) : 'Sem preço'}</span>
                         </div>
-                        ${responsible ? `<div class="card-meta"><div class="card-meta-item"><i class="fas fa-user"></i> ${responsible}</div></div>` : ''}
-                    `;
-
-                    newCard.addEventListener('dragstart', handleJudicialDragStart);
-                    newCard.addEventListener('dragend', handleJudicialDragEnd);
-
-                    newCard.querySelector('.btn-card-delete').addEventListener('click', () => {
-                        if (confirm('Excluir este card?')) {
-                            newCard.remove();
-                            updateColumnCounts();
-                            saveJudicialKanbanData();
-                        }
-                    });
-
-                    container.appendChild(newCard);
-                    updateColumnCounts();
-                    saveJudicialKanbanData();
-                    modal.remove();
+                    `).join('');
+                    container.style.display = 'block';
                 });
             }
 
-            function saveJudicialKanbanData() {
-                const kanbanBoard = document.getElementById('kanban-judicial');
-                const columns = kanbanBoard.querySelectorAll('.kanban-column');
-                const data = {};
-
-                columns.forEach(column => {
-                    const columnTitle = column.getAttribute('data-column-title');
-                    const cards = column.querySelectorAll('.kanban-card');
-                    data[columnTitle] = Array.from(cards).map(card => ({
-                        title: card.querySelector('.card-title').textContent,
-                        description: card.querySelector('.card-description')?.textContent || '',
-                        priority: Array.from(card.classList).find(c => c.startsWith('priority-')) || 'priority-medium',
-                        responsible: card.querySelector('.card-meta-item')?.textContent.replace(/\s+/g, ' ').trim().substring(1) || ''
-                    }));
-                });
-
-                localStorage.setItem('judicialKanbanData', JSON.stringify(data));
+            function adicionarMedJudicial(id, nome, preco) {
+                if (!window._judMedsSelecionados) window._judMedsSelecionados = [];
+                if (window._judMedsSelecionados.find(m => m.id === id)) { alert('Já adicionado'); return; }
+                window._judMedsSelecionados.push({ id, nome, preco_brl: preco });
+                document.getElementById('jud-med-resultados').style.display = 'none';
+                document.getElementById('jud-med-busca').value = '';
+                renderMedsJudicial();
             }
 
-            function loadJudicialKanbanData() {
-                const data = localStorage.getItem('judicialKanbanData');
-                if (!data) return;
+            function removerMedJudicial(idx) {
+                window._judMedsSelecionados.splice(idx, 1);
+                renderMedsJudicial();
+            }
 
-                const kanbanData = JSON.parse(data);
-                const kanbanBoard = document.getElementById('kanban-judicial');
+            function renderMedsJudicial() {
+                const container = document.getElementById('jud-meds-lista');
+                if (!container) return;
+                const meds = window._judMedsSelecionados || [];
+                if (!meds.length) { container.innerHTML = '<div style="color:#999;font-size:12px;">Nenhum medicamento adicionado</div>'; return; }
+                let total = 0;
+                container.innerHTML = meds.map((m, i) => {
+                    total += m.preco_brl || 0;
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#fff;border-radius:6px;margin-bottom:4px;font-size:12px;">
+                        <span>${m.nome}</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="color:#2E7D32;font-weight:600;">R$ ${(m.preco_brl||0).toFixed(2)}</span>
+                            <button onclick="removerMedJudicial(${i})" style="background:none;border:none;color:#C62828;cursor:pointer;"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>`;
+                }).join('');
+                container.innerHTML += `<div style="text-align:right;font-weight:700;color:#E65100;font-size:13px;margin-top:4px;">Total: R$ ${total.toFixed(2)}</div>`;
+            }
 
-                Object.keys(kanbanData).forEach(columnTitle => {
-                    const column = kanbanBoard.querySelector(`[data-column-title="${columnTitle}"]`);
-                    if (!column) return;
+            function openProcessoDetalheModal(procId) {
+                const proc = judicialProcessos.find(p => p.id === procId);
+                if (!proc) return;
 
-                    const container = column.querySelector('.kanban-cards');
-                    kanbanData[columnTitle].forEach(cardData => {
-                        const card = document.createElement('div');
-                        card.className = `kanban-card ${cardData.priority}`;
-                        card.draggable = true;
-                        card.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                <div style="flex: 1;">
-                                    <div class="card-title">${cardData.title}</div>
-                                    ${cardData.description ? `<div class="card-description">${cardData.description}</div>` : ''}
+                const etapaLabel = JUDICIAL_ETAPAS[proc.etapa] || proc.etapa;
+                const createdDate = proc.created_at ? new Date(proc.created_at).toLocaleDateString('pt-BR') : '';
+                const medsHtml = (proc.medicamentos || []).map(m =>
+                    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6;font-size:12px;">
+                        <span>${m.nome}</span>
+                        <span style="font-weight:600;color:#2E7D32;">${m.preco_brl ? 'R$ '+parseFloat(m.preco_brl).toFixed(2) : 'Sem preço'}</span>
+                    </div>`
+                ).join('') || '<div style="color:#999;font-size:12px;">Nenhum medicamento vinculado</div>';
+
+                const movsHtml = (proc.movimentacoes || []).map(m =>
+                    `<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;">
+                        <div style="display:flex;justify-content:space-between;">
+                            <span style="font-weight:600;font-size:12px;color:#5E35B1;">${m.descricao_simplificada || m.descricao_juridica}</span>
+                            <span style="font-size:10px;color:#999;">${m.data ? new Date(m.data).toLocaleDateString('pt-BR') : ''}</span>
+                        </div>
+                        ${m.descricao_juridica && m.descricao_simplificada ? `<div style="font-size:11px;color:#888;margin-top:2px;"><i>Jurídico: ${m.descricao_juridica}</i></div>` : ''}
+                    </div>`
+                ).join('') || '<div style="color:#999;font-size:12px;">Nenhuma movimentação registrada</div>';
+
+                const totalMeds = (proc.medicamentos || []).reduce((s, m) => s + (parseFloat(m.preco_brl) || 0), 0);
+
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:750px;max-height:90vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#5E35B1,#7C4DFF);color:#fff;">
+                            <h2><i class="fas fa-gavel"></i> Processo ${proc.id}</h2>
+                            <button class="btn-close-modal" style="color:#fff;"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Status Badge -->
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                <div>
+                                    <span style="background:#ede7f6;color:#5E35B1;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">${etapaLabel}</span>
+                                    <span style="background:${proc.prioridade==='alta'?'#ffebee':proc.prioridade==='media'?'#fff3e0':'#e8f5e9'};color:${proc.prioridade==='alta'?'#C62828':proc.prioridade==='media'?'#E65100':'#2E7D32'};padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-left:6px;">${proc.prioridade ? proc.prioridade.charAt(0).toUpperCase() + proc.prioridade.slice(1) : 'Média'}</span>
                                 </div>
-                                <button class="btn-card-delete" style="background: #D81B60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <span style="font-size:11px;color:#999;">Criado em ${createdDate}</span>
                             </div>
-                            ${cardData.responsible ? `<div class="card-meta"><div class="card-meta-item"><i class="fas fa-user"></i> ${cardData.responsible}</div></div>` : ''}
-                        `;
 
-                        card.addEventListener('dragstart', handleJudicialDragStart);
-                        card.addEventListener('dragend', handleJudicialDragEnd);
+                            <!-- Paciente & Processo -->
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                                <div style="background:#f9f9f9;padding:12px;border-radius:8px;">
+                                    <div style="font-weight:700;font-size:12px;color:#5E35B1;margin-bottom:6px;"><i class="fas fa-user"></i> Paciente</div>
+                                    <div style="font-size:14px;font-weight:600;">${proc.paciente_nome || 'N/A'}</div>
+                                    <div style="font-size:12px;color:#666;">CID: ${proc.diagnostico_cid || 'N/A'}</div>
+                                    ${proc.hipossuficiente ? '<div style="margin-top:4px;"><span style="background:#C62828;color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;">HIPOSSUFICIENTE</span></div>' : ''}
+                                </div>
+                                <div style="background:#f9f9f9;padding:12px;border-radius:8px;">
+                                    <div style="font-weight:700;font-size:12px;color:#5E35B1;margin-bottom:6px;"><i class="fas fa-file-alt"></i> Processo</div>
+                                    <div style="font-size:14px;font-weight:600;">${proc.numero_processo || 'Nº pendente'}</div>
+                                    <div style="font-size:12px;color:#666;">${proc.tipo_acao || ''}</div>
+                                    <div style="font-size:12px;color:#666;">${proc.tribunal || ''} ${proc.vara ? '- ' + proc.vara : ''} ${proc.comarca ? '- ' + proc.comarca : ''}</div>
+                                </div>
+                            </div>
 
-                        card.querySelector('.btn-card-delete').addEventListener('click', () => {
-                            if (confirm('Excluir este card?')) {
-                                card.remove();
-                                updateColumnCounts();
-                                saveJudicialKanbanData();
-                            }
-                        });
+                            <!-- Advogado & Financeiro -->
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                                <div style="background:#e8eaf6;padding:12px;border-radius:8px;">
+                                    <div style="font-weight:700;font-size:12px;color:#283593;margin-bottom:6px;"><i class="fas fa-user-tie"></i> Advogado</div>
+                                    <div style="font-size:13px;font-weight:600;">${proc.advogado_nome || 'N/A'}</div>
+                                    <div style="font-size:12px;color:#666;">OAB: ${proc.advogado_oab || 'N/A'}</div>
+                                    <div style="font-size:12px;color:#666;">${proc.advogado_email || ''} ${proc.advogado_telefone ? '| ' + proc.advogado_telefone : ''}</div>
+                                </div>
+                                <div style="background:#e8f5e9;padding:12px;border-radius:8px;">
+                                    <div style="font-weight:700;font-size:12px;color:#2E7D32;margin-bottom:6px;"><i class="fas fa-dollar-sign"></i> Financeiro</div>
+                                    <div style="font-size:13px;">Valor da Causa: <b>R$ ${proc.valor_causa ? parseFloat(proc.valor_causa).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '0,00'}</b></div>
+                                    <div style="font-size:12px;color:#666;">Honorários Iniciais: R$ ${proc.honorarios_iniciais ? parseFloat(proc.honorarios_iniciais).toFixed(2) : '0,00'}</div>
+                                    <div style="font-size:12px;color:#666;">Êxito: ${proc.honorarios_exito_percent || 0}%</div>
+                                </div>
+                            </div>
 
-                        container.appendChild(card);
-                    });
+                            <!-- Medicamentos / Orçamento -->
+                            <div style="background:#fff3e0;padding:14px;border-radius:8px;margin-bottom:16px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <div style="font-weight:700;font-size:12px;color:#E65100;"><i class="fas fa-pills"></i> Medicamentos / Orçamento</div>
+                                    <div style="font-weight:800;color:#2E7D32;font-size:14px;">Total: R$ ${totalMeds.toFixed(2)}</div>
+                                </div>
+                                ${medsHtml}
+                            </div>
+
+                            <!-- Geração de Documentos -->
+                            <div style="background:#fce4ec;padding:14px;border-radius:8px;margin-bottom:16px;">
+                                <div style="font-weight:700;font-size:12px;color:#880E4F;margin-bottom:10px;"><i class="fas fa-file-pdf"></i> Geração de Documentos</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                    <button onclick="gerarDocJudicial('${proc.id}','procuracao')" style="background:#880E4F;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-file-contract" style="margin-right:4px;"></i> Procuração Ad Judicia</button>
+                                    <button onclick="gerarDocJudicial('${proc.id}','hipossuficiencia')" style="background:#880E4F;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-hand-holding-usd" style="margin-right:4px;"></i> Decl. Hipossuficiência</button>
+                                    <button onclick="gerarDocJudicial('${proc.id}','laudo')" style="background:#880E4F;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-file-medical" style="margin-right:4px;"></i> Laudo Circunstanciado</button>
+                                    <button onclick="gerarDocJudicial('${proc.id}','orcamentos')" style="background:#880E4F;color:#fff;border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-receipt" style="margin-right:4px;"></i> 3 Orçamentos</button>
+                                </div>
+                            </div>
+
+                            <!-- Movimentações -->
+                            <div style="background:#f5f5f5;padding:14px;border-radius:8px;margin-bottom:16px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <div style="font-weight:700;font-size:12px;color:#333;"><i class="fas fa-history"></i> Movimentações</div>
+                                    <button onclick="addMovimentacaoModal('${proc.id}')" style="background:#5E35B1;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;"><i class="fas fa-plus"></i> Adicionar</button>
+                                </div>
+                                <div style="max-height:200px;overflow-y:auto;">${movsHtml}</div>
+                            </div>
+
+                            ${proc.observacoes ? `<div style="background:#f9f9f9;padding:10px;border-radius:8px;font-size:12px;color:#666;"><b>Obs:</b> ${proc.observacoes}</div>` : ''}
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+                            <button class="btn-primary" style="background:#5E35B1;" onclick="editarProcessoEtapa('${proc.id}',this.closest('.modal-overlay'))"><i class="fas fa-arrow-right" style="margin-right:4px;"></i> Avançar Etapa</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.querySelector('.btn-close-modal').addEventListener('click', () => modal.remove());
+            }
+
+            async function editarProcessoEtapa(procId, modalEl) {
+                const proc = judicialProcessos.find(p => p.id === procId);
+                if (!proc) return;
+                const etapas = Object.keys(JUDICIAL_ETAPAS);
+                const curIdx = etapas.indexOf(proc.etapa);
+                if (curIdx >= etapas.length - 1) { alert('Processo já está na última etapa.'); return; }
+                const nextEtapa = etapas[curIdx + 1];
+                try {
+                    await fetch('/api/judicial/' + procId, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ etapa: nextEtapa }) });
+                    proc.etapa = nextEtapa;
+                    renderJudicialKanban();
+                    updateJudicialStats();
+                    if (modalEl) modalEl.remove();
+                    alert('Processo movido para: ' + JUDICIAL_ETAPAS[nextEtapa]);
+                } catch(e) { alert('Erro ao atualizar'); }
+            }
+
+            function addMovimentacaoModal(procId) {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.style.zIndex = '10001';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:500px;">
+                        <div class="modal-header"><h2><i class="fas fa-plus"></i> Nova Movimentação</h2><button class="btn-close-modal"><i class="fas fa-times"></i></button></div>
+                        <div class="modal-body">
+                            <div class="form-group"><label>Descrição Jurídica</label><input id="mov-juridica" placeholder="Ex: Concluso para despacho"></div>
+                            <div class="form-group"><label>Tradução Simplificada</label><input id="mov-simples" placeholder="Ex: O juiz vai analisar o pedido"></div>
+                            <div class="form-group"><label>Responsável</label><input id="mov-resp" placeholder="Ex: Dr. Silva"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancelar</button>
+                            <button class="btn-primary" style="background:#5E35B1;" id="btn-salvar-mov">Salvar</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.querySelector('.btn-close-modal').addEventListener('click', () => modal.remove());
+                modal.querySelector('#btn-salvar-mov').addEventListener('click', async () => {
+                    const body = {
+                        descricao_juridica: modal.querySelector('#mov-juridica').value.trim(),
+                        descricao_simplificada: modal.querySelector('#mov-simples').value.trim(),
+                        responsavel: modal.querySelector('#mov-resp').value.trim()
+                    };
+                    if (!body.descricao_juridica && !body.descricao_simplificada) { alert('Preencha ao menos uma descrição'); return; }
+                    try {
+                        const res = await fetch('/api/judicial/' + procId + '/movimentacao', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                        if (res.ok) {
+                            modal.remove();
+                            await loadJudicialProcessos();
+                            // Reopen detail modal
+                            openProcessoDetalheModal(procId);
+                        } else { alert('Erro ao salvar'); }
+                    } catch(e) { alert('Erro de conexão'); }
                 });
             }
+
+            async function excluirProcesso(procId) {
+                if (!confirm('Excluir este processo judicial?')) return;
+                try {
+                    await fetch('/api/judicial/' + procId, { method: 'DELETE' });
+                    await loadJudicialProcessos();
+                } catch(e) { alert('Erro ao excluir'); }
+            }
+
+            function gerarDocJudicial(procId, tipo) {
+                const proc = judicialProcessos.find(p => p.id === procId);
+                if (!proc) return;
+
+                let titulo = '', conteudo = '';
+                const hoje = new Date().toLocaleDateString('pt-BR');
+                const totalMeds = (proc.medicamentos || []).reduce((s, m) => s + (parseFloat(m.preco_brl) || 0), 0);
+
+                if (tipo === 'procuracao') {
+                    titulo = 'PROCURAÇÃO AD JUDICIA';
+                    conteudo = `PROCURAÇÃO AD JUDICIA ET EXTRA\n\n` +
+                        `OUTORGANTE: ${proc.paciente_nome || '___________'}\n` +
+                        `CPF: ___________\n` +
+                        `Endereço: ___________\n\n` +
+                        `OUTORGADO: ${proc.advogado_nome || '___________'}\n` +
+                        `OAB: ${proc.advogado_oab || '___________'}\n\n` +
+                        `Pelo presente instrumento particular de procuração, o(a) outorgante acima qualificado(a), nomeia e constitui seu(sua) procurador(a) o(a) advogado(a) acima, conferindo-lhe poderes para o foro em geral, com a cláusula "ad judicia et extra", para propor ação de ${proc.tipo_acao || 'Obrigação de Fazer com Tutela Antecipada'} em face da União Federal/Estado, visando o fornecimento de medicamento à base de Cannabis para tratamento de saúde, com poderes especiais para receber, dar quitação, firmar compromissos, transigir, desistir, renunciar, recorrer, substabelecer com ou sem reserva de poderes.\n\n` +
+                        `${proc.comarca || '___________'}, ${hoje}\n\n\n` +
+                        `_________________________________\n${proc.paciente_nome || 'Assinatura do Outorgante'}`;
+                } else if (tipo === 'hipossuficiencia') {
+                    titulo = 'DECLARAÇÃO DE HIPOSSUFICIÊNCIA';
+                    conteudo = `DECLARAÇÃO DE HIPOSSUFICIÊNCIA ECONÔMICA\n\n` +
+                        `Eu, ${proc.paciente_nome || '___________'}, portador(a) do CPF nº ___________, residente e domiciliado(a) em ___________, DECLARO, para os devidos fins de direito, sob as penas da lei, que não possuo condições financeiras de arcar com as custas processuais e honorários advocatícios sem prejuízo do sustento próprio e de minha família.\n\n` +
+                        `Declaro ainda que necessito do medicamento à base de Cannabis Medicinal para tratamento de ${proc.diagnostico_cid || '___________'}, cujo custo mensal estimado é de R$ ${totalMeds.toFixed(2)}, valor incompatível com minha renda.\n\n` +
+                        `Por ser expressão da verdade, firmo a presente declaração.\n\n` +
+                        `${proc.comarca || '___________'}, ${hoje}\n\n\n` +
+                        `_________________________________\n${proc.paciente_nome || 'Assinatura do Declarante'}`;
+                } else if (tipo === 'laudo') {
+                    titulo = 'LAUDO MÉDICO CIRCUNSTANCIADO';
+                    conteudo = `LAUDO MÉDICO CIRCUNSTANCIADO\n(Para fins judiciais - Fornecimento de Cannabis Medicinal)\n\n` +
+                        `PACIENTE: ${proc.paciente_nome || '___________'}\n` +
+                        `DIAGNÓSTICO (CID): ${proc.diagnostico_cid || '___________'}\n\n` +
+                        `1. HISTÓRICO CLÍNICO:\n[Descrever o quadro clínico detalhado do paciente]\n\n` +
+                        `2. TRATAMENTOS CONVENCIONAIS REALIZADOS (FALHA TERAPÊUTICA):\n[Listar todos os tratamentos já tentados e os motivos de falha]\n\n` +
+                        `3. JUSTIFICATIVA PARA USO DE CANNABIS MEDICINAL:\nCom base na literatura científica atual e na resposta clínica observada, justifico a necessidade do uso de Cannabis Medicinal para este paciente, tendo em vista a refratariedade ao tratamento convencional.\n\n` +
+                        `4. MEDICAMENTOS PRESCRITOS:\n${(proc.medicamentos||[]).map(m => '- ' + m.nome + (m.preco_brl ? ' (R$ ' + parseFloat(m.preco_brl).toFixed(2) + ')' : '')).join('\n') || '[Listar medicamentos]'}\n\n` +
+                        `5. CONSEQUÊNCIAS DA AUSÊNCIA DO TRATAMENTO:\n[Descrever os riscos e prejuízos à saúde caso o tratamento não seja fornecido]\n\n` +
+                        `6. CONCLUSÃO:\nDiante do exposto, atesto a NECESSIDADE e URGÊNCIA do fornecimento dos medicamentos acima descritos para o adequado tratamento do paciente.\n\n\n` +
+                        `_________________________________\nMédico(a) Responsável\nCRM: ___________\n${hoje}`;
+                } else if (tipo === 'orcamentos') {
+                    titulo = 'ORÇAMENTOS - 3 COTAÇÕES';
+                    const medsList = (proc.medicamentos||[]).map(m => `${m.nome}: R$ ${(parseFloat(m.preco_brl)||0).toFixed(2)}`).join('\n');
+                    conteudo = `ORÇAMENTO 1 - ON MEDICINA INTERNACIONAL\nData: ${hoje}\nPaciente: ${proc.paciente_nome}\n\nMedicamentos:\n${medsList || '[Sem medicamentos]'}\n\nTotal: R$ ${totalMeds.toFixed(2)}\n\n` +
+                        `${'='.repeat(50)}\n\n` +
+                        `ORÇAMENTO 2 - [FORNECEDOR 2]\nData: ${hoje}\nPaciente: ${proc.paciente_nome}\n\nMedicamentos:\n${medsList || '[Sem medicamentos]'}\n\nTotal: R$ ${(totalMeds * 1.15).toFixed(2)}\n\n` +
+                        `${'='.repeat(50)}\n\n` +
+                        `ORÇAMENTO 3 - [FORNECEDOR 3]\nData: ${hoje}\nPaciente: ${proc.paciente_nome}\n\nMedicamentos:\n${medsList || '[Sem medicamentos]'}\n\nTotal: R$ ${(totalMeds * 1.25).toFixed(2)}`;
+                }
+
+                // Show document in a modal
+                const docModal = document.createElement('div');
+                docModal.className = 'modal-overlay';
+                docModal.style.zIndex = '10002';
+                docModal.innerHTML = `
+                    <div class="modal-content" style="max-width:700px;max-height:90vh;">
+                        <div class="modal-header" style="background:#880E4F;color:#fff;">
+                            <h2><i class="fas fa-file-pdf"></i> ${titulo}</h2>
+                            <button class="btn-close-modal" style="color:#fff;"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="max-height:60vh;overflow-y:auto;">
+                            <pre style="white-space:pre-wrap;font-family:'Segoe UI',sans-serif;font-size:13px;line-height:1.7;background:#fafafa;padding:20px;border-radius:8px;border:1px solid #eee;">${conteudo}</pre>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+                            <button class="btn-primary" style="background:#880E4F;" onclick="copiarDocJudicial(this)"><i class="fas fa-copy" style="margin-right:4px;"></i> Copiar Texto</button>
+                            <button class="btn-primary" style="background:#2E7D32;" onclick="imprimirDocJudicial(this)"><i class="fas fa-print" style="margin-right:4px;"></i> Imprimir</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(docModal);
+                docModal.querySelector('.btn-close-modal').addEventListener('click', () => docModal.remove());
+            }
+
+            function copiarDocJudicial(btn) {
+                const pre = btn.closest('.modal-content').querySelector('pre');
+                navigator.clipboard.writeText(pre.textContent).then(() => {
+                    btn.innerHTML = '<i class="fas fa-check" style="margin-right:4px;"></i> Copiado!';
+                    setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy" style="margin-right:4px;"></i> Copiar Texto'; }, 2000);
+                });
+            }
+
+            function imprimirDocJudicial(btn) {
+                const pre = btn.closest('.modal-content').querySelector('pre');
+                const w = window.open('', '_blank');
+                w.document.write('<html><head><title>Documento Judicial</title><style>body{font-family:"Segoe UI",sans-serif;font-size:14px;line-height:1.8;padding:40px;max-width:700px;margin:0 auto;}</style></head><body><pre style="white-space:pre-wrap;">' + pre.textContent + '</pre></body></html>');
+                w.document.close();
+                w.print();
+            }
+
+            function saveJudicialKanbanData() { /* API-driven, no-op */ }
+
+            window.openNovoProcessoModal = openNovoProcessoModal;
+            window.openProcessoDetalheModal = openProcessoDetalheModal;
+            window.editarProcessoEtapa = editarProcessoEtapa;
+            window.addMovimentacaoModal = addMovimentacaoModal;
+            window.excluirProcesso = excluirProcesso;
+            window.gerarDocJudicial = gerarDocJudicial;
+            window.copiarDocJudicial = copiarDocJudicial;
+            window.imprimirDocJudicial = imprimirDocJudicial;
+            window.buscarMedJudicial = buscarMedJudicial;
+            window.adicionarMedJudicial = adicionarMedJudicial;
+            window.removerMedJudicial = removerMedJudicial;
 
             // ========== IMPORTAÇÃO MEDICAMENTO KANBAN ==========
             let draggedImportacaoCard = null;
