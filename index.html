@@ -2499,7 +2499,7 @@
                                 <li><i class="fas fa-check-circle"></i> Propostas comerciais</li>
                                 <li><i class="fas fa-check-circle"></i> Análise de conversão</li>
                             </ul>
-                            <button class="btn-admin btn-acessar-comercial">Acessar Comercial</button>
+                            <button class="btn-admin btn-acessar-comercial" onclick="navigateTo('comercial')">Acessar Comercial</button>
                         </div>
                     </div>
 
@@ -2519,7 +2519,7 @@
                                 <li><i class="fas fa-check-circle"></i> Conciliação bancária</li>
                                 <li><i class="fas fa-check-circle"></i> Notas fiscais</li>
                             </ul>
-                            <button class="btn-admin btn-acessar-financeiro">Acessar Financeiro</button>
+                            <button class="btn-admin btn-acessar-financeiro" onclick="navigateTo('financeiro')">Acessar Financeiro</button>
                         </div>
                     </div>
 
@@ -2559,7 +2559,7 @@
                                 <li><i class="fas fa-check-circle"></i> Acompanhamento jurídico</li>
                                 <li><i class="fas fa-check-circle"></i> Compliance regulatório</li>
                             </ul>
-                            <button class="btn-admin btn-acessar-judicial">Acessar Judicial</button>
+                            <button class="btn-admin btn-acessar-judicial" onclick="navigateTo('judicial')">Acessar Judicial</button>
                         </div>
                     </div>
 
@@ -2579,7 +2579,7 @@
                                 <li><i class="fas fa-check-circle"></i> Documentação ANVISA</li>
                                 <li><i class="fas fa-check-circle"></i> Controle de estoque importado</li>
                             </ul>
-                            <button class="btn-admin btn-acessar-importacao">Gestão de Importação</button>
+                            <button class="btn-admin btn-acessar-importacao" onclick="navigateTo('importacao')">Gestão de Importação</button>
                         </div>
                     </div>
 
@@ -2599,7 +2599,7 @@
                                 <li><i class="fas fa-check-circle"></i> Processamento de linguagem</li>
                                 <li><i class="fas fa-check-circle"></i> Machine Learning</li>
                             </ul>
-                            <button class="btn-admin btn-acessar-ia">Acessar IA</button>
+                            <button class="btn-admin btn-acessar-ia" onclick="navigateTo('ia')">Acessar IA</button>
                         </div>
                     </div>
 
@@ -2619,7 +2619,7 @@
                                 <li><i class="fas fa-check-circle"></i> Aprovação de registros</li>
                                 <li><i class="fas fa-check-circle"></i> Documentação médica</li>
                             </ul>
-                            <button class="btn-admin btn-cadastrar-medico">Acessar Gestão Médicos</button>
+                            <button class="btn-admin btn-cadastrar-medico" onclick="navigateTo('gestao-medicos')">Acessar Gestão Médicos</button>
                         </div>
                     </div>
 
@@ -2659,7 +2659,7 @@
                                 <li><i class="fas fa-check-circle"></i> Linha do tempo</li>
                                 <li><i class="fas fa-check-circle"></i> Anamnese e documentos</li>
                             </ul>
-                            <button class="btn-admin btn-acessar-pacientes">Acessar Gestão Pacientes</button>
+                            <button class="btn-admin btn-acessar-pacientes" onclick="navigateTo('gestao-pacientes')">Acessar Gestão Pacientes</button>
                         </div>
                     </div>
 
@@ -3885,6 +3885,15 @@
     </main>
 
     <script>
+        // Global error handler for debugging
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('GLOBAL ERROR:', msg, 'at', url, 'line', line);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('UNHANDLED PROMISE:', e.reason);
+        });
+
         // Constante de BASE_URL padronizada - usa URL atual automaticamente
         const BASE_URL = window.location.origin;
         
