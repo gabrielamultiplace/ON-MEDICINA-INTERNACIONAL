@@ -945,7 +945,38 @@ def debug_medicamentos():
 
 
 # ===== COTAÇÃO / EXCHANGE RATE API =====
-_cotacao_cache = {}  # {moeda: {rate, timestamp}}
+_cotacao_cache = {}  # {moeda: {data, timestamp}}
+
+def _fetch_cotacoes_batch(moedas_list):
+    """Fetch multiple currencies in a single AwesomeAPI call"""
+    import time
+    pairs = ','.join([f'{m}-BRL' for m in moedas_list])
+    try:
+        url = f'https://economia.awesomeapi.com.br/last/{pairs}'
+        resp = http_requests.get(url, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        results = {}
+        for moeda in moedas_list:
+            key = f'{moeda}BRL'
+            if key in data:
+                info = data[key]
+                result = {
+                    'moeda': moeda,
+                    'bid': float(info.get('bid', 0)),
+                    'ask': float(info.get('ask', 0)),
+                    'high': float(info.get('high', 0)),
+                    'low': float(info.get('low', 0)),
+                    'nome': info.get('name', ''),
+                    'timestamp': info.get('create_date', datetime.now(timezone.utc).isoformat())
+                }
+                results[moeda] = result
+                _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
+        return results
+    except Exception as e:
+        logger.error(f'Erro batch cotação: {e}')
+        return {}
+
 
 @app.route('/api/cotacao/<moeda>', methods=['GET'])
 def get_cotacao(moeda):
@@ -961,62 +992,37 @@ def get_cotacao(moeda):
     if cached and (time.time() - cached['timestamp']) < 1800:
         return jsonify(cached['data'])
 
-    try:
-        url = f'https://economia.awesomeapi.com.br/last/{moeda}-BRL'
-        resp = http_requests.get(url, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        key = f'{moeda}BRL'
-        if key not in data:
-            return jsonify({'error': f'Moeda {moeda} não encontrada'}), 404
-        info = data[key]
-        result = {
-            'moeda': moeda,
-            'bid': float(info.get('bid', 0)),
-            'ask': float(info.get('ask', 0)),
-            'high': float(info.get('high', 0)),
-            'low': float(info.get('low', 0)),
-            'nome': info.get('name', ''),
-            'timestamp': info.get('create_date', datetime.now(timezone.utc).isoformat())
-        }
-        _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
-        return jsonify(result)
-    except http_requests.exceptions.RequestException as e:
-        logger.error(f'Erro ao buscar cotação {moeda}: {e}')
-        return jsonify({'error': f'Erro ao buscar cotação: {str(e)}'}), 502
+    results = _fetch_cotacoes_batch([moeda])
+    if moeda in results:
+        return jsonify(results[moeda])
+
+    # Fallback: return cached even if expired
+    if cached:
+        return jsonify(cached['data'])
+
+    return jsonify({'error': f'Não foi possível buscar cotação para {moeda}. Tente novamente em alguns segundos.'}), 502
 
 
 @app.route('/api/cotacao', methods=['GET'])
 def get_cotacoes_all():
-    """Fetch exchange rates for main currencies"""
+    """Fetch exchange rates for main currencies in a single batch call"""
     import time
     moedas = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF']
     results = {'BRL': {'moeda': 'BRL', 'bid': 1.0, 'nome': 'Real Brasileiro'}}
 
+    # Check which ones need fetching
+    need_fetch = []
     for moeda in moedas:
         cached = _cotacao_cache.get(moeda)
         if cached and (time.time() - cached['timestamp']) < 1800:
             results[moeda] = cached['data']
-            continue
-        try:
-            url = f'https://economia.awesomeapi.com.br/last/{moeda}-BRL'
-            resp = http_requests.get(url, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            key = f'{moeda}BRL'
-            if key in data:
-                info = data[key]
-                result = {
-                    'moeda': moeda,
-                    'bid': float(info.get('bid', 0)),
-                    'ask': float(info.get('ask', 0)),
-                    'nome': info.get('name', ''),
-                    'timestamp': info.get('create_date', '')
-                }
-                results[moeda] = result
-                _cotacao_cache[moeda] = {'data': result, 'timestamp': time.time()}
-        except Exception:
-            pass
+        else:
+            need_fetch.append(moeda)
+
+    # Fetch all needed in a single API call
+    if need_fetch:
+        fetched = _fetch_cotacoes_batch(need_fetch)
+        results.update(fetched)
 
     return jsonify(results)
 
