@@ -1245,10 +1245,12 @@ def confirmar_pagamento_asaas():
 
 
 @app.route('/api/asaas/webhook', methods=['POST'])
+@app.route('/comercial/webhooks', methods=['POST'])
 def webhook_asaas():
     """
     Webhook para receber notificações de pagamento do Asaas
     Documentação: https://docs.asaas.com/reference/webhooks
+    URL configurada no Asaas: /comercial/webhooks
     """
     try:
         data = request.json
