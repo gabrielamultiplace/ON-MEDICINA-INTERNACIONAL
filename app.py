@@ -2426,6 +2426,14 @@ def add_timeline_paciente(pac_id):
     )
     return jsonify(event), 201
 
+@app.route('/api/pacientes/<pac_id>/timeline/<event_id>', methods=['DELETE'])
+def delete_timeline_event(pac_id, event_id):
+    """Delete a timeline event"""
+    tl = load_timeline()
+    tl = [e for e in tl if not (e.get('id') == event_id and e.get('paciente_id') == pac_id)]
+    save_timeline(tl)
+    return jsonify({'status': 'ok'})
+
 # --- Ficha de Atendimento ---
 @app.route('/api/pacientes/<pac_id>/ficha', methods=['GET'])
 def get_ficha(pac_id):

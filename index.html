@@ -10193,7 +10193,10 @@
                             <div class="timeline-event tipo-${ev.tipo}">
                                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
                                     <div style="font-weight:700;color:#333;font-size:14px;"><i class="fas ${icon}" style="margin-right:6px;"></i>${ev.titulo}</div>
-                                    <div style="font-size:11px;color:#888;white-space:nowrap;">${dt}</div>
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        <span style="font-size:11px;color:#888;white-space:nowrap;">${dt}</span>
+                                        <button onclick="excluirEventoTimeline('${ev.id}')" title="Excluir evento" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;padding:2px 4px;" onmouseover="this.style.color='#e74c3c'" onmouseout="this.style.color='#ccc'"><i class="fas fa-trash-alt"></i></button>
+                                    </div>
                                 </div>
                                 ${ev.descricao ? `<div style="color:#666;font-size:13px;line-height:1.5;">${ev.descricao}</div>` : ''}
                                 <div style="margin-top:6px;font-size:10px;text-transform:uppercase;color:#aaa;font-weight:600;">${ev.tipo}</div>
@@ -11815,13 +11818,25 @@
 
             // ===== SOLICITAÇÃO DE EXAMES / TESTE FARMACOGENÉTICO =====
             function onEventoTipoChange(value) {
-                if (value === 'solicitacao_exames') {
+                if (value === 'prescricao') {
+                    fecharModalEventoTimeline();
+                    abrirModalPrescricao();
+                } else if (value === 'solicitacao_exames') {
                     fecharModalEventoTimeline();
                     abrirModalSolicitacao('exames');
                 } else if (value === 'solicitacao_farmacogenetico') {
                     fecharModalEventoTimeline();
                     abrirModalSolicitacao('farmacogenetico');
                 }
+            }
+
+            async function excluirEventoTimeline(eventId) {
+                if (!pacienteAtual) return;
+                if (!confirm('Excluir este evento da linha do tempo?')) return;
+                try {
+                    await apiRequest('/api/pacientes/' + pacienteAtual.id + '/timeline/' + eventId, { method: 'DELETE' });
+                    carregarTimeline(pacienteAtual.id);
+                } catch(e) { alert('Erro ao excluir evento'); }
             }
 
             async function abrirModalSolicitacao(tipo) {
@@ -12069,6 +12084,12 @@
             async function salvarEventoTimeline() {
                 if (!pacienteAtual) return;
                 const tipo = document.getElementById('evento-tipo').value;
+                // Tipos que têm modais próprios — não salvar como evento genérico
+                const tiposComModal = ['prescricao', 'solicitacao_exames', 'solicitacao_farmacogenetico'];
+                if (tiposComModal.includes(tipo)) {
+                    onEventoTipoChange(tipo);
+                    return;
+                }
                 const titulo = document.getElementById('evento-titulo').value.trim();
                 const descricao = document.getElementById('evento-descricao').value.trim();
                 if (!titulo) { alert('Título é obrigatório'); return; }
@@ -12147,6 +12168,7 @@
             window.carregarHistoricoEnvios = carregarHistoricoEnvios;
             window.carregarCertificadosMedicos = carregarCertificadosMedicos;
             window.onEventoTipoChange = onEventoTipoChange;
+            window.excluirEventoTimeline = excluirEventoTimeline;
             window.abrirModalSolicitacao = abrirModalSolicitacao;
             window.fecharModalSolicitacao = fecharModalSolicitacao;
             window.assinarSolicitacao = assinarSolicitacao;
