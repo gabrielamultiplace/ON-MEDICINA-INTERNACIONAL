@@ -2459,6 +2459,9 @@
                     <button class="btn-hero imp-tab-btn" data-imp-tab="anvisa" style="font-size:13px;padding:8px 20px;background:#C62828;">
                         <i class="fas fa-shield-alt"></i> Autorizações ANVISA
                     </button>
+                    <button class="btn-hero imp-tab-btn" data-imp-tab="sngpc" style="font-size:13px;padding:8px 20px;background:#4527A0;">
+                        <i class="fas fa-satellite-dish"></i> SNGPC
+                    </button>
                 </div>
             </div>
             <div class="page-body">
@@ -2608,6 +2611,63 @@
                     <!-- Lista Solicitações -->
                     <div id="anvisa-lista" style="display:grid;grid-template-columns:1fr;gap:0;">
                         <div style="padding:40px;text-align:center;color:#9ca3af;"><i class="fas fa-shield-alt" style="font-size:36px;opacity:0.3;"></i><div style="margin-top:10px;">Carregando solicitações ANVISA...</div></div>
+                    </div>
+                </div>
+
+                <!-- Tab: SNGPC - Sistema Nacional de Gerenciamento de Produtos Controlados -->
+                <div id="imp-tab-sngpc" class="imp-tab-content" style="display:none;">
+                    <!-- Header -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0;flex-wrap:wrap;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="background:linear-gradient(135deg,#4527A0,#7C4DFF);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-satellite-dish" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <h4 style="margin:0;color:#333;font-size:16px;">SNGPC - Produtos Controlados</h4>
+                                <p style="margin:0;color:#6b7280;font-size:12px;">Envio automático de movimentações de medicamentos controlados à ANVISA via API</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button onclick="abrirConfigSngpc()" style="background:#4527A0;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-cog" style="margin-right:4px;"></i> Configurações</button>
+                            <button onclick="testarAuthSngpc()" style="background:#00695C;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" id="btn-test-sngpc"><i class="fas fa-plug" style="margin-right:4px;"></i> Testar Conexão</button>
+                            <button onclick="carregarEnviosSngpc()" style="background:#1565C0;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-sync-alt" style="margin-right:4px;"></i> Atualizar</button>
+                        </div>
+                    </div>
+
+                    <!-- Info Banner -->
+                    <div style="background:linear-gradient(135deg,#EDE7F6,#D1C4E9);border-radius:10px;padding:14px 18px;margin-bottom:16px;border-left:4px solid #4527A0;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <i class="fas fa-info-circle" style="color:#4527A0;"></i>
+                            <strong style="color:#4527A0;font-size:13px;">Integração SNGPC Automática</strong>
+                        </div>
+                        <p style="margin:0;color:#4A148C;font-size:11px;line-height:1.5;">
+                            O sistema gera XMLs no formato SNGPC automaticamente quando uma prescrição é criada ou o paciente avança para a etapa de documentação ANVISA.
+                            Os dados do paciente, médico e medicamentos são preenchidos automaticamente a partir da plataforma.
+                            Configure o CNPJ da empresa e o CPF do transmissor para habilitar o envio à ANVISA.
+                        </p>
+                    </div>
+
+                    <!-- Stats Cards SNGPC -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px;" id="sngpc-stats">
+                        <div style="background:linear-gradient(135deg,#4527A0,#7C4DFF);border-radius:10px;padding:14px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="sngpc-stat-total">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Total Envios</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#2E7D32,#43A047);border-radius:10px;padding:14px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="sngpc-stat-enviados">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Enviados OK</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#C62828,#E53935);border-radius:10px;padding:14px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="sngpc-stat-erros">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Com Erro</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#E65100,#FF6D00);border-radius:10px;padding:14px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="sngpc-stat-auto">—</div>
+                            <div style="font-size:10px;opacity:0.85;">Auto-envio</div>
+                        </div>
+                    </div>
+
+                    <!-- Envios Lista -->
+                    <div id="sngpc-envios-lista" style="display:grid;gap:0;">
+                        <div style="padding:40px;text-align:center;color:#9ca3af;"><i class="fas fa-satellite-dish" style="font-size:36px;opacity:0.3;"></i><div style="margin-top:10px;">Carregando envios SNGPC...</div></div>
                     </div>
                 </div>
             </div>
@@ -7321,6 +7381,7 @@
                     document.querySelectorAll('.imp-tab-content').forEach(t => t.style.display = 'none');
                     document.getElementById('imp-tab-' + tab).style.display = '';
                     if (tab === 'anvisa') carregarSolicitacoesAnvisa();
+                    if (tab === 'sngpc') carregarEnviosSngpc();
                 });
             });
 
@@ -13985,6 +14046,254 @@
                 window.open('https://sso.acesso.gov.br', '_blank');
             }
 
+            // ===== SNGPC - SISTEMA NACIONAL DE GERENCIAMENTO DE PRODUTOS CONTROLADOS =====
+            let sngpcEnvios = [];
+            let sngpcConfig = {};
+
+            async function carregarEnviosSngpc() {
+                try {
+                    const [enviosRes, configRes] = await Promise.all([
+                        fetch('/api/sngpc/envios'),
+                        fetch('/api/sngpc/config')
+                    ]);
+                    sngpcEnvios = await enviosRes.json();
+                    sngpcConfig = await configRes.json();
+                    renderSngpcStats();
+                    renderSngpcEnvios();
+                } catch(e) {
+                    console.error('Erro ao carregar SNGPC:', e);
+                }
+            }
+
+            function renderSngpcStats() {
+                const total = sngpcEnvios.length;
+                const enviados = sngpcEnvios.filter(e => e.status === 'enviado').length;
+                const erros = sngpcEnvios.filter(e => e.status === 'erro').length;
+                document.getElementById('sngpc-stat-total').textContent = total;
+                document.getElementById('sngpc-stat-enviados').textContent = enviados;
+                document.getElementById('sngpc-stat-erros').textContent = erros;
+                document.getElementById('sngpc-stat-auto').textContent = sngpcConfig.auto_envio ? 'ON' : 'OFF';
+                document.getElementById('sngpc-stat-auto').closest('div[style*="background"]').style.background =
+                    sngpcConfig.auto_envio ? 'linear-gradient(135deg,#2E7D32,#43A047)' : 'linear-gradient(135deg,#E65100,#FF6D00)';
+            }
+
+            function renderSngpcEnvios() {
+                const container = document.getElementById('sngpc-envios-lista');
+                if (!sngpcEnvios.length) {
+                    container.innerHTML = `<div style="padding:40px;text-align:center;color:#9ca3af;">
+                        <i class="fas fa-satellite-dish" style="font-size:36px;opacity:0.3;"></i>
+                        <div style="margin-top:10px;">Nenhum envio SNGPC registrado</div>
+                        <div style="font-size:11px;margin-top:6px;">Os envios serão criados automaticamente quando prescrições forem realizadas</div>
+                    </div>`;
+                    return;
+                }
+                const sorted = [...sngpcEnvios].sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+                container.innerHTML = sorted.map(envio => {
+                    const statusColors = { 'enviado': '#2E7D32', 'erro': '#C62828', 'pendente': '#E65100' };
+                    const statusLabels = { 'enviado': 'Enviado', 'erro': 'Erro', 'pendente': 'Pendente' };
+                    const color = statusColors[envio.status] || '#6b7280';
+                    const dt = envio.created_at ? new Date(envio.created_at).toLocaleString('pt-BR') : '-';
+                    return `<div style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid ${color};border-radius:8px;padding:14px 16px;margin-bottom:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="background:${color}15;color:${color};padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;">${statusLabels[envio.status] || envio.status}</div>
+                                <strong style="font-size:13px;">${envio.id}</strong>
+                                <span style="color:#6b7280;font-size:11px;">${dt}</span>
+                            </div>
+                            <div style="display:flex;gap:6px;">
+                                <button onclick="verXmlSngpc('${envio.id}')" style="background:#4527A0;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:10px;"><i class="fas fa-code"></i> XML</button>
+                                ${envio.hash ? `<button onclick="consultarEnvioSngpc('${envio.id}')" style="background:#1565C0;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:10px;"><i class="fas fa-search"></i> Consultar</button>` : ''}
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#6b7280;">
+                            <span><i class="fas fa-user" style="margin-right:3px;"></i> ${envio.paciente_id || '-'}</span>
+                            <span><i class="fas fa-file-prescription" style="margin-right:3px;"></i> ${envio.prescricao_id || '-'}</span>
+                            <span><i class="fas fa-server" style="margin-right:3px;"></i> HTTP ${envio.status_code || '-'}</span>
+                            ${envio.hash ? `<span><i class="fas fa-hashtag" style="margin-right:3px;"></i> ${envio.hash.substring(0,16)}...</span>` : ''}
+                        </div>
+                        ${envio.status === 'erro' ? `<div style="background:#FFF3E0;border-radius:6px;padding:6px 10px;margin-top:8px;font-size:10px;color:#BF360C;">${(envio.response||'').substring(0,200)}</div>` : ''}
+                    </div>`;
+                }).join('');
+            }
+
+            async function testarAuthSngpc() {
+                const btn = document.getElementById('btn-test-sngpc');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando...';
+                try {
+                    const resp = await fetch('/api/sngpc/auth/token', { method: 'POST' });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        btn.innerHTML = '<i class="fas fa-check-circle"></i> Conectado!';
+                        btn.style.background = '#2E7D32';
+                        alert('Conexão SNGPC OK!\n\nToken obtido: ' + (data.token_preview || ''));
+                    } else {
+                        btn.innerHTML = '<i class="fas fa-times-circle"></i> Falhou';
+                        btn.style.background = '#C62828';
+                        alert('Falha na autenticação SNGPC:\n\n' + (data.error || 'Erro desconhecido') + '\n\n' + (data.details || ''));
+                    }
+                } catch(e) {
+                    btn.innerHTML = '<i class="fas fa-times-circle"></i> Erro';
+                    btn.style.background = '#C62828';
+                    alert('Erro de conexão: ' + e.message);
+                }
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-plug" style="margin-right:4px;"></i> Testar Conexão';
+                    btn.style.background = '#00695C';
+                }, 3000);
+            }
+
+            function abrirConfigSngpc() {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:640px;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#4527A0,#7C4DFF);color:#fff;">
+                            <h2><i class="fas fa-cog"></i> Configurações SNGPC</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            <div style="background:#EDE7F6;border-radius:8px;padding:12px;margin-bottom:16px;font-size:11px;color:#4A148C;">
+                                <i class="fas fa-info-circle"></i> Credenciais OAuth2 do Portal de APIs ANVISA (api.anvisa.gov.br)
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">Client ID</label><input id="sngpc-client-id" value="${sngpcConfig.client_id||''}" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">Client Secret</label><input id="sngpc-client-secret" type="password" value="${sngpcConfig.client_secret||''}" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">CNPJ da Empresa <span style="color:red;">*</span></label><input id="sngpc-cnpj" value="${sngpcConfig.cnpj_empresa||''}" placeholder="00.000.000/0001-00" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">CPF Transmissor <span style="color:red;">*</span></label><input id="sngpc-cpf" value="${sngpcConfig.cpf_transmissor||''}" placeholder="000.000.000-00" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">E-mail Responsável</label><input id="sngpc-email" value="${sngpcConfig.email_responsavel||''}" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                <div style="display:flex;align-items:flex-end;gap:10px;">
+                                    <label style="font-size:11px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                                        <input type="checkbox" id="sngpc-auto" ${sngpcConfig.auto_envio ? 'checked' : ''} style="width:16px;height:16px;">
+                                        Envio automático à ANVISA
+                                    </label>
+                                </div>
+                            </div>
+                            <details style="margin-top:16px;">
+                                <summary style="font-size:11px;color:#6b7280;cursor:pointer;">Autenticação alternativa (usuário/senha)</summary>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;">
+                                    <div><label style="font-size:11px;font-weight:600;color:#333;">Usuário SNGPC</label><input id="sngpc-username" value="${sngpcConfig.username||''}" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                    <div><label style="font-size:11px;font-weight:600;color:#333;">Senha SNGPC</label><input id="sngpc-password" type="password" value="${sngpcConfig.password||''}" style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                </div>
+                            </details>
+                            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+                                <button onclick="this.closest('.modal-overlay').remove()" style="background:#6b7280;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:12px;">Cancelar</button>
+                                <button onclick="salvarConfigSngpc()" style="background:#4527A0;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-save" style="margin-right:4px;"></i> Salvar</button>
+                            </div>
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+            }
+
+            async function salvarConfigSngpc() {
+                const payload = {
+                    client_id: document.getElementById('sngpc-client-id').value.trim(),
+                    client_secret: document.getElementById('sngpc-client-secret').value.trim(),
+                    cnpj_empresa: document.getElementById('sngpc-cnpj').value.trim(),
+                    cpf_transmissor: document.getElementById('sngpc-cpf').value.trim(),
+                    email_responsavel: document.getElementById('sngpc-email').value.trim(),
+                    auto_envio: document.getElementById('sngpc-auto').checked,
+                    username: document.getElementById('sngpc-username').value.trim(),
+                    password: document.getElementById('sngpc-password').value.trim()
+                };
+                try {
+                    const resp = await fetch('/api/sngpc/config', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        alert('Configuração SNGPC salva com sucesso!');
+                        document.querySelector('.modal-overlay').remove();
+                        carregarEnviosSngpc();
+                    } else {
+                        alert('Erro: ' + (data.error || 'Falha ao salvar'));
+                    }
+                } catch(e) {
+                    alert('Erro: ' + e.message);
+                }
+            }
+
+            function verXmlSngpc(envioId) {
+                const envio = sngpcEnvios.find(e => e.id === envioId);
+                if (!envio) return;
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                const xmlPreview = (envio.xml_preview || 'XML não disponível').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:700px;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#4527A0,#7C4DFF);color:#fff;">
+                            <h2><i class="fas fa-code"></i> XML SNGPC - ${envio.id}</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            <div style="display:flex;gap:12px;margin-bottom:12px;font-size:11px;">
+                                <span><strong>Status:</strong> ${envio.status}</span>
+                                <span><strong>HTTP:</strong> ${envio.status_code}</span>
+                                <span><strong>Paciente:</strong> ${envio.paciente_id}</span>
+                                ${envio.hash ? `<span><strong>Hash:</strong> ${envio.hash}</span>` : ''}
+                            </div>
+                            <pre style="background:#1a1a2e;color:#00ff88;padding:16px;border-radius:8px;overflow-x:auto;font-size:11px;line-height:1.5;white-space:pre-wrap;max-height:400px;overflow-y:auto;">${xmlPreview}</pre>
+                            ${envio.response ? `<div style="margin-top:12px;"><strong style="font-size:11px;">Resposta ANVISA:</strong><pre style="background:#FFF3E0;padding:10px;border-radius:6px;font-size:10px;white-space:pre-wrap;max-height:150px;overflow-y:auto;">${(envio.response||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : ''}
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+            }
+
+            async function consultarEnvioSngpc(envioId) {
+                const envio = sngpcEnvios.find(e => e.id === envioId);
+                if (!envio || !envio.hash) return alert('Hash do envio não disponível');
+                try {
+                    const resp = await fetch(`/api/sngpc/consultar?hash=${envio.hash}`);
+                    const data = await resp.json();
+                    alert('Resultado da consulta SNGPC:\n\n' + JSON.stringify(data, null, 2));
+                } catch(e) {
+                    alert('Erro: ' + e.message);
+                }
+            }
+
+            async function enviarSngpcManual(pacienteId) {
+                if (!confirm('Gerar e enviar XML SNGPC para este paciente?')) return;
+                try {
+                    const resp = await fetch(`/api/sngpc/enviar/${pacienteId}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        alert('XML SNGPC enviado com sucesso!\n\nID: ' + (data.envio?.id || ''));
+                        carregarEnviosSngpc();
+                    } else {
+                        alert('Erro no envio SNGPC:\n\n' + (data.error || 'Erro desconhecido'));
+                    }
+                } catch(e) {
+                    alert('Erro: ' + e.message);
+                }
+            }
+
+            async function previewXmlSngpc(pacienteId) {
+                try {
+                    const resp = await fetch(`/api/sngpc/gerar-xml/${pacienteId}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+                    const data = await resp.json();
+                    if (data.error) return alert('Erro: ' + data.error);
+                    const modal = document.createElement('div');
+                    modal.className = 'modal-overlay';
+                    const xmlText = (data.xml || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width:700px;">
+                            <div class="modal-header" style="background:linear-gradient(135deg,#4527A0,#7C4DFF);color:#fff;">
+                                <h2><i class="fas fa-code"></i> Preview XML SNGPC</h2>
+                                <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="modal-body" style="padding:20px;">
+                                <pre style="background:#1a1a2e;color:#00ff88;padding:16px;border-radius:8px;overflow-x:auto;font-size:11px;line-height:1.5;white-space:pre-wrap;max-height:500px;overflow-y:auto;">${xmlText}</pre>
+                                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+                                    <button onclick="this.closest('.modal-overlay').remove()" style="background:#6b7280;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;">Fechar</button>
+                                    <button onclick="enviarSngpcManual('${pacienteId}');this.closest('.modal-overlay').remove();" style="background:#4527A0;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-paper-plane" style="margin-right:4px;"></i> Enviar à ANVISA</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    document.body.appendChild(modal);
+                } catch(e) {
+                    alert('Erro: ' + e.message);
+                }
+            }
+
             function abrirGuiaAnvisa() {
                 const modal = document.createElement('div');
                 modal.className = 'modal-overlay';
@@ -14138,6 +14447,17 @@
             window.abrirCatalogoAnvisa = abrirCatalogoAnvisa;
             window.copiarDadosAnvisa = copiarDadosAnvisa;
             window.abrirPortalAnvisa = abrirPortalAnvisa;
+
+            // SNGPC exports
+            window.carregarEnviosSngpc = carregarEnviosSngpc;
+            window.renderSngpcEnvios = renderSngpcEnvios;
+            window.testarAuthSngpc = testarAuthSngpc;
+            window.abrirConfigSngpc = abrirConfigSngpc;
+            window.salvarConfigSngpc = salvarConfigSngpc;
+            window.verXmlSngpc = verXmlSngpc;
+            window.consultarEnvioSngpc = consultarEnvioSngpc;
+            window.enviarSngpcManual = enviarSngpcManual;
+            window.previewXmlSngpc = previewXmlSngpc;
 
             window.onEventoTipoChange = onEventoTipoChange;
             window.excluirEventoTimeline = excluirEventoTimeline;

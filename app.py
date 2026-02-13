@@ -83,6 +83,8 @@ JUDICIAL_FILE = os.path.join(DATA_DIR, 'judicial_processos.json')
 ADVOGADOS_FILE = os.path.join(DATA_DIR, 'advogados.json')
 ANVISA_FILE = os.path.join(DATA_DIR, 'anvisa_solicitacoes.json')
 ANVISA_PRODUTOS_FILE = os.path.join(DATA_DIR, 'anvisa_produtos_cannabis.json')
+SNGPC_CONFIG_FILE = os.path.join(DATA_DIR, 'sngpc_config.json')
+SNGPC_ENVIOS_FILE = os.path.join(DATA_DIR, 'sngpc_envios.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -266,6 +268,227 @@ def load_anvisa_produtos():
 
 def save_anvisa_produtos(data):
     _save_json_file(ANVISA_PRODUTOS_FILE, data)
+
+
+def _criar_anvisa_automatica(pac_id, medico_info=None, medicamentos=None):
+    """Auto-create ANVISA solicitation with all data from platform.
+    Called when: 1) prescription is created, 2) patient moves to documentacao_anvisa stage.
+    Returns the created solicitation or None if already exists / patient not found.
+    """
+    # 1. Load patient data
+    pacientes = load_pacientes()
+    pac = next((p for p in pacientes if p.get('id') == pac_id), None)
+    if not pac:
+        logger.warning(f"ANVISA auto: paciente {pac_id} não encontrado")
+        return None
+
+    # 2. Check if ANVISA solicitation already exists for this patient (avoid duplicates)
+    solicitacoes = load_anvisa_solicitacoes()
+    existente = next((s for s in solicitacoes if s.get('paciente_id') == pac_id
+                      and s.get('status') not in ('aprovada', 'negada')), None)
+    if existente:
+        logger.info(f"ANVISA auto: solicitação já existe para paciente {pac_id} -> {existente.get('id')}")
+        return existente
+
+    # 3. Resolve doctor data
+    prescritor_nome = ''
+    prescritor_crm = ''
+    prescritor_telefone = ''
+    prescritor_email = ''
+
+    if medico_info:
+        prescritor_nome = medico_info.get('nome', '')
+        prescritor_crm = medico_info.get('crm', '')
+        prescritor_telefone = medico_info.get('telefone', '')
+        prescritor_email = medico_info.get('email', '')
+
+    # If we have medico_id but missing details, fetch from doctors.json
+    medico_id = (medico_info or {}).get('id', '') or pac.get('medico_responsavel_id', '')
+    if medico_id and (not prescritor_nome or not prescritor_telefone):
+        doctors = load_doctors()
+        doc = next((d for d in doctors if str(d.get('id')) == str(medico_id)), None)
+        if doc:
+            prescritor_nome = prescritor_nome or doc.get('nome', '')
+            prescritor_crm = prescritor_crm or doc.get('crm', '')
+            prescritor_telefone = prescritor_telefone or doc.get('telefone', '')
+            prescritor_email = prescritor_email or doc.get('email', '')
+
+    # Fallback to patient's medico_responsavel_nome
+    if not prescritor_nome:
+        prescritor_nome = pac.get('medico_responsavel_nome', '')
+
+    # 4. Build product info from medications
+    produto_nome = ''
+    produto_marca = ''
+    produto_registro = ''
+    produto_processo = ''
+
+    if medicamentos and len(medicamentos) > 0:
+        nomes_meds = [m.get('nome', '') for m in medicamentos if m.get('nome')]
+        produto_nome = ', '.join(nomes_meds)
+
+    # Try to find last prescription if no medications provided
+    if not produto_nome:
+        prescricoes = load_prescricoes()
+        presc_pac = [p for p in prescricoes if p.get('paciente_id') == pac_id]
+        if presc_pac:
+            ultima = sorted(presc_pac, key=lambda x: x.get('created_at', ''), reverse=True)[0]
+            meds = ultima.get('medicamentos', [])
+            if meds:
+                produto_nome = ', '.join([m.get('nome', '') for m in meds if m.get('nome')])
+                medicamentos = meds  # Save for later use
+
+    # Try to match with ANVISA catalog for registro/processo
+    if produto_nome:
+        produtos_anvisa = load_anvisa_produtos()
+        for prod in produtos_anvisa:
+            nome_prod = prod.get('nome_produto', '').lower()
+            if any(n.lower() in nome_prod or nome_prod in n.lower()
+                   for n in produto_nome.split(', ') if n):
+                produto_registro = prod.get('numero_registro', '')
+                produto_processo = prod.get('numero_processo', '')
+                produto_marca = prod.get('nome_empresa', '') or produto_marca
+                break
+
+    # 5. Check prontuário for existing documents
+    prontuarios = load_prontuarios()
+    pron_pac = [p for p in prontuarios if p.get('paciente_id') == pac_id]
+
+    doc_identidade = False
+    doc_comprovante = False
+    doc_receita = False
+    doc_procuracao = False
+
+    for pron in pron_pac:
+        tipo = pron.get('tipo', '')
+        titulo = (pron.get('titulo', '') or '').lower()
+        descricao_pron = (pron.get('descricao', '') or '').lower()
+        texto = titulo + ' ' + descricao_pron
+
+        # Auto-detect document types by tipo and keywords
+        if tipo == 'receituario' or 'receita' in texto or 'prescri' in texto:
+            doc_receita = True
+        if 'identidade' in texto or 'rg' in texto or 'cnh' in texto or 'documento' in texto:
+            doc_identidade = True
+        if 'comprovante' in texto or 'endereco' in texto or 'residencia' in texto:
+            doc_comprovante = True
+        if 'procuracao' in texto or 'procuração' in texto or 'responsavel' in texto:
+            doc_procuracao = True
+
+    # A prescription was just created → doc_receita is true
+    if medicamentos:
+        doc_receita = True
+
+    # Determine initial status based on documents
+    docs_count = sum([doc_identidade, doc_comprovante, doc_receita, doc_procuracao])
+    # Receita is mandatory; identity + comprovante make it ready
+    if doc_receita and doc_identidade and doc_comprovante:
+        status_inicial = 'documentos_prontos'
+    else:
+        status_inicial = 'pendente_documentos'
+
+    # 6. Determine solicitante info
+    solicitante_tipo = 'proprio'
+    solicitante_nome = pac.get('nome', '')
+    if pac.get('responsavel_nome'):
+        solicitante_tipo = 'responsavel'
+        solicitante_nome = pac.get('responsavel_nome', '')
+
+    # 7. Build observations with auto-fill details
+    obs_parts = ['[Solicitação criada automaticamente pela plataforma]']
+    if medicamentos:
+        for med in medicamentos:
+            med_line = f"- {med.get('nome', '')}"
+            if med.get('dosagem'):
+                med_line += f" | Dosagem: {med['dosagem']}"
+            if med.get('posologia'):
+                med_line += f" | Posologia: {med['posologia']}"
+            if med.get('quantidade'):
+                med_line += f" | Qtd: {med['quantidade']}"
+            if med.get('duracao'):
+                med_line += f" | Duração: {med['duracao']}"
+            obs_parts.append(med_line)
+
+    docs_faltando = []
+    if not doc_identidade:
+        docs_faltando.append('Documento de Identidade')
+    if not doc_comprovante:
+        docs_faltando.append('Comprovante de Endereço')
+    if not doc_receita:
+        docs_faltando.append('Receita Médica')
+    if docs_faltando:
+        obs_parts.append(f"Documentos pendentes: {', '.join(docs_faltando)}")
+
+    # 8. Generate solicitation ID
+    sol_id = f'ANV{len(solicitacoes)+1:05d}'
+
+    sol = {
+        'id': sol_id,
+        'paciente_id': pac_id,
+        'paciente_nome': pac.get('nome', ''),
+        'paciente_cpf': pac.get('cpf', ''),
+        'tipo_solicitacao': 'inicial',
+        'produto': produto_nome,
+        'produto_marca': produto_marca or 'USAHEMP',
+        'produto_registro': produto_registro,
+        'produto_processo': produto_processo,
+        'prescritor_nome': prescritor_nome,
+        'prescritor_crm': prescritor_crm,
+        'prescritor_telefone': prescritor_telefone,
+        'prescritor_email': prescritor_email,
+        'protocolo_anvisa': '',
+        'status': status_inicial,
+        'doc_identidade': doc_identidade,
+        'doc_comprovante': doc_comprovante,
+        'doc_receita': doc_receita,
+        'doc_procuracao': doc_procuracao,
+        'solicitante_tipo': solicitante_tipo,
+        'solicitante_nome': solicitante_nome,
+        'observacoes': '\n'.join(obs_parts),
+        'auto_criada': True,
+        'historico': [{
+            'data': datetime.now(timezone.utc).isoformat(),
+            'acao': 'Solicitação criada automaticamente com dados da plataforma',
+            'status': status_inicial
+        }],
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+
+    solicitacoes.append(sol)
+    save_anvisa_solicitacoes(solicitacoes)
+
+    # 9. Add timeline event
+    add_timeline_event(pac_id, 'anvisa', 'Solicitação ANVISA criada automaticamente',
+        f'Solicitação {sol_id} criada com dados preenchidos. Status: {status_inicial}. '
+        f'Produto: {produto_nome or "N/A"}. Prescritor: {prescritor_nome or "N/A"}.')
+
+    logger.info(f"✅ ANVISA auto: solicitação {sol_id} criada para paciente {pac_id} ({pac.get('nome','')}) - status: {status_inicial}")
+    return sol
+
+
+def load_sngpc_config():
+    return _load_json_file(SNGPC_CONFIG_FILE, {
+        'client_id': '11896516610',
+        'client_secret': 'Yt5wjfQbnpV1qZfGklvbECnF5aAilAND',
+        'auth_url': 'https://acesso.prd.apps.anvisa.gov.br/auth/realms/externo/protocol/openid-connect/token',
+        'cnpj_empresa': '',
+        'cpf_transmissor': '',
+        'email_responsavel': '',
+        'username': '',
+        'password': '',
+        'auto_envio': False,
+        'base_url': 'https://sngpc-api.anvisa.gov.br'
+    })
+
+def save_sngpc_config(data):
+    _save_json_file(SNGPC_CONFIG_FILE, data)
+
+def load_sngpc_envios():
+    return _load_json_file(SNGPC_ENVIOS_FILE, [])
+
+def save_sngpc_envios(data):
+    _save_json_file(SNGPC_ENVIOS_FILE, data)
 
 def load_webhooks_config():
     return _load_json_file(WEBHOOKS_CONFIG_FILE, {'prescricao_url': '', 'prescricao_ativo': False})
@@ -777,6 +1000,411 @@ def copiar_dados_anvisa(sol_id):
 ▶ OBSERVAÇÕES: {sol.get('observacoes','')}
 ═══════════════════════════════════════"""
     return jsonify({'texto': texto})
+
+
+# ===== SNGPC - SISTEMA NACIONAL DE GERENCIAMENTO DE PRODUTOS CONTROLADOS =====
+
+def _gerar_xml_sngpc_venda(pac_id, prescricao_id=None):
+    """Generate SNGPC XML for a medication sale to consumer.
+    Returns the XML string and metadata dict, or (None, error_msg).
+    """
+    # Load patient data
+    pacientes = load_pacientes()
+    pac = next((p for p in pacientes if p.get('id') == pac_id), None)
+    if not pac:
+        return None, 'Paciente não encontrado'
+
+    # Load prescription (latest or specific)
+    prescricoes = load_prescricoes()
+    if prescricao_id:
+        presc = next((p for p in prescricoes if p.get('id') == prescricao_id), None)
+    else:
+        presc_pac = [p for p in prescricoes if p.get('paciente_id') == pac_id]
+        presc = sorted(presc_pac, key=lambda x: x.get('created_at', ''), reverse=True)[0] if presc_pac else None
+
+    if not presc:
+        return None, 'Nenhuma prescrição encontrada para este paciente'
+
+    # Load SNGPC config
+    config = load_sngpc_config()
+    cnpj_empresa = config.get('cnpj_empresa', '')
+    cpf_transmissor = config.get('cpf_transmissor', '')
+
+    if not cnpj_empresa or not cpf_transmissor:
+        return None, 'CNPJ da empresa e CPF do transmissor são obrigatórios na configuração SNGPC'
+
+    # Clean CPF/CNPJ (remove dots, dashes, slashes)
+    cnpj_clean = ''.join(c for c in cnpj_empresa if c.isdigit())
+    cpf_clean = ''.join(c for c in cpf_transmissor if c.isdigit())
+
+    # Dates
+    today = datetime.now().strftime('%Y-%m-%d')
+    data_prescricao = presc.get('data', today)
+    if 'T' in data_prescricao:
+        data_prescricao = data_prescricao.split('T')[0]
+
+    # Doctor info
+    medico_nome = presc.get('medico_nome', '').upper()
+    medico_crm = presc.get('medico_crm', '')
+    # Extract CRM number and UF
+    crm_numero = ''.join(c for c in medico_crm if c.isdigit())
+    crm_uf = ''
+    for uf in ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']:
+        if uf in medico_crm.upper():
+            crm_uf = uf
+            break
+    if not crm_uf:
+        crm_uf = 'SP'  # Default
+
+    # Patient/Buyer info
+    paciente_nome = pac.get('nome', '').upper()
+    paciente_cpf = ''.join(c for c in pac.get('cpf', '') if c.isdigit())
+    # Determine UF from address
+    paciente_uf = 'SP'  # Default
+    endereco = pac.get('endereco', '').upper()
+    for uf in ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']:
+        if f' {uf}' in endereco or f'-{uf}' in endereco or f'/{uf}' in endereco:
+            paciente_uf = uf
+            break
+
+    # Build medication entries
+    medicamentos = presc.get('medicamentos', [])
+    if not medicamentos:
+        return None, 'Prescrição sem medicamentos'
+
+    # Try to match with ANVISA catalog for registroMS
+    produtos_anvisa = load_anvisa_produtos()
+
+    med_xml_entries = []
+    for med in medicamentos:
+        nome_med = med.get('nome', '')
+        registro_ms = ''
+        # Try to find in ANVISA catalog
+        for prod in produtos_anvisa:
+            nome_prod = prod.get('nome_produto', '').lower()
+            if nome_med.lower() in nome_prod or nome_prod in nome_med.lower():
+                registro_ms = prod.get('numero_registro', '')
+                break
+
+        # Pad registroMS to 13 digits with leading 1
+        if not registro_ms:
+            registro_ms = '1000000000000'  # Placeholder
+        registro_ms = registro_ms.replace('.', '').replace('-', '').replace('/', '')
+        if len(registro_ms) < 13:
+            registro_ms = '1' + registro_ms.zfill(12)
+
+        quantidade = med.get('quantidade', '1')
+        try:
+            qtd = int(str(quantidade).replace(' ', '').split()[0])
+        except (ValueError, IndexError):
+            qtd = 1
+
+        lote = med.get('lote', 'SL001')
+        uso_prolongado = 'S'  # Cannabis is typically prolonged use
+
+        med_xml_entries.append(f"""      <saidaMedicamentoVendaAoConsumidor>
+        <tipoReceituarioMedicamento>1</tipoReceituarioMedicamento>
+        <numeroNotificacaoMedicamento/>
+        <dataPrescricaoMedicamento>{data_prescricao}</dataPrescricaoMedicamento>
+        <prescritorMedicamento>
+          <nomePrescritor>{medico_nome}</nomePrescritor>
+          <numeroRegistroProfissional>{crm_numero}</numeroRegistroProfissional>
+          <conselhoProfissional>CRM</conselhoProfissional>
+          <UFConselho>{crm_uf}</UFConselho>
+        </prescritorMedicamento>
+        <usoMedicamento>1</usoMedicamento>
+        <compradorMedicamento>
+          <nomeComprador>{paciente_nome}</nomeComprador>
+          <tipoDocumento>2</tipoDocumento>
+          <numeroDocumento>{paciente_cpf}</numeroDocumento>
+          <orgaoExpedidor>SSP</orgaoExpedidor>
+          <UFEmissaoDocumento>{paciente_uf}</UFEmissaoDocumento>
+        </compradorMedicamento>
+        <medicamentoVenda>
+          <usoProlongado>{uso_prolongado}</usoProlongado>
+          <registroMSMedicamento>{registro_ms}</registroMSMedicamento>
+          <numeroLoteMedicamento>{lote}</numeroLoteMedicamento>
+          <quantidadeMedicamento>{qtd}</quantidadeMedicamento>
+          <unidadeMedidaMedicamento>2</unidadeMedidaMedicamento>
+        </medicamentoVenda>
+        <dataVendaMedicamento>{today}</dataVendaMedicamento>
+      </saidaMedicamentoVendaAoConsumidor>""")
+
+    # Build full XML
+    xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<mensagemSNGPC xmlns="urn:sngpc-schema">
+  <cabecalho>
+    <cnpjEmissor>{cnpj_clean}</cnpjEmissor>
+    <cpfTransmissor>{cpf_clean}</cpfTransmissor>
+    <dataInicio>{today}</dataInicio>
+    <dataFim>{today}</dataFim>
+  </cabecalho>
+  <corpo>
+    <medicamentos>
+{''.join(med_xml_entries)}
+    </medicamentos>
+    <insumos/>
+  </corpo>
+</mensagemSNGPC>"""
+
+    metadata = {
+        'paciente_id': pac_id,
+        'paciente_nome': paciente_nome,
+        'prescricao_id': presc.get('id', ''),
+        'medicamentos_count': len(medicamentos),
+        'registro_ms_list': [m.get('nome', '') for m in medicamentos],
+        'data_geracao': datetime.now(timezone.utc).isoformat()
+    }
+
+    return xml_content, metadata
+
+
+def _obter_token_sngpc():
+    """Get authentication token from SNGPC API via OAuth2 client_credentials flow."""
+    config = load_sngpc_config()
+    client_id = config.get('client_id', '')
+    client_secret = config.get('client_secret', '')
+    auth_url = config.get('auth_url', 'https://acesso.prd.apps.anvisa.gov.br/auth/realms/externo/protocol/openid-connect/token')
+    base_url = config.get('base_url', 'https://sngpc-api.anvisa.gov.br')
+    username = config.get('username', '')
+    password = config.get('password', '')
+
+    # Method 1 (primary): OAuth2 client_credentials via Keycloak
+    if client_id and client_secret:
+        try:
+            form_data = {
+                'grant_type': 'client_credentials',
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'scope': 'openid'
+            }
+            resp = http_requests.post(auth_url,
+                data=form_data,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                timeout=30)
+            if resp.status_code == 200:
+                token_data = resp.json()
+                access_token = token_data.get('access_token', '')
+                if access_token:
+                    logger.info(f"✅ SNGPC OAuth2 token obtido com sucesso (expira em {token_data.get('expires_in', '?')}s)")
+                    return {'token': access_token, 'expires_in': token_data.get('expires_in', 300), 'token_type': token_data.get('token_type', 'Bearer')}
+                return {'error': 'Token vazio na resposta', 'details': str(token_data)[:500]}
+            logger.error(f"SNGPC OAuth2 auth failed: {resp.status_code} - {resp.text[:300]}")
+            return {'error': f'Falha OAuth2 Keycloak: HTTP {resp.status_code}', 'details': resp.text[:500]}
+        except Exception as e:
+            logger.error(f"SNGPC OAuth2 error: {e}")
+            return {'error': f'Erro de conexão OAuth2: {str(e)}'}
+
+    # Method 2 (fallback): Username/Password authentication
+    if username and password:
+        url = f"{base_url}/v1/Authentication/GetToken"
+        try:
+            resp = http_requests.post(url,
+                json={'username': username, 'password': password},
+                headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+                timeout=30)
+            if resp.status_code == 200:
+                data = resp.json() if resp.headers.get('content-type', '').startswith('application/json') else {}
+                return {'token': data.get('token', data.get('access_token', resp.text.strip('"')))}
+            logger.error(f"SNGPC user/pass auth failed: {resp.status_code}")
+            return {'error': f'Falha autenticação user/pass: HTTP {resp.status_code}', 'details': resp.text[:500]}
+        except Exception as e:
+            logger.error(f"SNGPC user/pass error: {e}")
+            return {'error': f'Erro de conexão: {str(e)}'}
+
+    return {'error': 'Credenciais SNGPC não configuradas (client_id/secret ou user/pass)'}
+
+
+def _enviar_xml_sngpc(xml_content, pac_id='', prescricao_id=''):
+    """Submit XML to SNGPC API and record the submission."""
+    config = load_sngpc_config()
+    base_url = config.get('base_url', 'https://sngpc-api.anvisa.gov.br')
+
+    # Get token
+    token_resp = _obter_token_sngpc()
+    if 'error' in token_resp:
+        return {'error': token_resp['error'], 'details': token_resp.get('details', '')}
+
+    token = token_resp.get('token', token_resp.get('access_token', ''))
+    if not token:
+        return {'error': 'Token não obtido da API SNGPC'}
+
+    # Submit XML
+    url = f"{base_url}/v1/FileXml/EnviarArquivoXmlSNGPC"
+    try:
+        resp = http_requests.post(url,
+            data=xml_content,
+            headers={
+                'Content-Type': 'application/json',
+                'Accept': 'text/plain',
+                'Authorization': f'Bearer {token}'
+            },
+            timeout=60)
+
+        # Record submission
+        envios = load_sngpc_envios()
+        envio = {
+            'id': f'SNGPC{len(envios)+1:05d}',
+            'paciente_id': pac_id,
+            'prescricao_id': prescricao_id,
+            'status_code': resp.status_code,
+            'response': resp.text[:1000],
+            'hash': '',
+            'xml_preview': xml_content[:500],
+            'status': 'enviado' if resp.status_code == 200 else 'erro',
+            'created_at': datetime.now(timezone.utc).isoformat()
+        }
+
+        # Try to extract hash from response
+        try:
+            resp_data = resp.json()
+            envio['hash'] = resp_data.get('hash', resp_data.get('Hash', ''))
+            envio['response_data'] = resp_data
+        except Exception:
+            envio['response_data'] = resp.text[:1000]
+
+        envios.append(envio)
+        save_sngpc_envios(envios)
+
+        if resp.status_code == 200:
+            logger.info(f"✅ SNGPC XML enviado com sucesso para paciente {pac_id}")
+            add_timeline_event(pac_id, 'sngpc', 'XML SNGPC enviado com sucesso',
+                f'Envio {envio["id"]} realizado à ANVISA/SNGPC')
+            return {'ok': True, 'envio': envio}
+        else:
+            logger.error(f"❌ SNGPC envio falhou: {resp.status_code} - {resp.text[:200]}")
+            return {'error': f'Envio falhou: HTTP {resp.status_code}', 'envio': envio}
+
+    except Exception as e:
+        logger.error(f"❌ SNGPC envio error: {e}")
+        return {'error': f'Erro ao enviar XML: {str(e)}'}
+
+
+def _auto_enviar_sngpc(pac_id):
+    """Auto-generate and submit SNGPC if auto_envio is enabled."""
+    config = load_sngpc_config()
+    if not config.get('auto_envio'):
+        return None
+    if not config.get('cnpj_empresa') or not config.get('cpf_transmissor'):
+        logger.warning("SNGPC auto: CNPJ/CPF não configurados")
+        return None
+
+    xml_content, result = _gerar_xml_sngpc_venda(pac_id)
+    if xml_content is None:
+        logger.warning(f"SNGPC auto: não foi possível gerar XML - {result}")
+        return None
+
+    return _enviar_xml_sngpc(xml_content, pac_id, result.get('prescricao_id', ''))
+
+
+# --- SNGPC API Endpoints ---
+
+@app.route('/api/sngpc/config', methods=['GET'])
+def get_sngpc_config():
+    """Get SNGPC configuration (masks sensitive data)"""
+    config = load_sngpc_config()
+    safe = dict(config)
+    if safe.get('password'):
+        safe['password'] = '••••••••'
+    if safe.get('client_secret'):
+        safe['client_secret'] = safe['client_secret'][:8] + '••••••••'
+    return jsonify(safe)
+
+@app.route('/api/sngpc/config', methods=['PUT'])
+def update_sngpc_config():
+    """Update SNGPC configuration"""
+    config = load_sngpc_config()
+    data = request.get_json(silent=True) or {}
+    for k, v in data.items():
+        if k == 'password' and v == '••••••••':
+            continue  # Don't overwrite with mask
+        if k == 'client_secret' and '••••' in v:
+            continue
+        config[k] = v
+    save_sngpc_config(config)
+    return jsonify({'ok': True, 'message': 'Configuração SNGPC atualizada'})
+
+@app.route('/api/sngpc/auth/token', methods=['POST'])
+def sngpc_get_token():
+    """Test SNGPC authentication and get token"""
+    result = _obter_token_sngpc()
+    if 'error' in result:
+        return jsonify(result), 400
+    return jsonify({'ok': True, 'token_preview': str(result.get('token', ''))[:20] + '...', 'message': 'Autenticação SNGPC bem-sucedida'})
+
+@app.route('/api/sngpc/gerar-xml/<pac_id>', methods=['POST'])
+def sngpc_gerar_xml(pac_id):
+    """Generate SNGPC XML for a patient sale (preview, does not submit)"""
+    data = request.get_json(silent=True) or {}
+    prescricao_id = data.get('prescricao_id', None)
+    xml_content, result = _gerar_xml_sngpc_venda(pac_id, prescricao_id)
+    if xml_content is None:
+        return jsonify({'error': result}), 400
+    return jsonify({'xml': xml_content, 'metadata': result})
+
+@app.route('/api/sngpc/enviar/<pac_id>', methods=['POST'])
+def sngpc_enviar(pac_id):
+    """Generate and submit SNGPC XML for a patient"""
+    data = request.get_json(silent=True) or {}
+    prescricao_id = data.get('prescricao_id', None)
+
+    xml_content, result = _gerar_xml_sngpc_venda(pac_id, prescricao_id)
+    if xml_content is None:
+        return jsonify({'error': result}), 400
+
+    envio_result = _enviar_xml_sngpc(xml_content, pac_id, result.get('prescricao_id', ''))
+    if 'error' in envio_result:
+        return jsonify(envio_result), 400
+    return jsonify(envio_result)
+
+@app.route('/api/sngpc/consultar', methods=['GET'])
+def sngpc_consultar():
+    """Query SNGPC submission status"""
+    email = request.args.get('email', '')
+    cnpj = request.args.get('cnpj', '')
+    hash_val = request.args.get('hash', '')
+
+    if not email or not cnpj or not hash_val:
+        # Return config defaults
+        config = load_sngpc_config()
+        if not email:
+            email = config.get('email_responsavel', '')
+        if not cnpj:
+            cnpj = ''.join(c for c in config.get('cnpj_empresa', '') if c.isdigit())
+
+    if not hash_val:
+        return jsonify({'error': 'Hash do envio é obrigatório'}), 400
+
+    config = load_sngpc_config()
+    base_url = config.get('base_url', 'https://sngpc-api.anvisa.gov.br')
+    url = f"{base_url}/v1/FileXml/ConsultaDadosArquivoXml/{email}/{cnpj}/{hash_val}"
+
+    try:
+        resp = http_requests.get(url,
+            headers={'Accept': 'text/plain'},
+            timeout=30)
+        if resp.status_code == 200:
+            try:
+                return jsonify(resp.json())
+            except Exception:
+                return jsonify({'response': resp.text})
+        return jsonify({'error': f'Consulta falhou: HTTP {resp.status_code}', 'response': resp.text[:500]}), resp.status_code
+    except Exception as e:
+        return jsonify({'error': f'Erro na consulta: {str(e)}'}), 500
+
+@app.route('/api/sngpc/envios', methods=['GET'])
+def sngpc_list_envios():
+    """List all SNGPC submissions"""
+    return jsonify(load_sngpc_envios())
+
+@app.route('/api/sngpc/envios/<envio_id>', methods=['GET'])
+def sngpc_get_envio(envio_id):
+    """Get a specific SNGPC submission"""
+    envios = load_sngpc_envios()
+    envio = next((e for e in envios if e.get('id') == envio_id), None)
+    if not envio:
+        return jsonify({'error': 'Envio não encontrado'}), 404
+    return jsonify(envio)
 
 
 # ===== LEADS (Pacientes) API =====
@@ -3044,6 +3672,21 @@ def mover_paciente_kanban(pac_id):
     }
     add_timeline_event(pac_id, 'evolucao', 'Movimentação no Kanban',
         f'Paciente movido de "{etapa_labels.get(etapa_anterior, etapa_anterior)}" para "{etapa_labels.get(nova_etapa, nova_etapa)}"')
+
+    # Auto-create ANVISA solicitation when patient enters documentacao_anvisa stage
+    if nova_etapa == 'documentacao_anvisa':
+        try:
+            anvisa_sol = _criar_anvisa_automatica(pac_id)
+            if anvisa_sol:
+                logger.info(f"✅ ANVISA auto: solicitação criada via kanban para paciente {pac_id}")
+                # Auto-trigger SNGPC if configured
+                try:
+                    _auto_enviar_sngpc(pac_id)
+                except Exception as sngpc_err:
+                    logger.error(f"SNGPC auto-envio error: {sngpc_err}")
+        except Exception as e:
+            logger.error(f"❌ Erro ao criar ANVISA automatica via kanban: {e}")
+
     return jsonify(pacientes[idx])
 
 
@@ -3168,10 +3811,41 @@ def criar_prescricao(pac_id):
     except Exception as e:
         logger.error(f"❌ Erro ao enviar webhook de prescrição: {e}")
 
+    # Auto-create ANVISA solicitation with prescription data
+    anvisa_auto = None
+    try:
+        medico_info_anvisa = {'id': medico_id, 'nome': medico_nome, 'crm': medico_crm}
+        # Try to get full doctor info
+        if medico_id:
+            doctors_list = load_doctors()
+            doc_full = next((d for d in doctors_list if str(d.get('id')) == str(medico_id)), None)
+            if doc_full:
+                medico_info_anvisa['telefone'] = doc_full.get('telefone', '')
+                medico_info_anvisa['email'] = doc_full.get('email', '')
+        anvisa_auto = _criar_anvisa_automatica(pac_id, medico_info=medico_info_anvisa, medicamentos=medicamentos_prescritos)
+        # Auto-move patient to documentacao_anvisa if at orcamento_prescricao
+        if pac.get('kanban_etapa') == 'orcamento_prescricao' and anvisa_auto:
+            pacientes_reload = load_pacientes()
+            idx_pac = next((i for i, p in enumerate(pacientes_reload) if p.get('id') == pac_id), None)
+            if idx_pac is not None:
+                pacientes_reload[idx_pac]['kanban_etapa'] = 'documentacao_anvisa'
+                pacientes_reload[idx_pac]['updated_at'] = datetime.now(timezone.utc).isoformat()
+                save_pacientes(pacientes_reload)
+                add_timeline_event(pac_id, 'evolucao', 'Movimentação automática no Kanban',
+                    'Paciente movido automaticamente para "Documentação Anvisa" após prescrição')
+        # Auto-trigger SNGPC if configured
+        try:
+            _auto_enviar_sngpc(pac_id)
+        except Exception as sngpc_err:
+            logger.error(f"SNGPC auto-envio error: {sngpc_err}")
+    except Exception as e:
+        logger.error(f"❌ Erro auto-ANVISA/SNGPC na prescrição: {e}")
+
     return jsonify({
         'prescricao': prescricao,
         'prontuario': pron_record,
-        'message': 'Prescrição assinada e salva no receituário com sucesso'
+        'anvisa_auto': anvisa_auto.get('id') if anvisa_auto else None,
+        'message': 'Prescrição assinada e salva no receituário com sucesso' + (' | Solicitação ANVISA criada automaticamente' if anvisa_auto else '')
     }), 201
 
 
