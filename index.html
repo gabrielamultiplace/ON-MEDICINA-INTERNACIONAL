@@ -2456,6 +2456,9 @@
                     <button class="btn-hero imp-tab-btn" data-imp-tab="importacoes" style="font-size:13px;padding:8px 20px;background:#e67e22;">
                         <i class="fas fa-truck"></i> Importações
                     </button>
+                    <button class="btn-hero imp-tab-btn" data-imp-tab="anvisa" style="font-size:13px;padding:8px 20px;background:#C62828;">
+                        <i class="fas fa-shield-alt"></i> Autorizações ANVISA
+                    </button>
                 </div>
             </div>
             <div class="page-body">
@@ -2532,6 +2535,77 @@
                             <div class="kanban-cards"></div>
                             <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Autorizações ANVISA -->
+                <div id="imp-tab-anvisa" class="imp-tab-content" style="display:none;">
+                    <!-- Header + Stats -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="background:linear-gradient(135deg,#C62828,#E53935);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-shield-alt" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <h4 style="margin:0;color:#333;font-size:16px;">Autorizações de Importação ANVISA</h4>
+                                <p style="margin:0;color:#6b7280;font-size:12px;">Controle de solicitações de importação de produtos de cannabis via portal gov.br</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="abrirGuiaAnvisa()" style="background:#1565C0;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-book" style="margin-right:4px;"></i> Guia Passo a Passo</button>
+                            <button onclick="abrirModalNovaSolicitacaoAnvisa()" style="background:#C62828;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-plus-circle" style="margin-right:4px;"></i> Nova Solicitação</button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div id="anvisa-stats-bar" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;">
+                        <div style="background:linear-gradient(135deg,#5E35B1,#7C4DFF);color:#fff;padding:12px;border-radius:10px;text-align:center;">
+                            <div style="font-size:22px;font-weight:800;" id="anv-stat-total">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Total</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#E65100,#FF6D00);color:#fff;padding:12px;border-radius:10px;text-align:center;">
+                            <div style="font-size:22px;font-weight:800;" id="anv-stat-pendente">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Pend. Documentos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#1565C0,#1E88E5);color:#fff;padding:12px;border-radius:10px;text-align:center;">
+                            <div style="font-size:22px;font-weight:800;" id="anv-stat-enviada">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Em Análise</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#2E7D32,#43A047);color:#fff;padding:12px;border-radius:10px;text-align:center;">
+                            <div style="font-size:22px;font-weight:800;" id="anv-stat-aprovada">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Aprovadas</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#C62828,#E53935);color:#fff;padding:12px;border-radius:10px;text-align:center;">
+                            <div style="font-size:22px;font-weight:800;" id="anv-stat-negada">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Negadas/Exigência</div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:#f9fafb;padding:10px 14px;border-radius:8px;border:1px solid #e5e7eb;">
+                        <div style="font-size:11px;font-weight:700;color:#374151;"><i class="fas fa-filter" style="margin-right:4px;"></i> Filtros:</div>
+                        <select id="anv-filtro-status" onchange="renderAnvisaLista()" style="padding:5px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;">
+                            <option value="todos">Todos Status</option>
+                            <option value="pendente_documentos">Pend. Documentos</option>
+                            <option value="documentos_prontos">Documentos Prontos</option>
+                            <option value="enviada_anvisa">Enviada à ANVISA</option>
+                            <option value="em_fila_analise">Aguardando em Fila</option>
+                            <option value="em_analise">Em Análise</option>
+                            <option value="exigencia">Exigência</option>
+                            <option value="aprovada">Aprovada</option>
+                            <option value="negada">Negada</option>
+                        </select>
+                        <select id="anv-filtro-tipo" onchange="renderAnvisaLista()" style="padding:5px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;">
+                            <option value="todos">Todos os Tipos</option>
+                            <option value="inicial">Inicial</option>
+                            <option value="renovacao">Renovação</option>
+                            <option value="alteracao">Alteração</option>
+                        </select>
+                        <input type="text" id="anv-filtro-busca" placeholder="Buscar paciente, protocolo..." oninput="renderAnvisaLista()" style="flex:1;min-width:180px;padding:5px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;">
+                        <button onclick="document.getElementById('anv-filtro-status').value='todos';document.getElementById('anv-filtro-tipo').value='todos';document.getElementById('anv-filtro-busca').value='';renderAnvisaLista();" style="background:#6b7280;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;"><i class="fas fa-times"></i> Limpar</button>
+                    </div>
+
+                    <!-- Lista Solicitações -->
+                    <div id="anvisa-lista" style="display:grid;grid-template-columns:1fr;gap:0;">
+                        <div style="padding:40px;text-align:center;color:#9ca3af;"><i class="fas fa-shield-alt" style="font-size:36px;opacity:0.3;"></i><div style="margin-top:10px;">Carregando solicitações ANVISA...</div></div>
                     </div>
                 </div>
             </div>
@@ -7244,6 +7318,7 @@
                     const tab = this.getAttribute('data-imp-tab');
                     document.querySelectorAll('.imp-tab-content').forEach(t => t.style.display = 'none');
                     document.getElementById('imp-tab-' + tab).style.display = '';
+                    if (tab === 'anvisa') carregarSolicitacoesAnvisa();
                 });
             });
 
@@ -13428,6 +13503,482 @@
             window.editarAdvogado = editarAdvogado;
             window.excluirAdvogado = excluirAdvogado;
             window.limparFormAdvogado = limparFormAdvogado;
+
+            // ========== ANVISA SOLICITAÇÕES MANAGEMENT ==========
+            let _anvisaData = [];
+
+            const ANVISA_STATUS_MAP = {
+                'pendente_documentos': { label: 'Pend. Documentos', color: '#E65100', icon: 'fa-folder-open' },
+                'documentos_prontos': { label: 'Docs Prontos', color: '#1565C0', icon: 'fa-check-double' },
+                'enviada_anvisa': { label: 'Enviada à ANVISA', color: '#5E35B1', icon: 'fa-paper-plane' },
+                'em_fila_analise': { label: 'Aguardando Fila', color: '#FF6F00', icon: 'fa-hourglass-start' },
+                'em_analise': { label: 'Em Análise', color: '#1565C0', icon: 'fa-search' },
+                'exigencia': { label: 'Exigência', color: '#C62828', icon: 'fa-exclamation-circle' },
+                'aprovada': { label: 'Aprovada', color: '#2E7D32', icon: 'fa-check-circle' },
+                'negada': { label: 'Negada', color: '#B71C1C', icon: 'fa-times-circle' }
+            };
+
+            async function carregarSolicitacoesAnvisa() {
+                try {
+                    _anvisaData = await apiRequest('/api/anvisa') || [];
+                    atualizarStatsAnvisa();
+                    renderAnvisaLista();
+                } catch(e) {
+                    console.error('Erro ao carregar ANVISA:', e);
+                    document.getElementById('anvisa-lista').innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;"><i class="fas fa-exclamation-triangle" style="font-size:24px;"></i><div style="margin-top:10px;">Erro ao carregar solicitações</div></div>';
+                }
+            }
+
+            function atualizarStatsAnvisa() {
+                const t = _anvisaData.length;
+                const pend = _anvisaData.filter(s => s.status === 'pendente_documentos' || s.status === 'documentos_prontos').length;
+                const analise = _anvisaData.filter(s => ['enviada_anvisa','em_fila_analise','em_analise'].includes(s.status)).length;
+                const aprov = _anvisaData.filter(s => s.status === 'aprovada').length;
+                const neg = _anvisaData.filter(s => s.status === 'negada' || s.status === 'exigencia').length;
+                document.getElementById('anv-stat-total').textContent = t;
+                document.getElementById('anv-stat-pendente').textContent = pend;
+                document.getElementById('anv-stat-enviada').textContent = analise;
+                document.getElementById('anv-stat-aprovada').textContent = aprov;
+                document.getElementById('anv-stat-negada').textContent = neg;
+            }
+
+            function renderAnvisaLista() {
+                const container = document.getElementById('anvisa-lista');
+                if (!container) return;
+                const fStatus = document.getElementById('anv-filtro-status')?.value || 'todos';
+                const fTipo = document.getElementById('anv-filtro-tipo')?.value || 'todos';
+                const fBusca = (document.getElementById('anv-filtro-busca')?.value || '').toLowerCase().trim();
+
+                let filtered = [..._anvisaData];
+                if (fStatus !== 'todos') filtered = filtered.filter(s => s.status === fStatus);
+                if (fTipo !== 'todos') filtered = filtered.filter(s => s.tipo_solicitacao === fTipo);
+                if (fBusca) filtered = filtered.filter(s =>
+                    (s.paciente_nome||'').toLowerCase().includes(fBusca) ||
+                    (s.protocolo_anvisa||'').toLowerCase().includes(fBusca) ||
+                    (s.produto||'').toLowerCase().includes(fBusca) ||
+                    (s.id||'').toLowerCase().includes(fBusca)
+                );
+
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div style="padding:40px;text-align:center;color:#9ca3af;"><i class="fas fa-inbox" style="font-size:28px;"></i><div style="margin-top:10px;">Nenhuma solicitação encontrada</div></div>';
+                    return;
+                }
+
+                container.innerHTML = filtered.map(sol => {
+                    const st = ANVISA_STATUS_MAP[sol.status] || { label: sol.status, color: '#6b7280', icon: 'fa-question' };
+                    const tipoLabel = sol.tipo_solicitacao === 'inicial' ? 'Inicial' : sol.tipo_solicitacao === 'renovacao' ? 'Renovação' : 'Alteração';
+                    const dias = sol.created_at ? Math.floor((new Date() - new Date(sol.created_at)) / (1000*60*60*24)) : 0;
+                    const docsOk = [sol.doc_identidade, sol.doc_comprovante, sol.doc_receita].filter(Boolean).length;
+                    const docsTotal = sol.solicitante_tipo === 'responsavel' ? 4 : 3;
+                    const docsOkFull = sol.solicitante_tipo === 'responsavel' ? [sol.doc_identidade, sol.doc_comprovante, sol.doc_receita, sol.doc_procuracao].filter(Boolean).length : docsOk;
+
+                    // Progress bar based on status
+                    const statusSteps = ['pendente_documentos','documentos_prontos','enviada_anvisa','em_fila_analise','em_analise','aprovada'];
+                    const currentStep = statusSteps.indexOf(sol.status);
+                    const progress = sol.status === 'negada' || sol.status === 'exigencia' ? 0 : Math.max(0, ((currentStep + 1) / statusSteps.length) * 100);
+
+                    return `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:10px;border-left:4px solid ${st.color};">
+                        <div style="display:flex;justify-content:space-between;align-items:start;">
+                            <div style="flex:1;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                    <div style="font-weight:700;font-size:14px;color:#111827;">${sol.paciente_nome || 'Paciente'}</div>
+                                    <span style="background:${st.color}15;color:${st.color};padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;"><i class="fas ${st.icon}"></i> ${st.label}</span>
+                                    <span style="background:#ede9fe;color:#5E35B1;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;">${tipoLabel}</span>
+                                </div>
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#6b7280;margin-bottom:8px;">
+                                    <span><i class="fas fa-hashtag" style="width:12px;"></i> ${sol.id}</span>
+                                    ${sol.protocolo_anvisa ? '<span><i class="fas fa-shield-alt" style="width:12px;"></i> Prot: ' + sol.protocolo_anvisa + '</span>' : ''}
+                                    <span><i class="fas fa-pills" style="width:12px;"></i> ${sol.produto || sol.produto_marca || 'N/A'}</span>
+                                    <span><i class="fas fa-user-md" style="width:12px;"></i> ${sol.prescritor_nome || 'N/A'} ${sol.prescritor_crm ? '- ' + sol.prescritor_crm : ''}</span>
+                                    <span><i class="fas fa-calendar" style="width:12px;"></i> ${dias} dias</span>
+                                </div>
+                                <!-- Document checklist mini -->
+                                <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                                    <span style="font-size:10px;font-weight:600;color:#374151;">Docs:</span>
+                                    <span style="font-size:10px;padding:1px 6px;border-radius:4px;${sol.doc_identidade?'background:#dcfce7;color:#16a34a;':'background:#fef2f2;color:#dc2626;'}"><i class="fas ${sol.doc_identidade?'fa-check':'fa-times'}"></i> RG/CNH</span>
+                                    <span style="font-size:10px;padding:1px 6px;border-radius:4px;${sol.doc_comprovante?'background:#dcfce7;color:#16a34a;':'background:#fef2f2;color:#dc2626;'}"><i class="fas ${sol.doc_comprovante?'fa-check':'fa-times'}"></i> Resid.</span>
+                                    <span style="font-size:10px;padding:1px 6px;border-radius:4px;${sol.doc_receita?'background:#dcfce7;color:#16a34a;':'background:#fef2f2;color:#dc2626;'}"><i class="fas ${sol.doc_receita?'fa-check':'fa-times'}"></i> Receita</span>
+                                    ${sol.solicitante_tipo === 'responsavel' ? '<span style="font-size:10px;padding:1px 6px;border-radius:4px;' + (sol.doc_procuracao?'background:#dcfce7;color:#16a34a;':'background:#fef2f2;color:#dc2626;') + '"><i class="fas ' + (sol.doc_procuracao?'fa-check':'fa-times') + '"></i> Procuração</span>' : ''}
+                                    <span style="font-size:10px;color:#6b7280;font-weight:600;">(${docsOkFull}/${docsTotal})</span>
+                                </div>
+                                <!-- Progress bar -->
+                                <div style="background:#e5e7eb;border-radius:4px;height:6px;width:100%;max-width:300px;">
+                                    <div style="background:${st.color};height:6px;border-radius:4px;width:${progress}%;transition:width 0.3s;"></div>
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+                                <select onchange="atualizarStatusAnvisa('${sol.id}',this.value)" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;font-size:10px;background:#fff;">
+                                    ${Object.entries(ANVISA_STATUS_MAP).map(([k,v]) => '<option value="' + k + '"' + (sol.status===k?' selected':'') + '>' + v.label + '</option>').join('')}
+                                </select>
+                                <div style="display:flex;gap:4px;">
+                                    <button onclick="editarAnvisa('${sol.id}')" style="background:#3b82f6;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Editar"><i class="fas fa-edit"></i></button>
+                                    <button onclick="verHistoricoAnvisa('${sol.id}')" style="background:#5E35B1;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Histórico"><i class="fas fa-history"></i></button>
+                                    <button onclick="excluirAnvisa('${sol.id}')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Excluir"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+            window.renderAnvisaLista = renderAnvisaLista;
+
+            async function atualizarStatusAnvisa(solId, novoStatus) {
+                try {
+                    await apiRequest('/api/anvisa/' + solId, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: novoStatus }) });
+                    carregarSolicitacoesAnvisa();
+                } catch(e) { alert('Erro ao atualizar status'); }
+            }
+
+            async function excluirAnvisa(solId) {
+                if (!confirm('Excluir esta solicitação ANVISA?')) return;
+                try {
+                    await apiRequest('/api/anvisa/' + solId, { method: 'DELETE' });
+                    carregarSolicitacoesAnvisa();
+                } catch(e) { alert('Erro ao excluir'); }
+            }
+
+            function verHistoricoAnvisa(solId) {
+                const sol = _anvisaData.find(s => s.id === solId);
+                if (!sol || !sol.historico) return;
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:500px;max-height:80vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#5E35B1,#7C4DFF);color:#fff;">
+                            <h2><i class="fas fa-history"></i> Histórico — ${sol.paciente_nome || sol.id}</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            ${sol.historico.map(h => {
+                                const hSt = ANVISA_STATUS_MAP[h.status] || { label: h.status, color: '#6b7280' };
+                                const dt = h.data ? new Date(h.data).toLocaleString('pt-BR') : '';
+                                return '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;"><div style="width:10px;height:10px;border-radius:50%;background:' + hSt.color + ';margin-top:5px;flex-shrink:0;"></div><div><div style="font-size:13px;font-weight:600;color:#111827;">' + h.acao + '</div><div style="font-size:11px;color:#6b7280;">' + dt + '</div></div></div>';
+                            }).join('')}
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+                modal.querySelector('.btn-close-modal').addEventListener('click', () => modal.remove());
+            }
+
+            async function editarAnvisa(solId) {
+                const sol = await apiRequest('/api/anvisa/' + solId);
+                if (!sol) return;
+                abrirModalNovaSolicitacaoAnvisa(sol);
+            }
+
+            async function abrirModalNovaSolicitacaoAnvisa(editData) {
+                const isEdit = !!editData;
+                const sol = editData || {};
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:750px;max-height:92vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#C62828,#E53935);color:#fff;">
+                            <h2><i class="fas fa-shield-alt"></i> ${isEdit ? 'Editar' : 'Nova'} Solicitação de Importação ANVISA</h2>
+                            <button class="btn-close-modal" style="color:#fff;"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            <!-- Paciente -->
+                            <div style="background:#fef2f2;padding:14px;border-radius:10px;margin-bottom:14px;">
+                                <div style="font-weight:700;font-size:13px;color:#C62828;margin-bottom:8px;"><i class="fas fa-user" style="margin-right:4px;"></i> Dados do Paciente</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Paciente *</label>
+                                        <select id="anv-paciente" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                            <option value="">Selecionar paciente...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>CPF</label><input id="anv-cpf" value="${sol.paciente_cpf||''}" placeholder="000.000.000-00" style="font-size:12px;"></div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Tipo de Solicitação</label>
+                                        <select id="anv-tipo" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                            <option value="inicial" ${sol.tipo_solicitacao==='inicial'?'selected':''}>Inicial (1ª vez)</option>
+                                            <option value="renovacao" ${sol.tipo_solicitacao==='renovacao'?'selected':''}>Renovação</option>
+                                            <option value="alteracao" ${sol.tipo_solicitacao==='alteracao'?'selected':''}>Alteração / Correção</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Solicitante</label>
+                                        <select id="anv-solicitante-tipo" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                            <option value="proprio" ${sol.solicitante_tipo==='proprio'?'selected':''}>Próprio Paciente</option>
+                                            <option value="responsavel" ${sol.solicitante_tipo==='responsavel'?'selected':''}>Responsável Legal / Procurador</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="anv-solicitante-extra" style="margin-top:10px;display:${sol.solicitante_tipo==='responsavel'?'':'none'};">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nome do Responsável/Procurador</label><input id="anv-solicitante-nome" value="${sol.solicitante_nome||''}" placeholder="Nome completo" style="font-size:12px;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Produto -->
+                            <div style="background:#fff3e0;padding:14px;border-radius:10px;margin-bottom:14px;">
+                                <div style="font-weight:700;font-size:13px;color:#E65100;margin-bottom:8px;"><i class="fas fa-pills" style="margin-right:4px;"></i> Produto Cannabis</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Marca / Fabricante</label>
+                                        <select id="anv-marca" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                            <option value="USAHEMP" ${sol.produto_marca==='USAHEMP'?'selected':''}>USA HEMP / USAHEMP</option>
+                                            <option value="Outro" ${sol.produto_marca==='Outro'?'selected':''}>Outro</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Produto / Concentração</label><input id="anv-produto" value="${sol.produto||''}" placeholder="Ex: CBD 3000mg Full Spectrum" style="font-size:12px;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Prescritor -->
+                            <div style="background:#e8f5e9;padding:14px;border-radius:10px;margin-bottom:14px;">
+                                <div style="font-weight:700;font-size:13px;color:#2E7D32;margin-bottom:8px;"><i class="fas fa-user-md" style="margin-right:4px;"></i> Dados do Prescritor</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nome do Médico *</label><input id="anv-prescritor-nome" value="${sol.prescritor_nome||''}" placeholder="Nome completo" style="font-size:12px;"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>CRM / CRO *</label><input id="anv-prescritor-crm" value="${sol.prescritor_crm||''}" placeholder="CRM 00000/UF" style="font-size:12px;"></div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Telefone</label><input id="anv-prescritor-tel" value="${sol.prescritor_telefone||''}" placeholder="(00) 90000-0000" style="font-size:12px;"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Email</label><input id="anv-prescritor-email" value="${sol.prescritor_email||''}" type="email" placeholder="medico@email.com" style="font-size:12px;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Documentos Checklist -->
+                            <div style="background:#ede9fe;padding:14px;border-radius:10px;margin-bottom:14px;">
+                                <div style="font-weight:700;font-size:13px;color:#5E35B1;margin-bottom:8px;"><i class="fas fa-file-alt" style="margin-right:4px;"></i> Checklist de Documentos</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:8px;background:#fff;border-radius:6px;cursor:pointer;"><input type="checkbox" id="anv-doc-id" ${sol.doc_identidade?'checked':''}> <i class="fas fa-id-card" style="color:#5E35B1;"></i> Documento com foto (RG/CNH)</label>
+                                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:8px;background:#fff;border-radius:6px;cursor:pointer;"><input type="checkbox" id="anv-doc-resid" ${sol.doc_comprovante?'checked':''}> <i class="fas fa-home" style="color:#5E35B1;"></i> Comprovante de residência</label>
+                                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:8px;background:#fff;border-radius:6px;cursor:pointer;"><input type="checkbox" id="anv-doc-receita" ${sol.doc_receita?'checked':''}> <i class="fas fa-prescription" style="color:#5E35B1;"></i> Receita Médica (JPG/PDF)</label>
+                                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:8px;background:#fff;border-radius:6px;cursor:pointer;"><input type="checkbox" id="anv-doc-proc" ${sol.doc_procuracao?'checked':''}> <i class="fas fa-file-signature" style="color:#5E35B1;"></i> Procuração / Vínculo (menor/incapaz)</label>
+                                </div>
+                            </div>
+
+                            <!-- Protocolo e Status -->
+                            <div style="background:#e3f2fd;padding:14px;border-radius:10px;margin-bottom:14px;">
+                                <div style="font-weight:700;font-size:13px;color:#1565C0;margin-bottom:8px;"><i class="fas fa-shield-alt" style="margin-right:4px;"></i> Protocolo ANVISA</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nº Protocolo ANVISA</label><input id="anv-protocolo" value="${sol.protocolo_anvisa||''}" placeholder="Preenchido após envio" style="font-size:12px;"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Status</label>
+                                        <select id="anv-status" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                            ${Object.entries(ANVISA_STATUS_MAP).map(([k,v]) => '<option value="' + k + '"' + (sol.status===k?' selected':'') + '>' + v.label + '</option>').join('')}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group"><label>Observações</label><textarea id="anv-obs" rows="2" placeholder="Notas..." style="font-size:12px;">${sol.observacoes||''}</textarea></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary btn-cancel-anv">Cancelar</button>
+                            <button class="btn-primary btn-save-anv" style="background:#C62828;">
+                                <i class="fas fa-save" style="margin-right:4px;"></i> ${isEdit ? 'Atualizar' : 'Criar Solicitação'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // show/hide solicitante extra
+                modal.querySelector('#anv-solicitante-tipo').addEventListener('change', function() {
+                    modal.querySelector('#anv-solicitante-extra').style.display = this.value === 'responsavel' ? '' : 'none';
+                });
+
+                // Load patients
+                fetch('/api/pacientes').then(r => r.json()).then(pacs => {
+                    const sel = modal.querySelector('#anv-paciente');
+                    (pacs || []).forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = (p.nome || '') + (p.cpf ? ' - ' + p.cpf : '') + ' (' + p.id + ')';
+                        if (sol.paciente_id && p.id === sol.paciente_id) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                });
+
+                modal.querySelector('.btn-close-modal').addEventListener('click', () => modal.remove());
+                modal.querySelector('.btn-cancel-anv').addEventListener('click', () => modal.remove());
+
+                modal.querySelector('.btn-save-anv').addEventListener('click', async () => {
+                    const pacSel = modal.querySelector('#anv-paciente');
+                    const pacOpt = pacSel.options[pacSel.selectedIndex];
+                    const body = {
+                        paciente_id: pacSel.value,
+                        paciente_nome: pacOpt ? pacOpt.textContent.split(' - ')[0].split(' (')[0].trim() : '',
+                        paciente_cpf: modal.querySelector('#anv-cpf').value.trim(),
+                        tipo_solicitacao: modal.querySelector('#anv-tipo').value,
+                        solicitante_tipo: modal.querySelector('#anv-solicitante-tipo').value,
+                        solicitante_nome: modal.querySelector('#anv-solicitante-nome').value.trim(),
+                        produto: modal.querySelector('#anv-produto').value.trim(),
+                        produto_marca: modal.querySelector('#anv-marca').value,
+                        prescritor_nome: modal.querySelector('#anv-prescritor-nome').value.trim(),
+                        prescritor_crm: modal.querySelector('#anv-prescritor-crm').value.trim(),
+                        prescritor_telefone: modal.querySelector('#anv-prescritor-tel').value.trim(),
+                        prescritor_email: modal.querySelector('#anv-prescritor-email').value.trim(),
+                        protocolo_anvisa: modal.querySelector('#anv-protocolo').value.trim(),
+                        status: modal.querySelector('#anv-status').value,
+                        doc_identidade: modal.querySelector('#anv-doc-id').checked,
+                        doc_comprovante: modal.querySelector('#anv-doc-resid').checked,
+                        doc_receita: modal.querySelector('#anv-doc-receita').checked,
+                        doc_procuracao: modal.querySelector('#anv-doc-proc').checked,
+                        observacoes: modal.querySelector('#anv-obs').value.trim()
+                    };
+                    try {
+                        if (isEdit) {
+                            await fetch('/api/anvisa/' + sol.id, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                        } else {
+                            await fetch('/api/anvisa', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                        }
+                        modal.remove();
+                        carregarSolicitacoesAnvisa();
+                    } catch(e) {
+                        alert('Erro ao salvar solicitação ANVISA');
+                    }
+                });
+            }
+
+            function abrirGuiaAnvisa() {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:800px;max-height:92vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#1565C0,#1E88E5);color:#fff;">
+                            <h2><i class="fas fa-book"></i> Guia Passo a Passo — Autorização ANVISA para Importação de Cannabis</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:24px;">
+                            <!-- ETAPA 1: Documentos -->
+                            <div style="margin-bottom:24px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                    <div style="background:#C62828;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">1</div>
+                                    <h3 style="margin:0;color:#C62828;font-size:15px;">Organize os Documentos</h3>
+                                </div>
+                                <div style="background:#fef2f2;padding:16px;border-radius:10px;border:1px solid #fecaca;">
+                                    <p style="margin:0 0 10px;font-size:13px;color:#374151;">Antes de iniciar, tenha todos os documentos prontos em formato <strong>PDF</strong>:</p>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:6px;padding:8px;background:#fff;border-radius:6px;font-size:12px;"><i class="fas fa-id-card" style="color:#C62828;"></i> <strong>Documento com foto</strong> (RG ou CNH)</div>
+                                        <div style="display:flex;align-items:center;gap:6px;padding:8px;background:#fff;border-radius:6px;font-size:12px;"><i class="fas fa-home" style="color:#C62828;"></i> <strong>Comprovante de residência</strong></div>
+                                        <div style="display:flex;align-items:center;gap:6px;padding:8px;background:#fff;border-radius:6px;font-size:12px;"><i class="fas fa-prescription" style="color:#C62828;"></i> <strong>Receita Médica</strong> (JPG ou PDF)</div>
+                                        <div style="display:flex;align-items:center;gap:6px;padding:8px;background:#fff;border-radius:6px;font-size:12px;"><i class="fas fa-file-signature" style="color:#C62828;"></i> <strong>Procuração</strong> (se menor/incapaz)</div>
+                                    </div>
+                                    <p style="margin:10px 0 0;font-size:11px;color:#6b7280;"><i class="fas fa-info-circle"></i> Se for menor de idade ou incapaz, a solicitação deve ser feita pelo responsável legal, que deverá anexar procuração ou documento que comprove o vínculo.</p>
+                                </div>
+                            </div>
+
+                            <!-- ETAPA 2: Cadastro Gov.br -->
+                            <div style="margin-bottom:24px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                    <div style="background:#1565C0;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">2</div>
+                                    <h3 style="margin:0;color:#1565C0;font-size:15px;">Acesse o Portal Gov.br</h3>
+                                </div>
+                                <div style="background:#e3f2fd;padding:16px;border-radius:10px;border:1px solid #90caf9;">
+                                    <p style="margin:0 0 10px;font-size:13px;color:#374151;">Cadastre-se ou faça login no portal do governo:</p>
+                                    <a href="https://sso.acesso.gov.br" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#1565C0;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;"><i class="fas fa-external-link-alt"></i> Acessar Gov.br</a>
+                                    <p style="margin:10px 0 0;font-size:11px;color:#6b7280;">Depois de logado, acesse o link de solicitação de importação de produtos à base de cannabis.</p>
+                                </div>
+                            </div>
+
+                            <!-- ETAPA 3: Iniciar Solicitação -->
+                            <div style="margin-bottom:24px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                    <div style="background:#5E35B1;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">3</div>
+                                    <h3 style="margin:0;color:#5E35B1;font-size:15px;">Preencha o Formulário de Solicitação</h3>
+                                </div>
+                                <div style="background:#ede9fe;padding:16px;border-radius:10px;border:1px solid #c4b5fd;">
+                                    <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#5E35B1;margin-bottom:4px;">3.1 — Clique em "Iniciar"</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Na página da ANVISA, clique no botão "Iniciar" para começar a solicitação.</p>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#5E35B1;margin-bottom:4px;">3.2 — Verifique dados do solicitante</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Confira se as informações estão corretas e clique em "Prosseguir".</p>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#5E35B1;margin-bottom:4px;">3.3 — Tipo de Solicitação</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;"><strong>Inicial</strong> = primeira vez | <strong>Alteração</strong> = correção | <strong>Renovação</strong> = renovar autorização existente.</p>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#5E35B1;margin-bottom:4px;">3.4 — Preencha dados pessoais e anexe documentos</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Se estiver solicitando para si, marque "É o próprio paciente". Preencha todos os campos com * e anexe o documento com foto em PDF.</p>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#5E35B1;margin-bottom:4px;">3.5 — Insira endereço e contatos</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Preencha endereço completo, telefone e email.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ETAPA 4: Produto -->
+                            <div style="margin-bottom:24px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                    <div style="background:#E65100;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">4</div>
+                                    <h3 style="margin:0;color:#E65100;font-size:15px;">Solicitação do Produto</h3>
+                                </div>
+                                <div style="background:#fff3e0;padding:16px;border-radius:10px;border:1px solid #ffcc02;">
+                                    <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#E65100;margin-bottom:4px;"><i class="fas fa-search"></i> 4.1 — Busque o produto</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Na lupa, pesquise: <strong>"USA HEMP"</strong> ou <strong>"USAHEMP"</strong> e selecione o produto prescrito.</p>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#E65100;margin-bottom:4px;"><i class="fas fa-user-md"></i> 4.2 — Dados do prescritor</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Preencha: Nome do médico, CRM ou CRO, telefone residencial, celular e email.</p>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#E65100;margin-bottom:4px;"><i class="fas fa-file-upload"></i> 4.3 — Anexe a receita</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Faça upload da receita médica em <strong>JPG ou PDF</strong>. Concorde com a declaração.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ETAPA 5: Conclusão -->
+                            <div style="margin-bottom:24px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                    <div style="background:#2E7D32;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">5</div>
+                                    <h3 style="margin:0;color:#2E7D32;font-size:15px;">Conclua e Acompanhe</h3>
+                                </div>
+                                <div style="background:#e8f5e9;padding:16px;border-radius:10px;border:1px solid #a5d6a7;">
+                                    <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#2E7D32;margin-bottom:4px;"><i class="fas fa-check-double"></i> 5.1 — Confira e envie</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Revise todos os dados, concorde com o termo e clique em "Prosseguir" para enviar.</p>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#2E7D32;margin-bottom:4px;"><i class="fas fa-tasks"></i> 5.2 — Etapas de Aprovação</div>
+                                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+                                                <span style="background:#FF6F0020;color:#FF6F00;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;">1. Aguardando em Fila</span>
+                                                <span style="background:#1565C020;color:#1565C0;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;">2. Em Análise</span>
+                                                <span style="background:#2E7D3220;color:#2E7D32;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;">3. Resultado</span>
+                                            </div>
+                                        </div>
+                                        <div style="padding:10px;background:#fff;border-radius:6px;">
+                                            <div style="font-weight:700;font-size:12px;color:#2E7D32;margin-bottom:4px;"><i class="fas fa-download"></i> 5.3 — Baixar Autorização</div>
+                                            <p style="margin:0;font-size:11px;color:#6b7280;">Quando atingir a 4ª etapa, clique em "Ver", role até o fim da página e faça download da autorização.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Links Úteis -->
+                            <div style="background:#f3f4f6;padding:14px;border-radius:10px;">
+                                <div style="font-weight:700;font-size:13px;color:#374151;margin-bottom:8px;"><i class="fas fa-link" style="margin-right:4px;"></i> Links Úteis</div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <a href="https://sso.acesso.gov.br" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:#1565C0;color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:600;"><i class="fas fa-external-link-alt"></i> Portal Gov.br</a>
+                                    <a href="https://www.gov.br/anvisa/pt-br" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:#C62828;color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:600;"><i class="fas fa-external-link-alt"></i> Portal ANVISA</a>
+                                    <a href="https://www.gov.br/anvisa/pt-br/assuntos/cannabis" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:#2E7D32;color:#fff;padding:6px 12px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:600;"><i class="fas fa-cannabis"></i> Cannabis ANVISA</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.querySelector('.btn-close-modal').addEventListener('click', () => modal.remove());
+            }
+
+            window.carregarSolicitacoesAnvisa = carregarSolicitacoesAnvisa;
+            window.renderAnvisaLista = renderAnvisaLista;
+            window.atualizarStatusAnvisa = atualizarStatusAnvisa;
+            window.excluirAnvisa = excluirAnvisa;
+            window.verHistoricoAnvisa = verHistoricoAnvisa;
+            window.editarAnvisa = editarAnvisa;
+            window.abrirModalNovaSolicitacaoAnvisa = abrirModalNovaSolicitacaoAnvisa;
+            window.abrirGuiaAnvisa = abrirGuiaAnvisa;
 
             window.onEventoTipoChange = onEventoTipoChange;
             window.excluirEventoTimeline = excluirEventoTimeline;

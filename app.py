@@ -81,6 +81,7 @@ LAUDOS_FILE = os.path.join(DATA_DIR, 'laudos.json')
 FORNECEDORES_FILE = os.path.join(DATA_DIR, 'fornecedores.json')
 JUDICIAL_FILE = os.path.join(DATA_DIR, 'judicial_processos.json')
 ADVOGADOS_FILE = os.path.join(DATA_DIR, 'advogados.json')
+ANVISA_FILE = os.path.join(DATA_DIR, 'anvisa_solicitacoes.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -252,6 +253,12 @@ def load_judicial():
 
 def save_judicial(data):
     _save_json_file(JUDICIAL_FILE, data)
+
+def load_anvisa_solicitacoes():
+    return _load_json_file(ANVISA_FILE, [])
+
+def save_anvisa_solicitacoes(data):
+    _save_json_file(ANVISA_FILE, data)
 
 def load_webhooks_config():
     return _load_json_file(WEBHOOKS_CONFIG_FILE, {'prescricao_url': '', 'prescricao_ativo': False})
@@ -611,6 +618,86 @@ def delete_advogado(adv_id):
     advs = load_advogados()
     advs = [a for a in advs if a.get('id') != adv_id]
     save_advogados(advs)
+    return jsonify({'ok': True})
+
+
+# ===== ANVISA SOLICITAÇÕES API =====
+
+@app.route('/api/anvisa', methods=['GET'])
+def list_anvisa():
+    return jsonify(load_anvisa_solicitacoes())
+
+@app.route('/api/anvisa', methods=['POST'])
+def create_anvisa():
+    solicitacoes = load_anvisa_solicitacoes()
+    data = request.get_json(silent=True) or {}
+    sol_id = f'ANV{len(solicitacoes)+1:05d}'
+    sol = {
+        'id': sol_id,
+        'paciente_id': data.get('paciente_id', ''),
+        'paciente_nome': data.get('paciente_nome', ''),
+        'paciente_cpf': data.get('paciente_cpf', ''),
+        'tipo_solicitacao': data.get('tipo_solicitacao', 'inicial'),
+        'produto': data.get('produto', ''),
+        'produto_marca': data.get('produto_marca', 'USAHEMP'),
+        'prescritor_nome': data.get('prescritor_nome', ''),
+        'prescritor_crm': data.get('prescritor_crm', ''),
+        'prescritor_telefone': data.get('prescritor_telefone', ''),
+        'prescritor_email': data.get('prescritor_email', ''),
+        'protocolo_anvisa': data.get('protocolo_anvisa', ''),
+        'status': data.get('status', 'pendente_documentos'),
+        'doc_identidade': data.get('doc_identidade', False),
+        'doc_comprovante': data.get('doc_comprovante', False),
+        'doc_receita': data.get('doc_receita', False),
+        'doc_procuracao': data.get('doc_procuracao', False),
+        'solicitante_tipo': data.get('solicitante_tipo', 'proprio'),
+        'solicitante_nome': data.get('solicitante_nome', ''),
+        'observacoes': data.get('observacoes', ''),
+        'historico': [{'data': datetime.now(timezone.utc).isoformat(), 'acao': 'Solicitação criada', 'status': 'pendente_documentos'}],
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    solicitacoes.append(sol)
+    save_anvisa_solicitacoes(solicitacoes)
+    return jsonify(sol), 201
+
+@app.route('/api/anvisa/<sol_id>', methods=['GET'])
+def get_anvisa(sol_id):
+    solicitacoes = load_anvisa_solicitacoes()
+    sol = next((s for s in solicitacoes if s.get('id') == sol_id), None)
+    if not sol:
+        return jsonify({'error': 'Não encontrado'}), 404
+    return jsonify(sol)
+
+@app.route('/api/anvisa/<sol_id>', methods=['PUT'])
+def update_anvisa(sol_id):
+    solicitacoes = load_anvisa_solicitacoes()
+    sol = next((s for s in solicitacoes if s.get('id') == sol_id), None)
+    if not sol:
+        return jsonify({'error': 'Não encontrado'}), 404
+    data = request.get_json(silent=True) or {}
+    old_status = sol.get('status', '')
+    for k, v in data.items():
+        if k not in ('id', 'created_at'):
+            sol[k] = v
+    sol['updated_at'] = datetime.now(timezone.utc).isoformat()
+    new_status = sol.get('status', '')
+    if new_status != old_status:
+        if 'historico' not in sol:
+            sol['historico'] = []
+        sol['historico'].append({
+            'data': datetime.now(timezone.utc).isoformat(),
+            'acao': f'Status alterado para: {new_status}',
+            'status': new_status
+        })
+    save_anvisa_solicitacoes(solicitacoes)
+    return jsonify(sol)
+
+@app.route('/api/anvisa/<sol_id>', methods=['DELETE'])
+def delete_anvisa(sol_id):
+    solicitacoes = load_anvisa_solicitacoes()
+    solicitacoes = [s for s in solicitacoes if s.get('id') != sol_id]
+    save_anvisa_solicitacoes(solicitacoes)
     return jsonify({'ok': True})
 
 
