@@ -2308,93 +2308,128 @@
 
                 <!-- TAB: Gestão de Advogados -->
                 <div id="jud-tab-advogados" class="jud-tab-content" style="display:none;">
-                    <div style="margin-bottom:24px;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                    <!-- Header -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
                             <div style="background:linear-gradient(135deg,#dc2626,#991b1b);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-user-tie" style="color:#fff;font-size:18px;"></i></div>
                             <div>
                                 <h4 style="margin:0;color:#333;font-size:16px;">Gestão de Advogados Parceiros</h4>
                                 <p style="margin:0;color:#6b7280;font-size:12px;">Gerencie os advogados que atuam em processos judiciais da plataforma</p>
                             </div>
                         </div>
+                        <button onclick="document.getElementById('adv-form-section').style.display=document.getElementById('adv-form-section').style.display==='none'?'':'none'" style="background:#dc2626;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-user-plus" style="margin-right:6px;"></i> Novo Advogado</button>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-                        <!-- Lista de Advogados -->
-                        <div>
-                            <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-list" style="margin-right:6px;color:#dc2626;"></i> Advogados Cadastrados</h5>
-                            <div id="advogados-lista" style="max-height:500px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
-                                <div style="padding:20px;text-align:center;color:#9ca3af;"><i class="fas fa-inbox"></i><div style="margin-top:8px;">Nenhum advogado cadastrado</div></div>
-                            </div>
+                    <!-- Stats Cards -->
+                    <div id="adv-stats-bar" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;">
+                        <div style="background:linear-gradient(135deg,#5E35B1,#7C4DFF);color:#fff;padding:14px;border-radius:10px;text-align:center;">
+                            <div style="font-size:24px;font-weight:800;" id="adv-stat-total">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Total Cadastrados</div>
                         </div>
+                        <div style="background:linear-gradient(135deg,#2E7D32,#43A047);color:#fff;padding:14px;border-radius:10px;text-align:center;">
+                            <div style="font-size:24px;font-weight:800;" id="adv-stat-ativos">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Ativos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#1565C0,#1E88E5);color:#fff;padding:14px;border-radius:10px;text-align:center;">
+                            <div style="font-size:24px;font-weight:800;" id="adv-stat-com-proc">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Com Processos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#E65100,#FF6D00);color:#fff;padding:14px;border-radius:10px;text-align:center;">
+                            <div style="font-size:24px;font-weight:800;" id="adv-stat-atrasados">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Com Atraso</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#546E7A,#78909C);color:#fff;padding:14px;border-radius:10px;text-align:center;">
+                            <div style="font-size:24px;font-weight:800;" id="adv-stat-sem-proc">0</div>
+                            <div style="font-size:10px;opacity:.85;text-transform:uppercase;">Sem Processos</div>
+                        </div>
+                    </div>
 
-                        <!-- Formulário de Cadastro -->
-                        <div>
-                            <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-user-plus" style="margin-right:6px;color:#dc2626;"></i> Novo Advogado</h5>
-                            <form id="form-advogado" enctype="multipart/form-data" style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-radius:8px;">
+                    <!-- Filtros -->
+                    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;background:#f9fafb;padding:12px 16px;border-radius:10px;border:1px solid #e5e7eb;">
+                        <div style="font-size:12px;font-weight:700;color:#374151;margin-right:4px;"><i class="fas fa-filter" style="margin-right:4px;"></i> Filtros:</div>
+                        <select id="adv-filtro-status" onchange="aplicarFiltrosAdvogados()" style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;background:#fff;">
+                            <option value="todos">Todos os Status</option>
+                            <option value="ativo">Ativos</option>
+                            <option value="inativo">Inativos</option>
+                        </select>
+                        <select id="adv-filtro-processos" onchange="aplicarFiltrosAdvogados()" style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;background:#fff;">
+                            <option value="todos">Todos</option>
+                            <option value="com-processos">Com Processos</option>
+                            <option value="sem-processos">Sem Processos</option>
+                            <option value="em-dia">Processos em Dia</option>
+                            <option value="atrasados">Processos Atrasados</option>
+                        </select>
+                        <input type="text" id="adv-filtro-busca" placeholder="Buscar por nome, OAB, especialidade..." oninput="aplicarFiltrosAdvogados()" style="flex:1;min-width:200px;padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                        <button onclick="document.getElementById('adv-filtro-status').value='todos';document.getElementById('adv-filtro-processos').value='todos';document.getElementById('adv-filtro-busca').value='';aplicarFiltrosAdvogados();" style="background:#6b7280;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;"><i class="fas fa-times"></i> Limpar</button>
+                    </div>
+
+                    <!-- Formulário Cadastro (togglable) -->
+                    <div id="adv-form-section" style="display:none;margin-bottom:20px;">
+                        <div style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                            <h5 style="margin:0 0 14px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-user-plus" style="margin-right:6px;color:#dc2626;"></i> <span id="adv-form-title">Novo Advogado</span></h5>
+                            <form id="form-advogado" enctype="multipart/form-data">
                                 <input type="hidden" id="adv-id" name="id">
-                                
-                                <div style="margin-bottom:14px;">
-                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nome Completo *</label>
-                                    <input type="text" id="adv-nome" name="nome" required placeholder="Nome completo" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                </div>
-
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
                                     <div>
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">OAB *</label>
-                                        <input type="text" id="adv-oab" name="oab" required placeholder="Ex: 123456/MG" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Nome Completo *</label>
+                                        <input type="text" id="adv-nome" name="nome" required placeholder="Nome completo" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
                                     </div>
                                     <div>
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">CPF</label>
-                                        <input type="text" id="adv-cpf" name="cpf" placeholder="000.000.000-00" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                    </div>
-                                </div>
-
-                                <div style="margin-bottom:14px;">
-                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Email *</label>
-                                    <input type="email" id="adv-email" name="email" required placeholder="email@exemplo.com" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                </div>
-
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-                                    <div>
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Telefone *</label>
-                                        <input type="tel" id="adv-telefone" name="telefone" required placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">OAB *</label>
+                                        <input type="text" id="adv-oab" name="oab" required placeholder="Ex: 123456/MG" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
                                     </div>
                                     <div>
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">WhatsApp</label>
-                                        <input type="tel" id="adv-whatsapp" name="whatsapp" placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">CPF</label>
+                                        <input type="text" id="adv-cpf" name="cpf" placeholder="000.000.000-00" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
                                     </div>
                                 </div>
-
-                                <div style="margin-bottom:14px;">
-                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Especialidades Jurídicas</label>
-                                    <input type="text" id="adv-especialidades" name="especialidades" placeholder="Ex: Direito da Saúde, Direito do Consumidor" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+                                    <div>
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Email *</label>
+                                        <input type="email" id="adv-email" name="email" required placeholder="email@exemplo.com" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Telefone *</label>
+                                        <input type="tel" id="adv-telefone" name="telefone" required placeholder="(00) 90000-0000" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">WhatsApp</label>
+                                        <input type="tel" id="adv-whatsapp" name="whatsapp" placeholder="(00) 90000-0000" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Cidade/UF</label>
+                                        <input type="text" id="adv-cidade" name="cidade" placeholder="Ex: São Paulo/SP" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
+                                    </div>
                                 </div>
-
-                                <div style="margin-bottom:14px;">
-                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Cidade/UF</label>
-                                    <input type="text" id="adv-cidade" name="cidade" placeholder="Ex: São Paulo/SP" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
+                                    <div>
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Especialidades Jurídicas</label>
+                                        <input type="text" id="adv-especialidades" name="especialidades" placeholder="Ex: Direito da Saúde, Direito do Consumidor" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Status</label>
+                                        <select id="adv-status" name="status" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;box-sizing:border-box;">
+                                            <option value="ativo">Ativo</option>
+                                            <option value="inativo">Inativo</option>
+                                        </select>
+                                    </div>
                                 </div>
-
-                                <div style="margin-bottom:14px;">
-                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observações</label>
-                                    <textarea id="adv-observacoes" name="observacoes" rows="2" placeholder="Informações adicionais..." style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:3px;">Observações</label>
+                                    <textarea id="adv-observacoes" name="observacoes" rows="2" placeholder="Informações adicionais..." style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
                                 </div>
-
-                                <div style="margin-bottom:14px;">
-                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Status</label>
-                                    <select id="adv-status" name="status" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                        <option value="ativo">Ativo</option>
-                                        <option value="inativo">Inativo</option>
-                                    </select>
-                                </div>
-
                                 <div style="display:flex;gap:8px;">
-                                    <button type="submit" style="flex:1;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-save" style="margin-right:6px;"></i><span id="btn-adv-text">Cadastrar</span></button>
-                                    <button type="button" onclick="limparFormAdvogado()" style="padding:10px 20px;background:#6b7280;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;"><i class="fas fa-times"></i></button>
+                                    <button type="submit" style="padding:8px 24px;background:#dc2626;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-save" style="margin-right:4px;"></i><span id="btn-adv-text">Cadastrar</span></button>
+                                    <button type="button" onclick="limparFormAdvogado()" style="padding:8px 16px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;"><i class="fas fa-times" style="margin-right:4px;"></i> Cancelar</button>
                                 </div>
-                                <div id="advogado-feedback" style="margin-top:12px;font-size:12px;display:none;"></div>
+                                <div id="advogado-feedback" style="margin-top:10px;font-size:12px;display:none;"></div>
                             </form>
                         </div>
+                    </div>
+
+                    <!-- Lista de Advogados com processos -->
+                    <div id="advogados-lista" style="display:grid;grid-template-columns:1fr;gap:0;">
+                        <div style="padding:40px;text-align:center;color:#9ca3af;"><i class="fas fa-spinner fa-spin" style="font-size:24px;"></i><div style="margin-top:10px;">Carregando advogados...</div></div>
                     </div>
                 </div>
 
@@ -13114,42 +13149,196 @@
             window.carregarHistoricoEnvios = carregarHistoricoEnvios;
             window.carregarCertificadosMedicos = carregarCertificadosMedicos;
 
-            // ========== ADVOGADOS MANAGEMENT ==========
+            // ========== ADVOGADOS MANAGEMENT (ENHANCED) ==========
+            let _advogadosData = [];
+            let _advProcessosData = [];
+
             async function carregarListaAdvogados() {
                 const container = document.getElementById('advogados-lista');
                 if (!container) return;
                 try {
-                    const advs = await apiRequest('/api/advogados');
-                    if (!advs || advs.length === 0) {
-                        container.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;"><i class="fas fa-inbox"></i><div style="margin-top:8px;">Nenhum advogado cadastrado</div></div>';
-                        return;
-                    }
-                    container.innerHTML = advs.map(adv => {
-                        const statusColor = adv.status === 'ativo' ? '#10b981' : '#ef4444';
-                        const statusLabel = adv.status === 'ativo' ? 'Ativo' : 'Inativo';
-                        return `<div style="padding:12px;border-bottom:1px solid #e5e7eb;background:#fff;">
-                            <div style="display:flex;justify-content:space-between;align-items:start;">
-                                <div style="flex:1;">
-                                    <div style="font-weight:600;font-size:13px;color:#111827;">${adv.nome || 'Sem nome'}</div>
-                                    <div style="font-size:11px;color:#6b7280;margin-top:2px;">OAB: ${adv.oab || 'N/A'} | ${adv.email || ''}</div>
-                                    ${adv.telefone ? `<div style="font-size:11px;color:#6b7280;"><i class="fas fa-phone" style="width:12px;"></i> ${adv.telefone}</div>` : ''}
-                                    ${adv.especialidades ? `<div style="font-size:10px;color:#7c3aed;margin-top:4px;"><i class="fas fa-balance-scale"></i> ${adv.especialidades}</div>` : ''}
-                                </div>
-                                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
-                                    <span style="background:${statusColor}20;color:${statusColor};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;">${statusLabel}</span>
-                                    <div style="display:flex;gap:4px;">
-                                        <button onclick="editarAdvogado('${adv.id}')" style="background:#3b82f6;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;" title="Editar"><i class="fas fa-edit"></i></button>
-                                        <button onclick="excluirAdvogado('${adv.id}')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;" title="Excluir"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('');
+                    const [advs, procs] = await Promise.all([
+                        apiRequest('/api/advogados'),
+                        apiRequest('/api/judicial')
+                    ]);
+                    _advogadosData = advs || [];
+                    _advProcessosData = procs || [];
+                    atualizarStatsAdvogados();
+                    aplicarFiltrosAdvogados();
                 } catch(e) {
                     console.error('Erro ao carregar advogados:', e);
-                    container.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i><div style="margin-top:8px;">Erro ao carregar advogados</div></div>';
+                    container.innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;"><i class="fas fa-exclamation-triangle" style="font-size:24px;"></i><div style="margin-top:10px;">Erro ao carregar advogados</div></div>';
                 }
             }
+
+            function getProcessosDoAdvogado(adv) {
+                const nomeNorm = (adv.nome || '').toLowerCase().trim();
+                const oabNorm = (adv.oab || '').toLowerCase().trim();
+                return _advProcessosData.filter(p => {
+                    const pNome = (p.advogado_nome || '').toLowerCase().trim();
+                    const pOab = (p.advogado_oab || '').toLowerCase().trim();
+                    return (nomeNorm && pNome && pNome.includes(nomeNorm)) || (oabNorm && pOab && pOab === oabNorm);
+                });
+            }
+
+            function isProcessoAtrasado(proc) {
+                // Processo is "atrasado" if it's been in the same stage for more than 30 days
+                const lastUpdate = proc.updated_at || proc.created_at;
+                if (!lastUpdate) return false;
+                const diff = (new Date() - new Date(lastUpdate)) / (1000 * 60 * 60 * 24);
+                const etapasFinal = ['medicamento_entregue', 'arquivado'];
+                return diff > 30 && !etapasFinal.includes(proc.etapa);
+            }
+
+            function atualizarStatsAdvogados() {
+                const total = _advogadosData.length;
+                const ativos = _advogadosData.filter(a => a.status === 'ativo').length;
+                let comProc = 0, comAtraso = 0, semProc = 0;
+                _advogadosData.forEach(adv => {
+                    const procs = getProcessosDoAdvogado(adv);
+                    if (procs.length > 0) {
+                        comProc++;
+                        if (procs.some(p => isProcessoAtrasado(p))) comAtraso++;
+                    } else {
+                        semProc++;
+                    }
+                });
+                document.getElementById('adv-stat-total').textContent = total;
+                document.getElementById('adv-stat-ativos').textContent = ativos;
+                document.getElementById('adv-stat-com-proc').textContent = comProc;
+                document.getElementById('adv-stat-atrasados').textContent = comAtraso;
+                document.getElementById('adv-stat-sem-proc').textContent = semProc;
+            }
+
+            const ETAPAS_LABEL = {
+                'coleta_documentos': 'Coleta de Documentos',
+                'analise_anvisa': 'Análise ANVISA',
+                'peticao_inicial': 'Petição Inicial',
+                'liminar_tutela': 'Liminar / Tutela',
+                'aguardando_cumprimento': 'Aguard. Cumprimento',
+                'medicamento_entregue': 'Medicamento Entregue',
+                'arquivado': 'Arquivado'
+            };
+            const ETAPAS_COLOR = {
+                'coleta_documentos': '#FF6F00',
+                'analise_anvisa': '#C62828',
+                'peticao_inicial': '#5E35B1',
+                'liminar_tutela': '#D84315',
+                'aguardando_cumprimento': '#1565C0',
+                'medicamento_entregue': '#2E7D32',
+                'arquivado': '#546E7A'
+            };
+
+            function aplicarFiltrosAdvogados() {
+                const container = document.getElementById('advogados-lista');
+                if (!container) return;
+                const filtroStatus = document.getElementById('adv-filtro-status')?.value || 'todos';
+                const filtroProc = document.getElementById('adv-filtro-processos')?.value || 'todos';
+                const filtroBusca = (document.getElementById('adv-filtro-busca')?.value || '').toLowerCase().trim();
+
+                let filtered = [..._advogadosData];
+
+                // Filter by status
+                if (filtroStatus !== 'todos') {
+                    filtered = filtered.filter(a => a.status === filtroStatus);
+                }
+
+                // Filter by search
+                if (filtroBusca) {
+                    filtered = filtered.filter(a => {
+                        return (a.nome || '').toLowerCase().includes(filtroBusca) ||
+                               (a.oab || '').toLowerCase().includes(filtroBusca) ||
+                               (a.especialidades || '').toLowerCase().includes(filtroBusca) ||
+                               (a.email || '').toLowerCase().includes(filtroBusca) ||
+                               (a.cidade || '').toLowerCase().includes(filtroBusca);
+                    });
+                }
+
+                // Enrich with processos
+                let enriched = filtered.map(adv => {
+                    const procs = getProcessosDoAdvogado(adv);
+                    const atrasados = procs.filter(p => isProcessoAtrasado(p));
+                    return { ...adv, processos: procs, atrasados };
+                });
+
+                // Filter by processos
+                if (filtroProc === 'com-processos') enriched = enriched.filter(a => a.processos.length > 0);
+                if (filtroProc === 'sem-processos') enriched = enriched.filter(a => a.processos.length === 0);
+                if (filtroProc === 'em-dia') enriched = enriched.filter(a => a.processos.length > 0 && a.atrasados.length === 0);
+                if (filtroProc === 'atrasados') enriched = enriched.filter(a => a.atrasados.length > 0);
+
+                if (enriched.length === 0) {
+                    container.innerHTML = '<div style="padding:40px;text-align:center;color:#9ca3af;"><i class="fas fa-inbox" style="font-size:28px;"></i><div style="margin-top:10px;font-size:14px;">Nenhum advogado encontrado com os filtros selecionados</div></div>';
+                    return;
+                }
+
+                container.innerHTML = enriched.map(adv => {
+                    const statusColor = adv.status === 'ativo' ? '#10b981' : '#ef4444';
+                    const statusLabel = adv.status === 'ativo' ? 'Ativo' : 'Inativo';
+                    const totalProc = adv.processos.length;
+                    const totalAtrasados = adv.atrasados.length;
+                    const procAtivos = adv.processos.filter(p => !['medicamento_entregue','arquivado'].includes(p.etapa)).length;
+                    const procConcluidos = adv.processos.filter(p => p.etapa === 'medicamento_entregue').length;
+
+                    let processosHtml = '';
+                    if (totalProc > 0) {
+                        processosHtml = '<div style="margin-top:10px;border-top:1px solid #e5e7eb;padding-top:10px;">' +
+                            '<div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px;"><i class="fas fa-folder-open" style="margin-right:4px;color:#5E35B1;"></i> Processos Vinculados (' + totalProc + ')</div>' +
+                            '<div style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;">' +
+                            adv.processos.map(p => {
+                                const etapaLabel = ETAPAS_LABEL[p.etapa] || p.etapa;
+                                const etapaColor = ETAPAS_COLOR[p.etapa] || '#6b7280';
+                                const atrasado = isProcessoAtrasado(p);
+                                const diasNaEtapa = p.updated_at ? Math.floor((new Date() - new Date(p.updated_at || p.created_at)) / (1000*60*60*24)) : 0;
+                                return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:${atrasado ? '#fef2f2' : '#f9fafb'};border-radius:6px;border-left:3px solid ${atrasado ? '#ef4444' : etapaColor};">
+                                    <div style="flex:1;">
+                                        <div style="font-size:11px;font-weight:600;color:#111827;">${p.paciente_nome || 'Paciente'} ${p.numero_processo ? '- ' + p.numero_processo : ''}</div>
+                                        <div style="font-size:10px;color:#6b7280;">${p.tipo_acao || ''} | ${p.tribunal || ''} ${p.comarca ? '- ' + p.comarca : ''}</div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <span style="background:${etapaColor}18;color:${etapaColor};padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;white-space:nowrap;">${etapaLabel}</span>
+                                        ${atrasado ? '<div style="font-size:9px;color:#ef4444;margin-top:2px;font-weight:600;"><i class="fas fa-exclamation-circle"></i> ' + diasNaEtapa + ' dias</div>' : '<div style="font-size:9px;color:#10b981;margin-top:2px;">' + diasNaEtapa + ' dias</div>'}
+                                    </div>
+                                </div>`;
+                            }).join('') +
+                            '</div></div>';
+                    }
+
+                    return `<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px;${totalAtrasados > 0 ? 'border-left:4px solid #ef4444;' : ''}">
+                        <div style="display:flex;justify-content:space-between;align-items:start;">
+                            <div style="flex:1;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                                    <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5E35B1,#7C4DFF);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;">${(adv.nome || 'A')[0].toUpperCase()}</div>
+                                    <div>
+                                        <div style="font-weight:700;font-size:14px;color:#111827;">${adv.nome || 'Sem nome'}</div>
+                                        <div style="font-size:11px;color:#6b7280;">OAB: ${adv.oab || 'N/A'} | ${adv.email || ''}</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+                                    ${adv.telefone ? '<span style="font-size:10px;color:#6b7280;background:#f3f4f6;padding:2px 6px;border-radius:4px;"><i class="fas fa-phone" style="width:10px;"></i> ' + adv.telefone + '</span>' : ''}
+                                    ${adv.cidade ? '<span style="font-size:10px;color:#6b7280;background:#f3f4f6;padding:2px 6px;border-radius:4px;"><i class="fas fa-map-marker-alt" style="width:10px;"></i> ' + adv.cidade + '</span>' : ''}
+                                    ${adv.especialidades ? '<span style="font-size:10px;color:#7c3aed;background:#ede9fe;padding:2px 6px;border-radius:4px;"><i class="fas fa-balance-scale" style="width:10px;"></i> ' + adv.especialidades + '</span>' : ''}
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                                <span style="background:${statusColor}15;color:${statusColor};padding:3px 10px;border-radius:8px;font-size:10px;font-weight:700;">${statusLabel}</span>
+                                <div style="display:flex;gap:6px;align-items:center;">
+                                    <span style="font-size:10px;color:#5E35B1;background:#ede9fe;padding:2px 8px;border-radius:6px;font-weight:600;"><i class="fas fa-folder"></i> ${totalProc} proc.</span>
+                                    ${procAtivos > 0 ? '<span style="font-size:10px;color:#1565C0;background:#e3f2fd;padding:2px 8px;border-radius:6px;font-weight:600;">' + procAtivos + ' ativos</span>' : ''}
+                                    ${procConcluidos > 0 ? '<span style="font-size:10px;color:#2E7D32;background:#e8f5e9;padding:2px 8px;border-radius:6px;font-weight:600;">' + procConcluidos + ' concl.</span>' : ''}
+                                    ${totalAtrasados > 0 ? '<span style="font-size:10px;color:#ef4444;background:#fef2f2;padding:2px 8px;border-radius:6px;font-weight:700;"><i class="fas fa-exclamation-triangle"></i> ' + totalAtrasados + ' atrasado(s)</span>' : ''}
+                                </div>
+                                <div style="display:flex;gap:4px;">
+                                    <button onclick="editarAdvogado('${adv.id}')" style="background:#3b82f6;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;" title="Editar"><i class="fas fa-edit"></i></button>
+                                    <button onclick="excluirAdvogado('${adv.id}')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;" title="Excluir"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        ${processosHtml}
+                    </div>`;
+                }).join('');
+            }
+            window.aplicarFiltrosAdvogados = aplicarFiltrosAdvogados;
 
             async function editarAdvogado(advId) {
                 try {
@@ -13166,7 +13355,9 @@
                     document.getElementById('adv-observacoes').value = adv.observacoes || '';
                     document.getElementById('adv-status').value = adv.status || 'ativo';
                     document.getElementById('btn-adv-text').textContent = 'Atualizar';
-                    document.getElementById('adv-nome').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.getElementById('adv-form-title').textContent = 'Editar Advogado';
+                    document.getElementById('adv-form-section').style.display = '';
+                    document.getElementById('adv-form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
                 } catch(e) {
                     alert('Erro ao carregar dados do advogado');
                 }
@@ -13187,6 +13378,8 @@
                 document.getElementById('form-advogado').reset();
                 document.getElementById('adv-id').value = '';
                 document.getElementById('btn-adv-text').textContent = 'Cadastrar';
+                document.getElementById('adv-form-title').textContent = 'Novo Advogado';
+                document.getElementById('adv-form-section').style.display = 'none';
             }
 
             function mostrarFeedbackAdvogado(msg, type) {
