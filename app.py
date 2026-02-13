@@ -80,6 +80,7 @@ PRESCRICOES_FILE = os.path.join(DATA_DIR, 'prescricoes.json')
 LAUDOS_FILE = os.path.join(DATA_DIR, 'laudos.json')
 FORNECEDORES_FILE = os.path.join(DATA_DIR, 'fornecedores.json')
 JUDICIAL_FILE = os.path.join(DATA_DIR, 'judicial_processos.json')
+ADVOGADOS_FILE = os.path.join(DATA_DIR, 'advogados.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -155,6 +156,24 @@ def get_next_doctor_id():
         except (ValueError, TypeError):
             pass
     return str(max_id + 1).zfill(4)
+
+def get_next_advogado_id():
+    """Generate next sequential advogado ID (ADV0001, ADV0002, etc)"""
+    advs = load_advogados()
+    if not advs:
+        return "ADV0001"
+    # Find max numeric ID
+    max_id = 0
+    for adv in advs:
+        try:
+            adv_id = adv.get('id', '')
+            if adv_id.startswith('ADV'):
+                num_id = int(adv_id[3:])
+                if num_id > max_id:
+                    max_id = num_id
+        except (ValueError, TypeError):
+            pass
+    return f"ADV{str(max_id + 1).zfill(4)}"
 
 
 def load_leads():
@@ -506,6 +525,178 @@ def delete_doctor(doc_id):
     docs = load_doctors()
     docs = [d for d in docs if d.get('id') != doc_id]
     save_doctors(docs)
+    return jsonify({'ok': True})
+
+
+# ============ ADVOGADOS API ============
+@app.route('/api/advogados', methods=['GET'])
+def list_advogados():
+    return jsonify(load_advogados())
+
+
+@app.route('/api/advogados', methods=['POST'])
+def create_advogado():
+    advs = load_advogados()
+    adv = {}
+    # collect form fields
+    for k in request.form:
+        adv[k] = request.form.get(k)
+    adv['id'] = get_next_advogado_id()
+    adv['created_at'] = adv.get('created_at') or datetime.now(timezone.utc).isoformat()
+    adv['status'] = adv.get('status', 'ativo')  # ativo, inativo
+
+    # handle photo
+    if 'photo' in request.files:
+        photo = request.files['photo']
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            target_dir = os.path.join(UPLOADS_DIR, adv['id'])
+            os.makedirs(target_dir, exist_ok=True)
+            path = os.path.join(target_dir, filename)
+            photo.save(path)
+            adv['photo_url'] = '/uploads/' + adv['id'] + '/' + filename
+
+    # handle OAB document files
+    oab_files = request.files.getlist('oab_files')
+    oab_saved = []
+    for f in oab_files:
+        if f and f.filename:
+            filename = secure_filename(f.filename)
+            target_dir = os.path.join(UPLOADS_DIR, adv['id'])
+            os.makedirs(target_dir, exist_ok=True)
+            path = os.path.join(target_dir, filename)
+            f.save(path)
+            oab_saved.append({'filename': filename})
+    if oab_saved:
+        adv['oab_docs'] = oab_saved
+
+    advs.append(adv)
+    save_advogados(advs)
+    return jsonify(adv), 201
+
+
+@app.route('/api/advogados/<adv_id>', methods=['GET'])
+def get_advogado(adv_id):
+    advs = load_advogados()
+    adv = next((a for a in advs if a.get('id') == adv_id), None)
+    if not adv:
+        return jsonify({'error': 'not found'}), 404
+    return jsonify(adv)
+
+
+@app.route('/api/advogados/<adv_id>', methods=['PUT'])
+def update_advogado(adv_id):
+    advs = load_advogados()
+    idx = next((i for i, a in enumerate(advs) if a.get('id') == adv_id), None)
+    if idx is None:
+        return jsonify({'error': 'not found'}), 404
+    adv = advs[idx]
+    for k in request.form:
+        adv[k] = request.form.get(k)
+    if 'photo' in request.files:
+        photo = request.files['photo']
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            target_dir = os.path.join(UPLOADS_DIR, adv_id)
+            os.makedirs(target_dir, exist_ok=True)
+            path = os.path.join(target_dir, filename)
+            photo.save(path)
+            adv['photo_url'] = '/uploads/' + adv_id + '/' + filename
+    save_advogados(advs)
+    return jsonify(adv)
+
+
+@app.route('/api/advogados/<adv_id>', methods=['DELETE'])
+def delete_advogado(adv_id):
+    advs = load_advogados()
+    advs = [a for a in advs if a.get('id') != adv_id]
+    save_advogados(advs)
+    return jsonify({'ok': True})
+
+
+# ============ ADVOGADOS API ============
+@app.route('/api/advogados', methods=['GET'])
+def list_advogados():
+    return jsonify(load_advogados())
+
+
+@app.route('/api/advogados', methods=['POST'])
+def create_advogado():
+    advs = load_advogados()
+    adv = {}
+    # collect form fields
+    for k in request.form:
+        adv[k] = request.form.get(k)
+    adv['id'] = get_next_advogado_id()
+    adv['created_at'] = adv.get('created_at') or datetime.now(timezone.utc).isoformat()
+    adv['status'] = adv.get('status', 'ativo')  # ativo, inativo
+
+    # handle photo
+    if 'photo' in request.files:
+        photo = request.files['photo']
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            target_dir = os.path.join(UPLOADS_DIR, adv['id'])
+            os.makedirs(target_dir, exist_ok=True)
+            path = os.path.join(target_dir, filename)
+            photo.save(path)
+            adv['photo_url'] = '/uploads/' + adv['id'] + '/' + filename
+
+    # handle OAB document files
+    oab_files = request.files.getlist('oab_files')
+    oab_saved = []
+    for f in oab_files:
+        if f and f.filename:
+            filename = secure_filename(f.filename)
+            target_dir = os.path.join(UPLOADS_DIR, adv['id'])
+            os.makedirs(target_dir, exist_ok=True)
+            path = os.path.join(target_dir, filename)
+            f.save(path)
+            oab_saved.append({'filename': filename})
+    if oab_saved:
+        adv['oab_docs'] = oab_saved
+
+    advs.append(adv)
+    save_advogados(advs)
+    return jsonify(adv), 201
+
+
+@app.route('/api/advogados/<adv_id>', methods=['GET'])
+def get_advogado(adv_id):
+    advs = load_advogados()
+    adv = next((a for a in advs if a.get('id') == adv_id), None)
+    if not adv:
+        return jsonify({'error': 'not found'}), 404
+    return jsonify(adv)
+
+
+@app.route('/api/advogados/<adv_id>', methods=['PUT'])
+def update_advogado(adv_id):
+    advs = load_advogados()
+    idx = next((i for i, a in enumerate(advs) if a.get('id') == adv_id), None)
+    if idx is None:
+        return jsonify({'error': 'not found'}), 404
+    adv = advs[idx]
+    for k in request.form:
+        adv[k] = request.form.get(k)
+    if 'photo' in request.files:
+        photo = request.files['photo']
+        if photo and photo.filename:
+            filename = secure_filename(photo.filename)
+            target_dir = os.path.join(UPLOADS_DIR, adv_id)
+            os.makedirs(target_dir, exist_ok=True)
+            path = os.path.join(target_dir, filename)
+            photo.save(path)
+            adv['photo_url'] = '/uploads/' + adv_id + '/' + filename
+    save_advogados(advs)
+    return jsonify(adv)
+
+
+@app.route('/api/advogados/<adv_id>', methods=['DELETE'])
+def delete_advogado(adv_id):
+    advs = load_advogados()
+    advs = [a for a in advs if a.get('id') != adv_id]
+    save_advogados(advs)
     return jsonify({'ok': True})
 
 

@@ -3340,6 +3340,7 @@
                 <div class="settings-tabs">
                     <button class="settings-tab active" data-tab="users">Usuários e permissões</button>
                     <button class="settings-tab" data-tab="parameters">Parâmetros do sistema</button>
+                    <button class="settings-tab" data-tab="advogados"><i class="fas fa-gavel" style="margin-right:4px;"></i> Advogados</button>
                     <button class="settings-tab" data-tab="integrations">Integrações API</button>
                     <button class="settings-tab" data-tab="assinatura"><i class="fas fa-file-signature" style="margin-right:4px;"></i> Assinatura Digital</button>
                     <button class="settings-tab" data-tab="backup">Backup e segurança</button>
@@ -3401,6 +3402,16 @@
                                 <button onclick="navigator.clipboard.writeText(document.getElementById('link-cadastro-paciente').value);this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar',2000);" style="padding:8px 16px;background:#059669;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Copiar</button>
                             </div>
                             <p style="margin:8px 0 0;color:#888;font-size:11px;">O paciente preenche seus dados pessoais, anamnese, sintomas e hábitos. As informações ficarão disponíveis na ficha de atendimento.</p>
+                        </div>
+
+                        <div style="margin-bottom:20px;padding:16px;background:#fef3f2;border-radius:8px;border:1px solid #dc2626;">
+                            <h4 style="margin:0 0 8px;color:#dc2626;"><i class="fas fa-gavel"></i> Link de Cadastro de Advogado</h4>
+                            <p style="margin:0 0 8px;color:#555;font-size:13px;">Envie este link para advogados parceiros se cadastrarem na plataforma:</p>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" id="link-cadastro-advogado" readonly style="flex:1;padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:13px;background:#fff;" value="">
+                                <button onclick="navigator.clipboard.writeText(document.getElementById('link-cadastro-advogado').value);this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar',2000);" style="padding:8px 16px;background:#dc2626;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Copiar</button>
+                            </div>
+                            <p style="margin:8px 0 0;color:#888;font-size:11px;">O advogado preenche dados profissionais, OAB, especialidades. Após cadastro, pode ser vinculado a processos judiciais.</p>
                         </div>
 
                         <ul class="admin-list">
@@ -3574,6 +3585,99 @@
                             <li><i class="fas fa-check-circle"></i> Segurança e auditoria</li>
                         </ul>
                     </div>
+
+                    <!-- ===== ABA: ADVOGADOS ===== -->
+                    <div class="settings-panel" data-panel="advogados">
+                        <div style="margin-bottom:24px;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                                <div style="background:linear-gradient(135deg,#dc2626,#991b1b);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-gavel" style="color:#fff;font-size:18px;"></i></div>
+                                <div>
+                                    <h4 style="margin:0;color:#333;font-size:16px;">Cadastro de Advogados Parceiros</h4>
+                                    <p style="margin:0;color:#6b7280;font-size:12px;">Gerencie os advogados que atuam em processos judiciais da plataforma</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                            <!-- Lista de Advogados -->
+                            <div>
+                                <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-list" style="margin-right:6px;color:#dc2626;"></i> Advogados Cadastrados</h5>
+                                <div id="advogados-lista" style="max-height:500px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                                    <div style="padding:20px;text-align:center;color:#9ca3af;"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+                                </div>
+                            </div>
+
+                            <!-- Formulário de Cadastro -->
+                            <div>
+                                <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-user-plus" style="margin-right:6px;color:#dc2626;"></i> Novo Advogado</h5>
+                                <form id="form-advogado" enctype="multipart/form-data" style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-radius:8px;">
+                                    <input type="hidden" id="adv-id" name="id">
+                                    
+                                    <div style="margin-bottom:14px;">
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nome Completo *</label>
+                                        <input type="text" id="adv-nome" name="nome" required placeholder="Nome completo" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                                        <div>
+                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">OAB *</label>
+                                            <input type="text" id="adv-oab" name="oab" required placeholder="Ex: 123456/MG" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        </div>
+                                        <div>
+                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">CPF</label>
+                                            <input type="text" id="adv-cpf" name="cpf" placeholder="000.000.000-00" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom:14px;">
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Email *</label>
+                                        <input type="email" id="adv-email" name="email" required placeholder="email@exemplo.com" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                                        <div>
+                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Telefone *</label>
+                                            <input type="tel" id="adv-telefone" name="telefone" required placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        </div>
+                                        <div>
+                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">WhatsApp</label>
+                                            <input type="tel" id="adv-whatsapp" name="whatsapp" placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom:14px;">
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Especialidades Jurídicas</label>
+                                        <input type="text" id="adv-especialidades" name="especialidades" placeholder="Ex: Direito da Saúde, Direito do Consumidor" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+
+                                    <div style="margin-bottom:14px;">
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Cidade/UF</label>
+                                        <input type="text" id="adv-cidade" name="cidade" placeholder="Ex: São Paulo/SP" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+
+                                    <div style="margin-bottom:14px;">
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observações</label>
+                                        <textarea id="adv-observacoes" name="observacoes" rows="2" placeholder="Informações adicionais..." style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                                    </div>
+
+                                    <div style="margin-bottom:14px;">
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Status</label>
+                                        <select id="adv-status" name="status" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                            <option value="ativo">Ativo</option>
+                                            <option value="inativo">Inativo</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="display:flex;gap:8px;">
+                                        <button type="submit" style="flex:1;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-save" style="margin-right:6px;"></i><span id="btn-adv-text">Cadastrar</span></button>
+                                        <button type="button" onclick="limparFormAdvogado()" style="padding:10px 20px;background:#6b7280;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div id="advogado-feedback" style="margin-top:12px;font-size:12px;display:none;"></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -4033,6 +4137,9 @@
                 if (tabId === 'assinatura') {
                     carregarConfigAssinatura();
                 }
+                if (tabId === 'advogados') {
+                    carregarListaAdvogados();
+                }
             }
 
             function showApp(user) {
@@ -4176,6 +4283,8 @@
                     if (linkCadastro) linkCadastro.value = BASE_URL + '/?registerMedico=true';
                     const linkPaciente = document.getElementById('link-cadastro-paciente');
                     if (linkPaciente) linkPaciente.value = BASE_URL + '/?registerPaciente=true';
+                    const linkAdvogado = document.getElementById('link-cadastro-advogado');
+                    if (linkAdvogado) linkAdvogado.value = BASE_URL + '/?registerAdvogado=true';
                     // Load webhook config
                     carregarWebhookConfig();
                 });
@@ -8894,6 +9003,184 @@
                 }
             }
 
+            // ========== FORMULÁRIO DE CADASTRO DE ADVOGADO (público) ==========
+            function openLawyerRegistrationForm() {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:760px;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;">
+                            <h2><i class="fas fa-gavel"></i> Cadastro de Advogado — Parceiro Jurídico</h2>
+                            <button class="btn-close-modal" style="color:#fff;"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+                            <div style="background:#fef2f2;padding:14px;border-radius:10px;margin-bottom:20px;border:1px solid #fecaca;">
+                                <p style="margin:0;color:#991b1b;font-size:13px;"><i class="fas fa-info-circle" style="margin-right:6px;"></i> Preencha seus dados para se cadastrar como advogado parceiro da ON Medicina Internacional. Após o cadastro, você poderá ser vinculado a processos judiciais de pacientes de cannabis medicinal.</p>
+                            </div>
+
+                            <form id="lawyer-registration-form">
+                                <h3 style="color:#991b1b;border-bottom:2px solid #fecaca;padding-bottom:8px;margin-bottom:16px;"><i class="fas fa-id-card" style="margin-right:8px;"></i> Identificação Profissional</h3>
+                                <div class="form-group"><label>Nome Completo *</label><input id="law-nome" required placeholder="Nome completo do advogado"></div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div class="form-group"><label>OAB (Nº/UF) *</label><input id="law-oab" required placeholder="Ex: 123456/MG"></div>
+                                    <div class="form-group"><label>CPF *</label><input id="law-cpf" required placeholder="000.000.000-00"></div>
+                                </div>
+                                <div class="form-group"><label>Foto de Perfil</label><input id="law-photo" type="file" accept="image/*"><small style="color:#888;display:block;margin-top:4px;">Foto profissional para identificação na plataforma.</small></div>
+
+                                <h3 style="color:#991b1b;border-bottom:2px solid #fecaca;padding-bottom:8px;margin-bottom:16px;margin-top:24px;"><i class="fas fa-phone" style="margin-right:8px;"></i> Contato</h3>
+                                <div class="form-group"><label>Email Profissional *</label><input id="law-email" type="email" required placeholder="advogado@escritorio.com"></div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div class="form-group"><label>Telefone *</label><input id="law-telefone" required placeholder="(00) 90000-0000"></div>
+                                    <div class="form-group"><label>WhatsApp</label><input id="law-whatsapp" placeholder="(00) 90000-0000"></div>
+                                </div>
+                                <div class="form-group"><label>Cidade / UF</label><input id="law-cidade" placeholder="Ex: Belo Horizonte / MG"></div>
+                                <div class="form-group"><label>Endereço do Escritório</label><input id="law-endereco" placeholder="Rua, número, complemento, bairro"></div>
+
+                                <h3 style="color:#991b1b;border-bottom:2px solid #fecaca;padding-bottom:8px;margin-bottom:16px;margin-top:24px;"><i class="fas fa-balance-scale" style="margin-right:8px;"></i> Atuação Profissional</h3>
+                                <div class="form-group"><label>Especialidades Jurídicas</label><input id="law-especialidades" placeholder="Ex: Direito da Saúde, Direito do Consumidor, Direito Público"></div>
+                                <div class="form-group"><label>Áreas de atuação em Cannabis Medicinal</label>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+                                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="law-area-cb" value="Obrigação de Fazer c/ Tutela"> Obrigação de Fazer c/ Tutela</label>
+                                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="law-area-cb" value="Mandado de Segurança"> Mandado de Segurança</label>
+                                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="law-area-cb" value="Habeas Corpus"> Habeas Corpus</label>
+                                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="law-area-cb" value="Importação ANVISA"> Importação ANVISA</label>
+                                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="law-area-cb" value="Direito Previdenciário"> Direito Previdenciário</label>
+                                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" class="law-area-cb" value="Direito Penal (cultivo)"> Direito Penal (cultivo)</label>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label>Experiência com Cannabis Medicinal</label>
+                                    <select id="law-experiencia" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                                        <option value="">Selecionar...</option>
+                                        <option value="iniciante">Iniciante — Interesse em atuar na área</option>
+                                        <option value="intermediario">Intermediário — Já atuou em alguns casos</option>
+                                        <option value="experiente">Experiente — Atua regularmente com processos judiciais</option>
+                                        <option value="especialista">Especialista — Referência na área</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>Breve descrição da experiência</label><textarea id="law-bio" rows="3" placeholder="Descreva sua experiência com processos de cannabis medicinal, direito à saúde e ações contra o SUS/ANVISA..."></textarea></div>
+
+                                <h3 style="color:#991b1b;border-bottom:2px solid #fecaca;padding-bottom:8px;margin-bottom:16px;margin-top:24px;"><i class="fas fa-file-alt" style="margin-right:8px;"></i> Documentação</h3>
+                                <div class="form-group"><label>Upload Carteira OAB (frente/verso)</label><input id="law-oab-files" type="file" accept="image/*,application/pdf" multiple><small style="color:#888;display:block;margin-top:4px;">Envie foto ou PDF da carteira OAB.</small></div>
+
+                                <h3 style="color:#991b1b;border-bottom:2px solid #fecaca;padding-bottom:8px;margin-bottom:16px;margin-top:24px;"><i class="fas fa-dollar-sign" style="margin-right:8px;"></i> Honorários e Modelo de Trabalho</h3>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div class="form-group"><label>Modelo de Honorários</label>
+                                        <select id="law-modelo-honorarios" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                                            <option value="fixo">Fixo por processo</option>
+                                            <option value="exito">Honorários de êxito</option>
+                                            <option value="misto">Misto (fixo + êxito)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group"><label>Valor Referência (R$)</label><input id="law-valor-ref" type="number" step="0.01" placeholder="Ex: 3000"></div>
+                                </div>
+
+                                <h3 style="color:#991b1b;border-bottom:2px solid #fecaca;padding-bottom:8px;margin-bottom:16px;margin-top:24px;"><i class="fas fa-university" style="margin-right:8px;"></i> Dados Bancários (para repasses)</h3>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div class="form-group"><label>Banco</label><input id="law-banco" placeholder="Ex: Itaú"></div>
+                                    <div class="form-group"><label>Agência</label><input id="law-agencia" placeholder="0000"></div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div class="form-group"><label>Conta Corrente</label><input id="law-conta" placeholder="00000-0"></div>
+                                    <div class="form-group"><label>Chave PIX</label><input id="law-pix" placeholder="CPF, email ou chave aleatória"></div>
+                                </div>
+
+                                <div class="form-group"><label>Observações adicionais</label><textarea id="law-obs" rows="2" placeholder="Notas, disponibilidade, informações relevantes..."></textarea></div>
+
+                                <div style="background:#fef2f2;padding:12px;border-radius:8px;margin-top:12px;">
+                                    <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#991b1b;cursor:pointer;">
+                                        <input type="checkbox" id="law-aceite" style="margin-top:3px;">
+                                        Eu confirmo que as informações fornecidas são verdadeiras e autorizo a ON Medicina Internacional a utilizar meus dados para fins de parceria jurídica em processos de cannabis medicinal.
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" id="btn-cancel-lawyer">Cancelar</button>
+                            <button class="btn-primary" id="btn-save-lawyer" style="background:#dc2626;"><i class="fas fa-gavel" style="margin-right:6px;"></i> Enviar Cadastro</button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                const close = () => modal.remove();
+                modal.querySelector('.btn-close-modal').addEventListener('click', close);
+                modal.querySelector('#btn-cancel-lawyer').addEventListener('click', close);
+
+                modal.querySelector('#btn-save-lawyer').addEventListener('click', async () => {
+                    const nome = modal.querySelector('#law-nome').value.trim();
+                    const oab = modal.querySelector('#law-oab').value.trim();
+                    const email = modal.querySelector('#law-email').value.trim();
+                    const telefone = modal.querySelector('#law-telefone').value.trim();
+                    const aceite = modal.querySelector('#law-aceite').checked;
+
+                    if (!nome || !oab || !email || !telefone) {
+                        alert('Preencha os campos obrigatórios: Nome, OAB, Email e Telefone.');
+                        return;
+                    }
+                    if (!aceite) {
+                        alert('Você precisa aceitar os termos para prosseguir.');
+                        return;
+                    }
+
+                    // Collect areas
+                    const areas = [];
+                    modal.querySelectorAll('.law-area-cb:checked').forEach(cb => areas.push(cb.value));
+
+                    const formData = new FormData();
+                    formData.append('nome', nome);
+                    formData.append('oab', oab);
+                    formData.append('cpf', modal.querySelector('#law-cpf').value.trim());
+                    formData.append('email', email);
+                    formData.append('telefone', telefone);
+                    formData.append('whatsapp', modal.querySelector('#law-whatsapp').value.trim());
+                    formData.append('cidade', modal.querySelector('#law-cidade').value.trim());
+                    formData.append('endereco', modal.querySelector('#law-endereco').value.trim());
+                    formData.append('especialidades', modal.querySelector('#law-especialidades').value.trim());
+                    formData.append('areas_atuacao', areas.join(', '));
+                    formData.append('experiencia', modal.querySelector('#law-experiencia').value);
+                    formData.append('bio', modal.querySelector('#law-bio').value.trim());
+                    formData.append('modelo_honorarios', modal.querySelector('#law-modelo-honorarios').value);
+                    formData.append('valor_referencia', modal.querySelector('#law-valor-ref').value || '0');
+                    formData.append('banco', modal.querySelector('#law-banco').value.trim());
+                    formData.append('agencia', modal.querySelector('#law-agencia').value.trim());
+                    formData.append('conta', modal.querySelector('#law-conta').value.trim());
+                    formData.append('pix', modal.querySelector('#law-pix').value.trim());
+                    formData.append('observacoes', modal.querySelector('#law-obs').value.trim());
+                    formData.append('status', 'ativo');
+
+                    const photoInput = modal.querySelector('#law-photo');
+                    if (photoInput && photoInput.files[0]) formData.append('photo', photoInput.files[0]);
+
+                    const oabFiles = modal.querySelector('#law-oab-files');
+                    if (oabFiles && oabFiles.files.length) {
+                        for (let i = 0; i < oabFiles.files.length; i++) formData.append('oab_files', oabFiles.files[i]);
+                    }
+
+                    const btn = modal.querySelector('#btn-save-lawyer');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+                    try {
+                        const res = await fetch('/api/advogados', { method: 'POST', body: formData });
+                        if (res.ok) {
+                            const adv = await res.json();
+                            alert(`✅ Cadastro realizado com sucesso!\\n\\nAdvogado: ${adv.nome}\\nID: ${adv.id}\\nOAB: ${adv.oab}\\n\\nEm breve entraremos em contato para confirmar sua parceria.`);
+                            close();
+                        } else {
+                            alert('Erro ao cadastrar. Tente novamente.');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-gavel" style="margin-right:6px;"></i> Enviar Cadastro';
+                        }
+                    } catch(e) {
+                        alert('Erro de conexão. Verifique sua internet e tente novamente.');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-gavel" style="margin-right:6px;"></i> Enviar Cadastro';
+                    }
+                });
+            }
+
+            window.openLawyerRegistrationForm = openLawyerRegistrationForm;
+
             // ---------- Admin list + edit UI for registered doctors ----------
             function fetchDoctorsFromServerOrLocal() {
                 return fetch('/api/doctors').then(r => { if (r.ok) return r.json(); throw new Error('server'); }).catch(()=> {
@@ -9706,7 +9993,7 @@
             // If URL contains registerPaciente or registerMedico, bypass login and open form
             try {
                 const p = new URLSearchParams(window.location.search);
-                if (p.get('registerPaciente') === 'true' || p.get('registerMedico') === 'true') {
+                if (p.get('registerPaciente') === 'true' || p.get('registerMedico') === 'true' || p.get('registerAdvogado') === 'true') {
                     // Hide login overlay and show app for registration
                     const loginOverlay = document.getElementById('login-overlay');
                     const appMain = document.getElementById('app');
@@ -9718,6 +10005,9 @@
                     }
                     if (p.get('registerMedico') === 'true') {
                         setTimeout(() => openDoctorRegistrationForm(), 400);
+                    }
+                    if (p.get('registerAdvogado') === 'true') {
+                        setTimeout(() => openLawyerRegistrationForm(), 400);
                     }
                 }
             } catch(e) {}
@@ -12791,6 +13081,129 @@
             window.carregarConfigAssinatura = carregarConfigAssinatura;
             window.carregarHistoricoEnvios = carregarHistoricoEnvios;
             window.carregarCertificadosMedicos = carregarCertificadosMedicos;
+
+            // ========== ADVOGADOS MANAGEMENT ==========
+            async function carregarListaAdvogados() {
+                const container = document.getElementById('advogados-lista');
+                if (!container) return;
+                try {
+                    const advs = await apiRequest('/api/advogados');
+                    if (!advs || advs.length === 0) {
+                        container.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;"><i class="fas fa-inbox"></i><div style="margin-top:8px;">Nenhum advogado cadastrado</div></div>';
+                        return;
+                    }
+                    container.innerHTML = advs.map(adv => {
+                        const statusColor = adv.status === 'ativo' ? '#10b981' : '#ef4444';
+                        const statusLabel = adv.status === 'ativo' ? 'Ativo' : 'Inativo';
+                        return `<div style="padding:12px;border-bottom:1px solid #e5e7eb;background:#fff;">
+                            <div style="display:flex;justify-content:space-between;align-items:start;">
+                                <div style="flex:1;">
+                                    <div style="font-weight:600;font-size:13px;color:#111827;">${adv.nome || 'Sem nome'}</div>
+                                    <div style="font-size:11px;color:#6b7280;margin-top:2px;">OAB: ${adv.oab || 'N/A'} | ${adv.email || ''}</div>
+                                    ${adv.telefone ? `<div style="font-size:11px;color:#6b7280;"><i class="fas fa-phone" style="width:12px;"></i> ${adv.telefone}</div>` : ''}
+                                    ${adv.especialidades ? `<div style="font-size:10px;color:#7c3aed;margin-top:4px;"><i class="fas fa-balance-scale"></i> ${adv.especialidades}</div>` : ''}
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+                                    <span style="background:${statusColor}20;color:${statusColor};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;">${statusLabel}</span>
+                                    <div style="display:flex;gap:4px;">
+                                        <button onclick="editarAdvogado('${adv.id}')" style="background:#3b82f6;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;" title="Editar"><i class="fas fa-edit"></i></button>
+                                        <button onclick="excluirAdvogado('${adv.id}')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;" title="Excluir"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } catch(e) {
+                    console.error('Erro ao carregar advogados:', e);
+                    container.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i><div style="margin-top:8px;">Erro ao carregar advogados</div></div>';
+                }
+            }
+
+            async function editarAdvogado(advId) {
+                try {
+                    const adv = await apiRequest('/api/advogados/' + advId);
+                    document.getElementById('adv-id').value = adv.id || '';
+                    document.getElementById('adv-nome').value = adv.nome || '';
+                    document.getElementById('adv-oab').value = adv.oab || '';
+                    document.getElementById('adv-cpf').value = adv.cpf || '';
+                    document.getElementById('adv-email').value = adv.email || '';
+                    document.getElementById('adv-telefone').value = adv.telefone || '';
+                    document.getElementById('adv-whatsapp').value = adv.whatsapp || '';
+                    document.getElementById('adv-especialidades').value = adv.especialidades || '';
+                    document.getElementById('adv-cidade').value = adv.cidade || '';
+                    document.getElementById('adv-observacoes').value = adv.observacoes || '';
+                    document.getElementById('adv-status').value = adv.status || 'ativo';
+                    document.getElementById('btn-adv-text').textContent = 'Atualizar';
+                    document.getElementById('adv-nome').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch(e) {
+                    alert('Erro ao carregar dados do advogado');
+                }
+            }
+
+            async function excluirAdvogado(advId) {
+                if (!confirm('Excluir este advogado? Esta ação não pode ser desfeita.')) return;
+                try {
+                    await apiRequest('/api/advogados/' + advId, { method: 'DELETE' });
+                    carregarListaAdvogados();
+                    mostrarFeedbackAdvogado('Advogado excluído com sucesso!', 'success');
+                } catch(e) {
+                    alert('Erro ao excluir advogado');
+                }
+            }
+
+            function limparFormAdvogado() {
+                document.getElementById('form-advogado').reset();
+                document.getElementById('adv-id').value = '';
+                document.getElementById('btn-adv-text').textContent = 'Cadastrar';
+            }
+
+            function mostrarFeedbackAdvogado(msg, type) {
+                const fb = document.getElementById('advogado-feedback');
+                if (!fb) return;
+                fb.textContent = msg;
+                fb.style.display = 'block';
+                fb.style.color = type === 'success' ? '#10b981' : '#ef4444';
+                setTimeout(() => { fb.style.display = 'none'; }, 3000);
+            }
+
+            document.getElementById('form-advogado')?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const advId = document.getElementById('adv-id').value;
+                const isEdit = !!advId;
+
+                const formData = new FormData();
+                formData.append('nome', document.getElementById('adv-nome').value);
+                formData.append('oab', document.getElementById('adv-oab').value);
+                formData.append('cpf', document.getElementById('adv-cpf').value);
+                formData.append('email', document.getElementById('adv-email').value);
+                formData.append('telefone', document.getElementById('adv-telefone').value);
+                formData.append('whatsapp', document.getElementById('adv-whatsapp').value);
+                formData.append('especialidades', document.getElementById('adv-especialidades').value);
+                formData.append('cidade', document.getElementById('adv-cidade').value);
+                formData.append('observacoes', document.getElementById('adv-observacoes').value);
+                formData.append('status', document.getElementById('adv-status').value);
+
+                try {
+                    if (isEdit) {
+                        await fetch('/api/advogados/' + advId, { method: 'PUT', body: formData });
+                        mostrarFeedbackAdvogado('Advogado atualizado com sucesso!', 'success');
+                    } else {
+                        await fetch('/api/advogados', { method: 'POST', body: formData });
+                        mostrarFeedbackAdvogado('Advogado cadastrado com sucesso!', 'success');
+                    }
+                    limparFormAdvogado();
+                    carregarListaAdvogados();
+                } catch(e) {
+                    console.error('Erro ao salvar advogado:', e);
+                    mostrarFeedbackAdvogado('Erro ao salvar advogado', 'error');
+                }
+            });
+
+            window.carregarListaAdvogados = carregarListaAdvogados;
+            window.editarAdvogado = editarAdvogado;
+            window.excluirAdvogado = excluirAdvogado;
+            window.limparFormAdvogado = limparFormAdvogado;
+
             window.onEventoTipoChange = onEventoTipoChange;
             window.excluirEventoTimeline = excluirEventoTimeline;
             window.abrirModalSolicitacao = abrirModalSolicitacao;
