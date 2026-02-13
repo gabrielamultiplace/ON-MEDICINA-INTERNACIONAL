@@ -2194,6 +2194,15 @@
                         </button>
                     </div>
                 </div>
+                <!-- Sub-tabs: Processos | Gestão de Advogados -->
+                <div style="display:flex;gap:8px;margin-top:12px;" id="judicial-subtabs">
+                    <button class="btn-hero jud-tab-btn active" data-jud-tab="processos" style="font-size:13px;padding:8px 20px;" onclick="switchJudicialTab('processos')">
+                        <i class="fas fa-columns"></i> Processos
+                    </button>
+                    <button class="btn-hero jud-tab-btn" data-jud-tab="advogados" style="font-size:13px;padding:8px 20px;background:#dc2626;" onclick="switchJudicialTab('advogados')">
+                        <i class="fas fa-user-tie"></i> Gestão de Advogados
+                    </button>
+                </div>
                 <!-- Stats bar -->
                 <div id="judicial-stats-bar" style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
                     <div style="background:linear-gradient(135deg,#5E35B1,#7C4DFF);color:#fff;padding:10px 18px;border-radius:10px;min-width:120px;text-align:center;">
@@ -2215,6 +2224,8 @@
                 </div>
             </div>
             <div class="page-body">
+                <!-- TAB: Processos (Kanban) -->
+                <div id="jud-tab-processos" class="jud-tab-content">
                 <div class="kanban-board" id="kanban-judicial">
                     <!-- 1. Coleta de Documentos -->
                     <div class="kanban-column kanban-jud-coleta" data-column-title="coleta_documentos" data-etapa="coleta_documentos">
@@ -2293,6 +2304,100 @@
                         <div class="kanban-cards" data-etapa="arquivado"></div>
                     </div>
                 </div>
+                </div>
+
+                <!-- TAB: Gestão de Advogados -->
+                <div id="jud-tab-advogados" class="jud-tab-content" style="display:none;">
+                    <div style="margin-bottom:24px;">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                            <div style="background:linear-gradient(135deg,#dc2626,#991b1b);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-user-tie" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <h4 style="margin:0;color:#333;font-size:16px;">Gestão de Advogados Parceiros</h4>
+                                <p style="margin:0;color:#6b7280;font-size:12px;">Gerencie os advogados que atuam em processos judiciais da plataforma</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                        <!-- Lista de Advogados -->
+                        <div>
+                            <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-list" style="margin-right:6px;color:#dc2626;"></i> Advogados Cadastrados</h5>
+                            <div id="advogados-lista" style="max-height:500px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                                <div style="padding:20px;text-align:center;color:#9ca3af;"><i class="fas fa-inbox"></i><div style="margin-top:8px;">Nenhum advogado cadastrado</div></div>
+                            </div>
+                        </div>
+
+                        <!-- Formulário de Cadastro -->
+                        <div>
+                            <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-user-plus" style="margin-right:6px;color:#dc2626;"></i> Novo Advogado</h5>
+                            <form id="form-advogado" enctype="multipart/form-data" style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-radius:8px;">
+                                <input type="hidden" id="adv-id" name="id">
+                                
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nome Completo *</label>
+                                    <input type="text" id="adv-nome" name="nome" required placeholder="Nome completo" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                </div>
+
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                                    <div>
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">OAB *</label>
+                                        <input type="text" id="adv-oab" name="oab" required placeholder="Ex: 123456/MG" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">CPF</label>
+                                        <input type="text" id="adv-cpf" name="cpf" placeholder="000.000.000-00" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Email *</label>
+                                    <input type="email" id="adv-email" name="email" required placeholder="email@exemplo.com" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                </div>
+
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                                    <div>
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Telefone *</label>
+                                        <input type="tel" id="adv-telefone" name="telefone" required placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">WhatsApp</label>
+                                        <input type="tel" id="adv-whatsapp" name="whatsapp" placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Especialidades Jurídicas</label>
+                                    <input type="text" id="adv-especialidades" name="especialidades" placeholder="Ex: Direito da Saúde, Direito do Consumidor" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                </div>
+
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Cidade/UF</label>
+                                    <input type="text" id="adv-cidade" name="cidade" placeholder="Ex: São Paulo/SP" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                </div>
+
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observações</label>
+                                    <textarea id="adv-observacoes" name="observacoes" rows="2" placeholder="Informações adicionais..." style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                                </div>
+
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Status</label>
+                                    <select id="adv-status" name="status" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
+                                        <option value="ativo">Ativo</option>
+                                        <option value="inativo">Inativo</option>
+                                    </select>
+                                </div>
+
+                                <div style="display:flex;gap:8px;">
+                                    <button type="submit" style="flex:1;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-save" style="margin-right:6px;"></i><span id="btn-adv-text">Cadastrar</span></button>
+                                    <button type="button" onclick="limparFormAdvogado()" style="padding:10px 20px;background:#6b7280;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div id="advogado-feedback" style="margin-top:12px;font-size:12px;display:none;"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -3340,7 +3445,6 @@
                 <div class="settings-tabs">
                     <button class="settings-tab active" data-tab="users">Usuários e permissões</button>
                     <button class="settings-tab" data-tab="parameters">Parâmetros do sistema</button>
-                    <button class="settings-tab" data-tab="advogados"><i class="fas fa-gavel" style="margin-right:4px;"></i> Advogados</button>
                     <button class="settings-tab" data-tab="integrations">Integrações API</button>
                     <button class="settings-tab" data-tab="assinatura"><i class="fas fa-file-signature" style="margin-right:4px;"></i> Assinatura Digital</button>
                     <button class="settings-tab" data-tab="backup">Backup e segurança</button>
@@ -3584,98 +3688,6 @@
                             <li><i class="fas fa-check-circle"></i> Histórico de backups</li>
                             <li><i class="fas fa-check-circle"></i> Segurança e auditoria</li>
                         </ul>
-                    </div>
-
-                    <!-- ===== ABA: ADVOGADOS ===== -->
-                    <div class="settings-panel" data-panel="advogados">
-                        <div style="margin-bottom:24px;">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-                                <div style="background:linear-gradient(135deg,#dc2626,#991b1b);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-gavel" style="color:#fff;font-size:18px;"></i></div>
-                                <div>
-                                    <h4 style="margin:0;color:#333;font-size:16px;">Cadastro de Advogados Parceiros</h4>
-                                    <p style="margin:0;color:#6b7280;font-size:12px;">Gerencie os advogados que atuam em processos judiciais da plataforma</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-                            <!-- Lista de Advogados -->
-                            <div>
-                                <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-list" style="margin-right:6px;color:#dc2626;"></i> Advogados Cadastrados</h5>
-                                <div id="advogados-lista" style="max-height:500px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
-                                    <div style="padding:20px;text-align:center;color:#9ca3af;"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
-                                </div>
-                            </div>
-
-                            <!-- Formulário de Cadastro -->
-                            <div>
-                                <h5 style="margin:0 0 12px;color:#374151;font-size:14px;font-weight:600;"><i class="fas fa-user-plus" style="margin-right:6px;color:#dc2626;"></i> Novo Advogado</h5>
-                                <form id="form-advogado" enctype="multipart/form-data" style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-radius:8px;">
-                                    <input type="hidden" id="adv-id" name="id">
-                                    
-                                    <div style="margin-bottom:14px;">
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nome Completo *</label>
-                                        <input type="text" id="adv-nome" name="nome" required placeholder="Nome completo" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                    </div>
-
-                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-                                        <div>
-                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">OAB *</label>
-                                            <input type="text" id="adv-oab" name="oab" required placeholder="Ex: 123456/MG" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                        </div>
-                                        <div>
-                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">CPF</label>
-                                            <input type="text" id="adv-cpf" name="cpf" placeholder="000.000.000-00" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                        </div>
-                                    </div>
-
-                                    <div style="margin-bottom:14px;">
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Email *</label>
-                                        <input type="email" id="adv-email" name="email" required placeholder="email@exemplo.com" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                    </div>
-
-                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-                                        <div>
-                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Telefone *</label>
-                                            <input type="tel" id="adv-telefone" name="telefone" required placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                        </div>
-                                        <div>
-                                            <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">WhatsApp</label>
-                                            <input type="tel" id="adv-whatsapp" name="whatsapp" placeholder="(00) 90000-0000" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                        </div>
-                                    </div>
-
-                                    <div style="margin-bottom:14px;">
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Especialidades Jurídicas</label>
-                                        <input type="text" id="adv-especialidades" name="especialidades" placeholder="Ex: Direito da Saúde, Direito do Consumidor" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                    </div>
-
-                                    <div style="margin-bottom:14px;">
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Cidade/UF</label>
-                                        <input type="text" id="adv-cidade" name="cidade" placeholder="Ex: São Paulo/SP" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                    </div>
-
-                                    <div style="margin-bottom:14px;">
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Observações</label>
-                                        <textarea id="adv-observacoes" name="observacoes" rows="2" placeholder="Informações adicionais..." style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
-                                    </div>
-
-                                    <div style="margin-bottom:14px;">
-                                        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Status</label>
-                                        <select id="adv-status" name="status" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;box-sizing:border-box;">
-                                            <option value="ativo">Ativo</option>
-                                            <option value="inativo">Inativo</option>
-                                        </select>
-                                    </div>
-
-                                    <div style="display:flex;gap:8px;">
-                                        <button type="submit" style="flex:1;padding:10px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;"><i class="fas fa-save" style="margin-right:6px;"></i><span id="btn-adv-text">Cadastrar</span></button>
-                                        <button type="button" onclick="limparFormAdvogado()" style="padding:10px 20px;background:#6b7280;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;"><i class="fas fa-times"></i></button>
-                                    </div>
-                                    <div id="advogado-feedback" style="margin-top:12px;font-size:12px;display:none;"></div>
-                                </form>
-                            </div>
-                        </div>
                     </div>
 
                 </div>
@@ -4137,9 +4149,7 @@
                 if (tabId === 'assinatura') {
                     carregarConfigAssinatura();
                 }
-                if (tabId === 'advogados') {
-                    carregarListaAdvogados();
-                }
+
             }
 
             function showApp(user) {
@@ -6292,6 +6302,28 @@
 
             // Stub save function for column reorder compatibility
             function saveFinanceiroKanbanData() { /* no-op - financeiro uses API now */ }
+
+            // ========== JUDICIAL SUB-TABS ==========
+            function switchJudicialTab(tabName) {
+                // Toggle tab buttons
+                document.querySelectorAll('.jud-tab-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.judTab === tabName);
+                });
+                // Toggle content
+                document.getElementById('jud-tab-processos').style.display = tabName === 'processos' ? '' : 'none';
+                document.getElementById('jud-tab-advogados').style.display = tabName === 'advogados' ? '' : 'none';
+                // Load data
+                if (tabName === 'advogados' && typeof carregarListaAdvogados === 'function') {
+                    carregarListaAdvogados();
+                }
+                // Show/hide novo processo button
+                const btnNovo = document.getElementById('btn-novo-processo');
+                if (btnNovo) btnNovo.style.display = tabName === 'processos' ? '' : 'none';
+                // Show/hide stats bar
+                const statsBar = document.getElementById('judicial-stats-bar');
+                if (statsBar) statsBar.style.display = tabName === 'processos' ? 'flex' : 'none';
+            }
+            window.switchJudicialTab = switchJudicialTab;
 
             // ========== KANBAN JUDICIAL (API-DRIVEN) ==========
             let draggedJudicialCard = null;
