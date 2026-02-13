@@ -82,6 +82,7 @@ FORNECEDORES_FILE = os.path.join(DATA_DIR, 'fornecedores.json')
 JUDICIAL_FILE = os.path.join(DATA_DIR, 'judicial_processos.json')
 ADVOGADOS_FILE = os.path.join(DATA_DIR, 'advogados.json')
 ANVISA_FILE = os.path.join(DATA_DIR, 'anvisa_solicitacoes.json')
+ANVISA_PRODUTOS_FILE = os.path.join(DATA_DIR, 'anvisa_produtos_cannabis.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -259,6 +260,12 @@ def load_anvisa_solicitacoes():
 
 def save_anvisa_solicitacoes(data):
     _save_json_file(ANVISA_FILE, data)
+
+def load_anvisa_produtos():
+    return _load_json_file(ANVISA_PRODUTOS_FILE, [])
+
+def save_anvisa_produtos(data):
+    _save_json_file(ANVISA_PRODUTOS_FILE, data)
 
 def load_webhooks_config():
     return _load_json_file(WEBHOOKS_CONFIG_FILE, {'prescricao_url': '', 'prescricao_ativo': False})
@@ -699,6 +706,77 @@ def delete_anvisa(sol_id):
     solicitacoes = [s for s in solicitacoes if s.get('id') != sol_id]
     save_anvisa_solicitacoes(solicitacoes)
     return jsonify({'ok': True})
+
+
+# ===== ANVISA CATÁLOGO DE PRODUTOS CANNABIS =====
+
+@app.route('/api/anvisa/produtos', methods=['GET'])
+def list_anvisa_produtos():
+    return jsonify(load_anvisa_produtos())
+
+@app.route('/api/anvisa/produtos/sync', methods=['POST'])
+def sync_anvisa_produtos():
+    """Sincroniza catálogo de produtos cannabis dos Dados Abertos ANVISA"""
+    import csv
+    import io
+    try:
+        url = 'https://dados.anvisa.gov.br/dados/TA_DA_PRODUTO_CANNABIS.CSV'
+        resp = http_requests.get(url, timeout=30, verify=True)
+        resp.raise_for_status()
+        content = resp.content.decode('utf-8', errors='replace')
+        reader = csv.DictReader(io.StringIO(content), delimiter=';')
+        produtos = []
+        for row in reader:
+            produtos.append({
+                'processo': row.get('NUMERO_DO_PROCESSO', '').strip(),
+                'empresa': row.get('NOME_RAZAO_SOCIAL_EMPRESA', '').strip(),
+                'cnpj': row.get('NUMERO_CNPJ_EMPRESA', '').strip(),
+                'produto': row.get('NOME_PRODUTO', '').strip(),
+                'data_publicacao': row.get('DATA_PUBLICACAO', '').strip(),
+                'data_vencimento': row.get('DATA_VENCIMENTO_REGISTRO', '').strip(),
+                'registro': row.get('NUMERO_REGISTRO_PRODUTO', '').strip(),
+                'status': row.get('STATUS_VALIDADE_REGISTRO', '').strip()
+            })
+        produtos.sort(key=lambda x: x['produto'])
+        save_anvisa_produtos(produtos)
+        return jsonify({'ok': True, 'total': len(produtos), 'sync_at': datetime.now(timezone.utc).isoformat()})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/anvisa/<sol_id>/copiar-dados', methods=['GET'])
+def copiar_dados_anvisa(sol_id):
+    """Gera texto formatado com todos os dados para colar no portal ANVISA"""
+    solicitacoes = load_anvisa_solicitacoes()
+    sol = next((s for s in solicitacoes if s.get('id') == sol_id), None)
+    if not sol:
+        return jsonify({'error': 'Não encontrado'}), 404
+    tipo_map = {'inicial': 'Inicial', 'renovacao': 'Renovação', 'alteracao': 'Alteração'}
+    texto = f"""═══════════════════════════════════════
+  DADOS PARA PORTAL ANVISA - {sol.get('id','')}
+═══════════════════════════════════════
+
+▶ TIPO: {tipo_map.get(sol.get('tipo_solicitacao',''), sol.get('tipo_solicitacao',''))}
+
+▶ PACIENTE:
+  Nome: {sol.get('paciente_nome','')}
+  CPF: {sol.get('paciente_cpf','')}
+  Solicitante: {sol.get('solicitante_tipo','proprio')}
+  {('Responsável: ' + sol.get('solicitante_nome','')) if sol.get('solicitante_tipo') == 'responsavel' else ''}
+
+▶ PRODUTO:
+  Marca: {sol.get('produto_marca','')}
+  Produto: {sol.get('produto','')}
+
+▶ PRESCRITOR:
+  Nome: {sol.get('prescritor_nome','')}
+  CRM/CRO: {sol.get('prescritor_crm','')}
+  Telefone: {sol.get('prescritor_telefone','')}
+  Email: {sol.get('prescritor_email','')}
+
+▶ PROTOCOLO: {sol.get('protocolo_anvisa','N/A')}
+▶ OBSERVAÇÕES: {sol.get('observacoes','')}
+═══════════════════════════════════════"""
+    return jsonify({'texto': texto})
 
 
 # ===== LEADS (Pacientes) API =====

@@ -2549,7 +2549,9 @@
                                 <p style="margin:0;color:#6b7280;font-size:12px;">Controle de solicitações de importação de produtos de cannabis via portal gov.br</p>
                             </div>
                         </div>
-                        <div style="display:flex;gap:8px;">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button onclick="abrirCatalogoAnvisa()" style="background:#2E7D32;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-cannabis" style="margin-right:4px;"></i> Catálogo ANVISA</button>
+                            <button onclick="sincronizarProdutosAnvisa()" style="background:#5E35B1;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" id="btn-sync-anvisa"><i class="fas fa-sync-alt" style="margin-right:4px;"></i> Sincronizar Produtos</button>
                             <button onclick="abrirGuiaAnvisa()" style="background:#1565C0;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-book" style="margin-right:4px;"></i> Guia Passo a Passo</button>
                             <button onclick="abrirModalNovaSolicitacaoAnvisa()" style="background:#C62828;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-plus-circle" style="margin-right:4px;"></i> Nova Solicitação</button>
                         </div>
@@ -13611,6 +13613,8 @@
                                     ${Object.entries(ANVISA_STATUS_MAP).map(([k,v]) => '<option value="' + k + '"' + (sol.status===k?' selected':'') + '>' + v.label + '</option>').join('')}
                                 </select>
                                 <div style="display:flex;gap:4px;">
+                                    <button onclick="copiarDadosAnvisa('${sol.id}')" style="background:#2E7D32;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Copiar dados para portal"><i class="fas fa-copy"></i></button>
+                                    <button onclick="abrirPortalAnvisa()" style="background:#FF6F00;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Abrir Portal Gov.br"><i class="fas fa-external-link-alt"></i></button>
                                     <button onclick="editarAnvisa('${sol.id}')" style="background:#3b82f6;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Editar"><i class="fas fa-edit"></i></button>
                                     <button onclick="verHistoricoAnvisa('${sol.id}')" style="background:#5E35B1;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Histórico"><i class="fas fa-history"></i></button>
                                     <button onclick="excluirAnvisa('${sol.id}')" style="background:#ef4444;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;" title="Excluir"><i class="fas fa-trash"></i></button>
@@ -13711,15 +13715,23 @@
 
                             <!-- Produto -->
                             <div style="background:#fff3e0;padding:14px;border-radius:10px;margin-bottom:14px;">
-                                <div style="font-weight:700;font-size:13px;color:#E65100;margin-bottom:8px;"><i class="fas fa-pills" style="margin-right:4px;"></i> Produto Cannabis</div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <div style="font-weight:700;font-size:13px;color:#E65100;"><i class="fas fa-pills" style="margin-right:4px;"></i> Produto Cannabis</div>
+                                    <button type="button" class="btn-buscar-catalogo" style="background:#2E7D32;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:600;"><i class="fas fa-search"></i> Buscar no Catálogo ANVISA</button>
+                                </div>
+                                <div class="anv-produto-catalogo-result" style="display:none;background:#e8f5e9;padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #a5d6a7;">
+                                    <div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:4px;"><i class="fas fa-check-circle"></i> Produto selecionado do catálogo ANVISA:</div>
+                                    <div class="catalogo-produto-info" style="font-size:11px;color:#374151;"></div>
+                                </div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                                     <div class="form-group" style="margin-bottom:0;"><label>Marca / Fabricante</label>
-                                        <select id="anv-marca" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
-                                            <option value="USAHEMP" ${sol.produto_marca==='USAHEMP'?'selected':''}>USA HEMP / USAHEMP</option>
-                                            <option value="Outro" ${sol.produto_marca==='Outro'?'selected':''}>Outro</option>
-                                        </select>
+                                        <input id="anv-marca" value="${sol.produto_marca||'USAHEMP'}" placeholder="Ex: USAHEMP, Prati-Donaduzzi..." style="font-size:12px;">
                                     </div>
                                     <div class="form-group" style="margin-bottom:0;"><label>Produto / Concentração</label><input id="anv-produto" value="${sol.produto||''}" placeholder="Ex: CBD 3000mg Full Spectrum" style="font-size:12px;"></div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nº Registro ANVISA</label><input id="anv-registro" value="${sol.produto_registro||''}" placeholder="Nº do registro" style="font-size:12px;"></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nº Processo</label><input id="anv-processo" value="${sol.produto_processo||''}" placeholder="Nº do processo" style="font-size:12px;"></div>
                                 </div>
                             </div>
 
@@ -13792,6 +13804,43 @@
                 modal.querySelector('.btn-close-modal').addEventListener('click', () => modal.remove());
                 modal.querySelector('.btn-cancel-anv').addEventListener('click', () => modal.remove());
 
+                // Catalog search button
+                modal.querySelector('.btn-buscar-catalogo').addEventListener('click', async () => {
+                    const produtos = await fetch('/api/anvisa/produtos').then(r=>r.json()).catch(()=>[]);
+                    if (!produtos.length) { alert('Catálogo vazio. Clique em "Sincronizar Produtos" primeiro.'); return; }
+                    const searchModal = document.createElement('div');
+                    searchModal.className = 'modal-overlay';
+                    searchModal.style.zIndex = '10001';
+                    searchModal.innerHTML = '<div class="modal-content" style="max-width:650px;max-height:80vh;overflow-y:auto;"><div class="modal-header" style="background:linear-gradient(135deg,#2E7D32,#43A047);color:#fff;"><h2><i class="fas fa-cannabis"></i> Selecionar Produto — Catálogo ANVISA</h2><button class="btn-close-modal" style="color:#fff;" onclick="this.closest(\'.modal-overlay\').remove()"><i class="fas fa-times"></i></button></div><div style="padding:12px;"><input type="text" placeholder="Buscar produto cannabis..." style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:12px;" class="cat-search-input"><div class="cat-results" style="max-height:50vh;overflow-y:auto;"></div></div></div>';
+                    document.body.appendChild(searchModal);
+                    const resultsDiv = searchModal.querySelector('.cat-results');
+                    const renderCat = (filter) => {
+                        const f = (filter||'').toLowerCase();
+                        const filtered = f ? produtos.filter(p => (p.produto||'').toLowerCase().includes(f)||(p.empresa||'').toLowerCase().includes(f)) : produtos;
+                        resultsDiv.innerHTML = filtered.slice(0,30).map(p => '<div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s;" class="cat-item" onmouseover="this.style.background=\'#e8f5e9\'" onmouseout="this.style.background=\'#fff\'"><div style="font-weight:700;font-size:12px;color:#111827;">' + (p.produto||'') + '</div><div style="font-size:10px;color:#6b7280;margin-top:2px;"><span style="margin-right:10px;"><i class="fas fa-building"></i> ' + (p.empresa||'') + '</span><span style="margin-right:10px;"><i class="fas fa-hashtag"></i> Reg: ' + (p.registro||'') + '</span><span style="padding:2px 6px;border-radius:4px;font-weight:600;' + (p.status==='Válido'?'background:#dcfce7;color:#16a34a;':'background:#fef2f2;color:#dc2626;') + '">' + (p.status||'') + '</span></div></div>').join('') + (filtered.length > 30 ? '<div style="text-align:center;padding:8px;font-size:11px;color:#6b7280;">Mostrando 30 de ' + filtered.length + '...</div>' : '');
+                    };
+                    renderCat('');
+                    searchModal.querySelector('.cat-search-input').addEventListener('input', (e) => renderCat(e.target.value));
+                    resultsDiv.addEventListener('click', (e) => {
+                        const item = e.target.closest('.cat-item');
+                        if (!item) return;
+                        const idx = [...resultsDiv.querySelectorAll('.cat-item')].indexOf(item);
+                        const searchVal = searchModal.querySelector('.cat-search-input').value.toLowerCase();
+                        const filtered = searchVal ? produtos.filter(p => (p.produto||'').toLowerCase().includes(searchVal)||(p.empresa||'').toLowerCase().includes(searchVal)) : produtos;
+                        const prod = filtered[idx];
+                        if (!prod) return;
+                        modal.querySelector('#anv-marca').value = prod.empresa || '';
+                        modal.querySelector('#anv-produto').value = prod.produto || '';
+                        modal.querySelector('#anv-registro').value = prod.registro || '';
+                        modal.querySelector('#anv-processo').value = prod.processo || '';
+                        const infoDiv = modal.querySelector('.catalogo-produto-info');
+                        const resultDiv = modal.querySelector('.anv-produto-catalogo-result');
+                        infoDiv.innerHTML = '<strong>' + prod.produto + '</strong> — ' + prod.empresa + ' (Reg: ' + prod.registro + ', Status: ' + prod.status + ')';
+                        resultDiv.style.display = '';
+                        searchModal.remove();
+                    });
+                });
+
                 modal.querySelector('.btn-save-anv').addEventListener('click', async () => {
                     const pacSel = modal.querySelector('#anv-paciente');
                     const pacOpt = pacSel.options[pacSel.selectedIndex];
@@ -13803,7 +13852,9 @@
                         solicitante_tipo: modal.querySelector('#anv-solicitante-tipo').value,
                         solicitante_nome: modal.querySelector('#anv-solicitante-nome').value.trim(),
                         produto: modal.querySelector('#anv-produto').value.trim(),
-                        produto_marca: modal.querySelector('#anv-marca').value,
+                        produto_marca: modal.querySelector('#anv-marca').value.trim(),
+                        produto_registro: modal.querySelector('#anv-registro').value.trim(),
+                        produto_processo: modal.querySelector('#anv-processo').value.trim(),
                         prescritor_nome: modal.querySelector('#anv-prescritor-nome').value.trim(),
                         prescritor_crm: modal.querySelector('#anv-prescritor-crm').value.trim(),
                         prescritor_telefone: modal.querySelector('#anv-prescritor-tel').value.trim(),
@@ -13828,6 +13879,110 @@
                         alert('Erro ao salvar solicitação ANVISA');
                     }
                 });
+            }
+
+            // ===== ANVISA INTEGRAÇÃO: CATÁLOGO, SYNC, COPIAR DADOS =====
+
+            async function sincronizarProdutosAnvisa() {
+                const btn = document.getElementById('btn-sync-anvisa');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...'; }
+                try {
+                    const resp = await fetch('/api/anvisa/produtos/sync', { method: 'POST' });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        alert('✅ Catálogo sincronizado!\n\n' + data.total + ' produtos cannabis autorizados pela ANVISA carregados com sucesso.');
+                    } else {
+                        alert('❌ Erro: ' + (data.error || 'Falha na sincronização'));
+                    }
+                } catch(e) {
+                    alert('❌ Erro ao sincronizar: ' + e.message);
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt" style="margin-right:4px;"></i> Sincronizar Produtos'; }
+                }
+            }
+
+            async function abrirCatalogoAnvisa() {
+                let produtos = [];
+                try { produtos = await fetch('/api/anvisa/produtos').then(r => r.json()); } catch(e) {}
+                if (!produtos.length) {
+                    if (confirm('Catálogo vazio. Deseja sincronizar agora com os Dados Abertos da ANVISA?')) {
+                        await sincronizarProdutosAnvisa();
+                        try { produtos = await fetch('/api/anvisa/produtos').then(r => r.json()); } catch(e) {}
+                    }
+                    if (!produtos.length) return;
+                }
+                const validos = produtos.filter(p => p.status === 'Válido').length;
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:850px;max-height:92vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#2E7D32,#43A047);color:#fff;">
+                            <h2><i class="fas fa-cannabis"></i> Catálogo de Produtos Cannabis — ANVISA</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div style="padding:16px;">
+                            <div style="display:flex;gap:10px;margin-bottom:12px;">
+                                <div style="background:#2E7D32;color:#fff;padding:8px 16px;border-radius:8px;text-align:center;flex:1;">
+                                    <div style="font-size:20px;font-weight:800;">${produtos.length}</div>
+                                    <div style="font-size:10px;opacity:.85;">Total Produtos</div>
+                                </div>
+                                <div style="background:#1565C0;color:#fff;padding:8px 16px;border-radius:8px;text-align:center;flex:1;">
+                                    <div style="font-size:20px;font-weight:800;">${validos}</div>
+                                    <div style="font-size:10px;opacity:.85;">Válidos</div>
+                                </div>
+                                <div style="background:#C62828;color:#fff;padding:8px 16px;border-radius:8px;text-align:center;flex:1;">
+                                    <div style="font-size:20px;font-weight:800;">${produtos.length - validos}</div>
+                                    <div style="font-size:10px;opacity:.85;">Vencidos</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                                <input type="text" placeholder="Buscar por nome do produto ou empresa..." style="flex:1;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;" class="cat-search">
+                                <select class="cat-filter-status" style="padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;">
+                                    <option value="todos">Todos</option>
+                                    <option value="Válido" selected>Válidos</option>
+                                    <option value="vencido">Vencidos</option>
+                                </select>
+                            </div>
+                            <div class="cat-lista" style="max-height:55vh;overflow-y:auto;"></div>
+                            <div style="margin-top:10px;text-align:center;font-size:10px;color:#9ca3af;">
+                                <i class="fas fa-database"></i> Fonte: Dados Abertos ANVISA (dados.anvisa.gov.br)
+                            </div>
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+                const lista = modal.querySelector('.cat-lista');
+                const renderCatalogo = () => {
+                    const busca = (modal.querySelector('.cat-search')?.value || '').toLowerCase();
+                    const statusFilt = modal.querySelector('.cat-filter-status')?.value || 'todos';
+                    let f = [...produtos];
+                    if (statusFilt === 'Válido') f = f.filter(p => p.status === 'Válido');
+                    else if (statusFilt === 'vencido') f = f.filter(p => p.status !== 'Válido');
+                    if (busca) f = f.filter(p => (p.produto||'').toLowerCase().includes(busca) || (p.empresa||'').toLowerCase().includes(busca));
+                    lista.innerHTML = f.map(p => {
+                        const venc = p.data_vencimento ? p.data_vencimento.split(' ')[0] : '';
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;background:#fff;"><div style="flex:1;"><div style="font-weight:700;font-size:12px;color:#111827;">' + (p.produto||'') + '</div><div style="font-size:10px;color:#6b7280;margin-top:2px;"><i class="fas fa-building" style="width:12px;"></i> ' + (p.empresa||'') + ' &nbsp;|&nbsp; <i class="fas fa-hashtag" style="width:12px;"></i> Reg: ' + (p.registro||'') + ' &nbsp;|&nbsp; <i class="fas fa-calendar" style="width:12px;"></i> Venc: ' + venc + '</div></div><span style="padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;flex-shrink:0;' + (p.status==='Válido'?'background:#dcfce7;color:#16a34a;':'background:#fef2f2;color:#dc2626;') + '">' + (p.status||'') + '</span></div>';
+                    }).join('') || '<div style="text-align:center;padding:30px;color:#9ca3af;">Nenhum produto encontrado</div>';
+                };
+                renderCatalogo();
+                modal.querySelector('.cat-search').addEventListener('input', renderCatalogo);
+                modal.querySelector('.cat-filter-status').addEventListener('change', renderCatalogo);
+            }
+
+            async function copiarDadosAnvisa(solId) {
+                try {
+                    const resp = await fetch('/api/anvisa/' + solId + '/copiar-dados');
+                    const data = await resp.json();
+                    if (data.texto) {
+                        await navigator.clipboard.writeText(data.texto);
+                        alert('✅ Dados copiados para a área de transferência!\n\nAgora cole no portal ANVISA.');
+                    }
+                } catch(e) {
+                    alert('Erro ao copiar dados');
+                }
+            }
+
+            function abrirPortalAnvisa() {
+                window.open('https://sso.acesso.gov.br', '_blank');
             }
 
             function abrirGuiaAnvisa() {
@@ -13979,6 +14134,10 @@
             window.editarAnvisa = editarAnvisa;
             window.abrirModalNovaSolicitacaoAnvisa = abrirModalNovaSolicitacaoAnvisa;
             window.abrirGuiaAnvisa = abrirGuiaAnvisa;
+            window.sincronizarProdutosAnvisa = sincronizarProdutosAnvisa;
+            window.abrirCatalogoAnvisa = abrirCatalogoAnvisa;
+            window.copiarDadosAnvisa = copiarDadosAnvisa;
+            window.abrirPortalAnvisa = abrirPortalAnvisa;
 
             window.onEventoTipoChange = onEventoTipoChange;
             window.excluirEventoTimeline = excluirEventoTimeline;
