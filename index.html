@@ -2678,17 +2678,13 @@
         <section id="ia" class="page-content">
             <div class="page-header">
                 <div class="header-content">
-                    <button class="btn-back" id="btn-back-ia">
+                    <button class="btn-back" id="btn-back-ia" onclick="document.getElementById('ia').classList.remove('active');document.getElementById('administrativo').classList.add('active');window.scrollTo({top:0,behavior:'smooth'})">
                         <i class="fas fa-arrow-left"></i> Voltar
                     </button>
                     <h1 class="page-title">
                         <i class="fas fa-brain"></i>
                         Inteligência Artificial
                     </h1>
-                    <button class="btn-hero btn-toggle-view" title="Alternar visualização">
-                        <i class="fas fa-arrows-alt-v"></i>
-                        Alternar Visual
-                    </button>
                 </div>
             </div>
             <div class="page-body">
@@ -2705,7 +2701,11 @@
                         </div>
                         <div style="display:flex;gap:8px;">
                             <select id="ia-filtro-categoria" onchange="renderIaPrompts()" style="padding:6px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;">
-                                <option value="">Todas categorias</option>
+                                <option value="">Todas as áreas</option>
+                                <option value="pacientes">IA Pacientes</option>
+                                <option value="advogados">IA Advogados</option>
+                                <option value="medicos">IA Médicos</option>
+                                <option value="comercial">IA Comercial</option>
                                 <option value="laudo">Laudos</option>
                                 <option value="receita">Avaliação de Receita</option>
                                 <option value="anamnese">Anamnese</option>
@@ -2723,13 +2723,13 @@
                             <div style="font-size:22px;font-weight:700;" id="ia-stat-total">0</div>
                             <div style="font-size:10px;opacity:0.85;">Total Prompts</div>
                         </div>
-                        <div style="background:linear-gradient(135deg,#1565C0,#42A5F5);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                        <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;padding:12px;color:#fff;text-align:center;">
                             <div style="font-size:22px;font-weight:700;" id="ia-stat-laudos">0</div>
-                            <div style="font-size:10px;opacity:0.85;">Laudos</div>
+                            <div style="font-size:10px;opacity:0.85;">Por Área (IA)</div>
                         </div>
                         <div style="background:linear-gradient(135deg,#2E7D32,#66BB6A);border-radius:10px;padding:12px;color:#fff;text-align:center;">
                             <div style="font-size:22px;font-weight:700;" id="ia-stat-receitas">0</div>
-                            <div style="font-size:10px;opacity:0.85;">Receitas</div>
+                            <div style="font-size:10px;opacity:0.85;">Clínicos</div>
                         </div>
                         <div style="background:linear-gradient(135deg,#E65100,#FF9800);border-radius:10px;padding:12px;color:#fff;text-align:center;">
                             <div style="font-size:22px;font-weight:700;" id="ia-stat-ativos">0</div>
@@ -2805,141 +2805,20 @@
 
                 <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
 
-                <!-- ===== PRÉ-ANÁLISES IA (DASHBOARD) ===== -->
+                <!-- ===== CONFIGURAÇÃO IA ===== -->
                 <div style="margin-bottom:24px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
                         <div style="display:flex;align-items:center;gap:10px;">
-                            <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-brain" style="color:#fff;font-size:18px;"></i></div>
+                            <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-cog" style="color:#fff;font-size:18px;"></i></div>
                             <div>
-                                <h4 style="margin:0;color:#333;font-size:16px;">Pré-Análises de Pacientes</h4>
-                                <p style="margin:0;color:#6b7280;font-size:12px;">Análises geradas pelo Google Gemini integrado à plataforma</p>
+                                <h4 style="margin:0;color:#333;font-size:16px;">Configuração da IA</h4>
+                                <p style="margin:0;color:#6b7280;font-size:12px;">Configurar modelo, API e parâmetros do Google Gemini</p>
                             </div>
                         </div>
                         <button onclick="configurarIA()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-cog" style="margin-right:4px;"></i> Configurar IA</button>
                     </div>
-
-                    <!-- Stats -->
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;" id="ia-analises-stats">
-                        <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;padding:12px;color:#fff;text-align:center;">
-                            <div style="font-size:22px;font-weight:700;" id="ia-stat-analises-total">0</div>
-                            <div style="font-size:10px;opacity:0.85;">Total Análises</div>
-                        </div>
-                        <div style="background:linear-gradient(135deg,#059669,#10b981);border-radius:10px;padding:12px;color:#fff;text-align:center;">
-                            <div style="font-size:22px;font-weight:700;" id="ia-stat-elegiveis">0</div>
-                            <div style="font-size:10px;opacity:0.85;">Elegíveis</div>
-                        </div>
-                        <div style="background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:10px;padding:12px;color:#fff;text-align:center;">
-                            <div style="font-size:22px;font-weight:700;" id="ia-stat-pendentes-revisao">0</div>
-                            <div style="font-size:10px;opacity:0.85;">Pendentes Revisão</div>
-                        </div>
-                        <div style="background:linear-gradient(135deg,#dc2626,#f87171);border-radius:10px;padding:12px;color:#fff;text-align:center;">
-                            <div style="font-size:22px;font-weight:700;" id="ia-stat-urgentes">0</div>
-                            <div style="font-size:10px;opacity:0.85;">Urgentes/Alta</div>
-                        </div>
-                    </div>
-
-                    <!-- Lista recente de análises -->
-                    <div id="ia-analises-dashboard-lista" style="display:grid;gap:8px;">
-                        <div style="padding:30px;text-align:center;color:#9ca3af;"><i class="fas fa-brain" style="font-size:30px;opacity:0.3;"></i><div style="margin-top:8px;font-size:13px;">Nenhuma pré-análise realizada ainda</div></div>
-                    </div>
                 </div>
 
-                <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
-
-                <!-- Kanban IA abaixo -->
-                <div class="kanban-board" id="kanban-ia">
-                    <!-- Coluna: Desenvolvimento -->
-                    <div class="kanban-column kanban-comercial" data-column-title="Desenvolvimento">
-                        <div class="kanban-column-header">
-                            <div class="kanban-column-title">
-                                Desenvolvimento
-                                <span class="kanban-column-count">0</span>
-                            </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
-                        </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
-                    </div>
-
-                    <!-- Coluna: Testes -->
-                    <div class="kanban-column kanban-consultas" data-column-title="Testes">
-                        <div class="kanban-column-header">
-                            <div class="kanban-column-title">
-                                Testes
-                                <span class="kanban-column-count">0</span>
-                            </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
-                        </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
-                    </div>
-
-                    <!-- Coluna: Implementação -->
-                    <div class="kanban-column kanban-acompanhamento" data-column-title="Implementação">
-                        <div class="kanban-column-header">
-                            <div class="kanban-column-title">
-                                Implementação
-                                <span class="kanban-column-count">0</span>
-                            </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
-                        </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
-                    </div>
-
-                    <!-- Coluna: Produção -->
-                    <div class="kanban-column kanban-financeiro" data-column-title="Produção">
-                        <div class="kanban-column-header">
-                            <div class="kanban-column-title">
-                                Produção
-                                <span class="kanban-column-count">0</span>
-                            </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
-                        </div>
-                        <div class="kanban-cards"></div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
-                    </div>
-
-                    <!-- Coluna: Médico -->
-                    <div class="kanban-column kanban-financeiro" data-column-title="Médico">
-                        <div class="kanban-column-header">
-                            <div class="kanban-column-title">
-                                Médico
-                                <span class="kanban-column-count">1</span>
-                            </div>
-                            <div class="kanban-column-actions">
-                                <button class="btn-column-action"><i class="fas fa-ellipsis-h"></i></button>
-                            </div>
-                        </div>
-                        <div class="kanban-cards">
-                            <div class="kanban-card priority-high" style="background:#f0f4f8;border-left:4px solid #0E4D42;">
-                                <div style="display:flex;justify-content:space-between;align-items:start;">
-                                    <div style="flex:1;">
-                                        <div class="card-title">Formulário Médico Trabalhe Conosco</div>
-                                        <div class="card-description" style="margin-top:8px;"><strong>Link de Acesso:</strong><br><a href="/?registerMedico=true" target="_blank" style="color:#0E4D42;text-decoration:underline;font-weight:bold;">Clique aqui para acessar o formulário</a></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="kanban-card priority-high" style="background:#f0f4f8;border-left:4px solid #0E4D42;">
-                                <div style="display:flex;justify-content:space-between;align-items:start;">
-                                    <div style="flex:1;">
-                                        <div class="card-title">Formulário Paciente</div>
-                                        <div class="card-description" style="margin-top:8px;"><strong>Link de Acesso:</strong><br><a href="/?registerPaciente=true" target="_blank" style="color:#0E4D42;text-decoration:underline;font-weight:bold;">Clique aqui para acessar o formulário</a></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn-add-card"><i class="fas fa-plus"></i> Adicionar card</button>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -4531,7 +4410,6 @@
                 if (pageId === 'ia' && typeof carregarIaPrompts === 'function') {
                     carregarIaPrompts();
                     if (typeof carregarBaseConhecimento === 'function') carregarBaseConhecimento();
-                    if (typeof carregarDashboardAnalises === 'function') carregarDashboardAnalises();
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch(err) {
@@ -7994,8 +7872,8 @@
 
             function renderIaPromptsStats() {
                 document.getElementById('ia-stat-total').textContent = iaPrompts.length;
-                document.getElementById('ia-stat-laudos').textContent = iaPrompts.filter(p => p.categoria === 'laudo').length;
-                document.getElementById('ia-stat-receitas').textContent = iaPrompts.filter(p => p.categoria === 'receita').length;
+                document.getElementById('ia-stat-laudos').textContent = iaPrompts.filter(p => ['pacientes','advogados','medicos','comercial'].includes(p.categoria)).length;
+                document.getElementById('ia-stat-receitas').textContent = iaPrompts.filter(p => ['laudo','receita','anamnese','relatorio','orientacao'].includes(p.categoria)).length;
                 document.getElementById('ia-stat-ativos').textContent = iaPrompts.filter(p => p.ativo).length;
             }
 
@@ -8015,9 +7893,9 @@
                     return;
                 }
 
-                const catIcons = { laudo:'fa-file-medical', receita:'fa-prescription', anamnese:'fa-notes-medical', relatorio:'fa-chart-bar', orientacao:'fa-info-circle', outro:'fa-cog' };
-                const catColors = { laudo:'#1565C0', receita:'#2E7D32', anamnese:'#E65100', relatorio:'#6A1B9A', orientacao:'#00695C', outro:'#6b7280' };
-                const catLabels = { laudo:'Laudo', receita:'Avaliação Receita', anamnese:'Anamnese', relatorio:'Relatório', orientacao:'Orientação', outro:'Outro' };
+                const catIcons = { pacientes:'fa-user-injured', advogados:'fa-balance-scale', medicos:'fa-user-md', comercial:'fa-chart-line', laudo:'fa-file-medical', receita:'fa-prescription', anamnese:'fa-notes-medical', relatorio:'fa-chart-bar', orientacao:'fa-info-circle', outro:'fa-cog' };
+                const catColors = { pacientes:'#7c3aed', advogados:'#dc2626', medicos:'#059669', comercial:'#d97706', laudo:'#1565C0', receita:'#2E7D32', anamnese:'#E65100', relatorio:'#6A1B9A', orientacao:'#00695C', outro:'#6b7280' };
+                const catLabels = { pacientes:'IA Pacientes', advogados:'IA Advogados', medicos:'IA Médicos', comercial:'IA Comercial', laudo:'Laudo', receita:'Avaliação Receita', anamnese:'Anamnese', relatorio:'Relatório', orientacao:'Orientação', outro:'Outro' };
 
                 container.innerHTML = lista.map(p => {
                     const cat = p.categoria || 'outro';
@@ -8069,6 +7947,10 @@
                                 <div><label style="font-size:11px;font-weight:600;color:#333;">Nome do Prompt <span style="color:red;">*</span></label><input id="iap-nome" value="${editData?.nome||''}" placeholder="Ex: Gerar Laudo Cannabis" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
                                 <div><label style="font-size:11px;font-weight:600;color:#333;">Categoria</label>
                                     <select id="iap-categoria" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                        <option value="pacientes" ${editData?.categoria==='pacientes'?'selected':''}>IA Pacientes</option>
+                                        <option value="advogados" ${editData?.categoria==='advogados'?'selected':''}>IA Advogados</option>
+                                        <option value="medicos" ${editData?.categoria==='medicos'?'selected':''}>IA Médicos</option>
+                                        <option value="comercial" ${editData?.categoria==='comercial'?'selected':''}>IA Comercial</option>
                                         <option value="laudo" ${editData?.categoria==='laudo'?'selected':''}>Laudo Médico</option>
                                         <option value="receita" ${editData?.categoria==='receita'?'selected':''}>Avaliação de Receita</option>
                                         <option value="anamnese" ${editData?.categoria==='anamnese'?'selected':''}>Anamnese</option>
@@ -8707,288 +8589,10 @@
             }
 
             async function carregarDashboardAnalises() {
-                try {
-                    const analises = await apiRequest('/api/ia/analises');
-                    // Stats
-                    const total = analises.length;
-                    const elegiveis = analises.filter(a => a.elegivel).length;
-                    const pendentes = analises.filter(a => !a.revisada_medico).length;
-                    const urgentes = analises.filter(a => a.prioridade === 'Urgente' || a.prioridade === 'Alta').length;
-                    document.getElementById('ia-stat-analises-total').textContent = total;
-                    document.getElementById('ia-stat-elegiveis').textContent = elegiveis;
-                    document.getElementById('ia-stat-pendentes-revisao').textContent = pendentes;
-                    document.getElementById('ia-stat-urgentes').textContent = urgentes;
-
-                    // List (last 10)
-                    const container = document.getElementById('ia-analises-dashboard-lista');
-                    if (total === 0) {
-                        container.innerHTML = '<div style="padding:30px;text-align:center;color:#9ca3af;"><i class="fas fa-brain" style="font-size:30px;opacity:0.3;"></i><div style="margin-top:8px;font-size:13px;">Nenhuma pré-análise realizada ainda</div></div>';
-                        return;
-                    }
-                    const recentes = analises.slice(0, 10);
-                    container.innerHTML = recentes.map(a => {
-                        const dt = a.created_at ? new Date(a.created_at) : new Date();
-                        const prioColors = { 'Urgente': '#dc2626', 'Alta': '#f59e0b', 'Normal': '#3b82f6', 'Eletiva': '#10b981' };
-                        const prioColor = prioColors[a.prioridade] || '#3b82f6';
-                        return `<div onclick="if(typeof abrirPerfilPaciente==='function') abrirPerfilPaciente('${a.paciente_id}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#f5f3ff';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='#fff';this.style.borderColor='#e5e7eb'">
-                            <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fas fa-user" style="color:#fff;font-size:14px;"></i>
-                            </div>
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-size:13px;font-weight:600;color:#1f2937;">${a.paciente_nome || a.paciente_id}</div>
-                                <div style="font-size:11px;color:#6b7280;">${a.id} · ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${a.modelo_ia||'Gemini'}</div>
-                            </div>
-                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                                <span style="padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;background:${a.elegivel?'#d1fae5':'#fee2e2'};color:${a.elegivel?'#065f46':'#991b1b'};">${a.elegivel?'Elegível':'Não Elegível'}</span>
-                                <span style="padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;background:${prioColor}22;color:${prioColor};">${a.prioridade}</span>
-                                ${a.revisada_medico ? '<span style="color:#16a34a;font-size:11px;" title="Revisada"><i class="fas fa-check-circle"></i></span>' : '<span style="color:#f59e0b;font-size:11px;" title="Pendente revisão"><i class="fas fa-clock"></i></span>'}
-                            </div>
-                        </div>`;
-                    }).join('');
-                } catch(e) {
-                    console.error('Erro ao carregar dashboard IA:', e);
-                }
+                // Dashboard removido - funcionalidade simplificada
             }
 
-            // ========== INTELIGÊNCIA ARTIFICIAL KANBAN ==========
-            let draggedIaCard = null;
-
-            function initIaKanban() {
-                const kanbanBoard = document.getElementById('kanban-ia');
-                if (!kanbanBoard) return;
-
-                const columns = kanbanBoard.querySelectorAll('.kanban-column');
-                const cards = kanbanBoard.querySelectorAll('.kanban-card');
-
-                cards.forEach(card => {
-                    card.addEventListener('dragstart', handleIaDragStart);
-                    card.addEventListener('dragend', handleIaDragEnd);
-                });
-
-                columns.forEach(column => {
-                    const cardsContainer = column.querySelector('.kanban-cards');
-                    cardsContainer.addEventListener('dragover', handleIaDragOver);
-                    cardsContainer.addEventListener('drop', (e) => handleIaDrop(e, cardsContainer));
-                    cardsContainer.addEventListener('dragleave', handleIaDragLeave);
-
-                    const addCardBtn = column.querySelector('.btn-add-card');
-                    if (addCardBtn) {
-                        addCardBtn.addEventListener('click', () => openAddIaCardModal(cardsContainer, column.getAttribute('data-column-title')));
-                    }
-                });
-
-                loadIaKanbanData();
-                updateColumnCounts();
-                setupColumnReordering('kanban-ia', 'ia');
-
-                const btnBack = document.getElementById('btn-back-ia');
-                if (btnBack) {
-                    btnBack.addEventListener('click', () => {
-                        document.getElementById('ia').classList.remove('active');
-                        document.getElementById('administrativo').classList.add('active');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    });
-                }
-            }
-
-            function handleIaDragStart(e) {
-                draggedIaCard = this;
-                this.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', this.innerHTML);
-            }
-
-            function handleIaDragEnd(e) {
-                this.classList.remove('dragging');
-                document.querySelectorAll('#kanban-ia .kanban-cards').forEach(container => {
-                    container.classList.remove('drag-over');
-                });
-                saveIaKanbanData();
-            }
-
-            function handleIaDragOver(e) {
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-                e.dataTransfer.dropEffect = 'move';
-                this.classList.add('drag-over');
-                return false;
-            }
-
-            function handleIaDragLeave(e) {
-                if (e.target === this) {
-                    this.classList.remove('drag-over');
-                }
-            }
-
-            function handleIaDrop(e, container) {
-                if (e.stopPropagation) {
-                    e.stopPropagation();
-                }
-                container.classList.remove('drag-over');
-
-                if (draggedIaCard && draggedIaCard.parentNode !== container) {
-                    container.appendChild(draggedIaCard);
-                    updateColumnCounts();
-                    saveIaKanbanData();
-                }
-                return false;
-            }
-
-            function openAddIaCardModal(container, columnTitle) {
-                const modal = document.createElement('div');
-                modal.className = 'modal-overlay';
-                modal.innerHTML = `
-                    <div class="modal-content" style="max-width: 500px;">
-                        <div class="modal-header">
-                            <h2><i class="fas fa-plus"></i> Adicionar Card - ${columnTitle}</h2>
-                            <button class="btn-close-modal"><i class="fas fa-times"></i></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="card-title-ia">Título do Card</label>
-                                <input type="text" id="card-title-ia" placeholder="Ex: Algoritmo de Predição" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="card-description-ia">Descrição</label>
-                                <textarea id="card-description-ia" placeholder="Detalhes do projeto de IA (modelo, dataset, tecnologia, etc.)" rows="3"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="card-priority-ia">Prioridade</label>
-                                <select id="card-priority-ia">
-                                    <option value="priority-low">Baixa</option>
-                                    <option value="priority-medium" selected>Média</option>
-                                    <option value="priority-high">Alta</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="card-responsible-ia">Responsável</label>
-                                <input type="text" id="card-responsible-ia" placeholder="Nome do responsável">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-secondary" id="btn-cancel-card-ia">Cancelar</button>
-                            <button class="btn-primary" id="btn-save-card-ia">Adicionar Card</button>
-                        </div>
-                    </div>
-                `;
-
-                document.body.appendChild(modal);
-
-                const closeBtn = modal.querySelector('.btn-close-modal');
-                const cancelBtn = modal.querySelector('#btn-cancel-card-ia');
-                closeBtn.addEventListener('click', () => modal.remove());
-                cancelBtn.addEventListener('click', () => modal.remove());
-
-                const saveBtn = modal.querySelector('#btn-save-card-ia');
-                saveBtn.addEventListener('click', () => {
-                    const title = modal.querySelector('#card-title-ia').value.trim();
-                    const description = modal.querySelector('#card-description-ia').value.trim();
-                    const priority = modal.querySelector('#card-priority-ia').value;
-                    const responsible = modal.querySelector('#card-responsible-ia').value.trim();
-
-                    if (!title) {
-                        alert('Título é obrigatório.');
-                        return;
-                    }
-
-                    const newCard = document.createElement('div');
-                    newCard.className = `kanban-card ${priority}`;
-                    newCard.draggable = true;
-                    newCard.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                            <div style="flex: 1;">
-                                <div class="card-title">${title}</div>
-                                ${description ? `<div class="card-description">${description}</div>` : ''}
-                            </div>
-                            <button class="btn-card-delete" style="background: #D81B60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        ${responsible ? `<div class="card-meta"><div class="card-meta-item"><i class="fas fa-user"></i> ${responsible}</div></div>` : ''}
-                    `;
-
-                    newCard.addEventListener('dragstart', handleIaDragStart);
-                    newCard.addEventListener('dragend', handleIaDragEnd);
-
-                    newCard.querySelector('.btn-card-delete').addEventListener('click', () => {
-                        if (confirm('Excluir este card?')) {
-                            newCard.remove();
-                            updateColumnCounts();
-                            saveIaKanbanData();
-                        }
-                    });
-
-                    container.appendChild(newCard);
-                    updateColumnCounts();
-                    saveIaKanbanData();
-                    modal.remove();
-                });
-            }
-
-            function saveIaKanbanData() {
-                const kanbanBoard = document.getElementById('kanban-ia');
-                const columns = kanbanBoard.querySelectorAll('.kanban-column');
-                const data = {};
-
-                columns.forEach(column => {
-                    const columnTitle = column.getAttribute('data-column-title');
-                    const cards = column.querySelectorAll('.kanban-card');
-                    data[columnTitle] = Array.from(cards).map(card => ({
-                        title: card.querySelector('.card-title').textContent,
-                        description: card.querySelector('.card-description')?.textContent || '',
-                        priority: Array.from(card.classList).find(c => c.startsWith('priority-')) || 'priority-medium',
-                        responsible: card.querySelector('.card-meta-item')?.textContent.replace(/\s+/g, ' ').trim().substring(1) || ''
-                    }));
-                });
-
-                localStorage.setItem('iaKanbanData', JSON.stringify(data));
-            }
-
-            function loadIaKanbanData() {
-                const data = localStorage.getItem('iaKanbanData');
-                if (!data) return;
-
-                const kanbanData = JSON.parse(data);
-                const kanbanBoard = document.getElementById('kanban-ia');
-
-                Object.keys(kanbanData).forEach(columnTitle => {
-                    const column = kanbanBoard.querySelector(`[data-column-title="${columnTitle}"]`);
-                    if (!column) return;
-
-                    const container = column.querySelector('.kanban-cards');
-                    kanbanData[columnTitle].forEach(cardData => {
-                        const card = document.createElement('div');
-                        card.className = `kanban-card ${cardData.priority}`;
-                        card.draggable = true;
-                        card.innerHTML = `
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                <div style="flex: 1;">
-                                    <div class="card-title">${cardData.title}</div>
-                                    ${cardData.description ? `<div class="card-description">${cardData.description}</div>` : ''}
-                                </div>
-                                <button class="btn-card-delete" style="background: #D81B60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                            ${cardData.responsible ? `<div class="card-meta"><div class="card-meta-item"><i class="fas fa-user"></i> ${cardData.responsible}</div></div>` : ''}
-                        `;
-
-                        card.addEventListener('dragstart', handleIaDragStart);
-                        card.addEventListener('dragend', handleIaDragEnd);
-
-                        card.querySelector('.btn-card-delete').addEventListener('click', () => {
-                            if (confirm('Excluir este card?')) {
-                                card.remove();
-                                updateColumnCounts();
-                                saveIaKanbanData();
-                            }
-                        });
-
-                        container.appendChild(card);
-                    });
-                });
-            }
+            // ========== KANBAN GERAL ==========
 
             // Função para atualizar contadores
             function updateColumnCounts() {
@@ -9338,9 +8942,6 @@
 
             // Inicializar Judicial Kanban
             initJudicialKanban();
-
-            // Inicializar Inteligência Artificial Kanban
-            initIaKanban();
 
             // Inicializar Importação Kanban
             initImportacaoKanban();
