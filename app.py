@@ -86,6 +86,8 @@ ANVISA_PRODUTOS_FILE = os.path.join(DATA_DIR, 'anvisa_produtos_cannabis.json')
 SNGPC_CONFIG_FILE = os.path.join(DATA_DIR, 'sngpc_config.json')
 SNGPC_ENVIOS_FILE = os.path.join(DATA_DIR, 'sngpc_envios.json')
 IA_PROMPTS_FILE = os.path.join(DATA_DIR, 'ia_prompts.json')
+IA_ANALISES_FILE = os.path.join(DATA_DIR, 'ia_analises.json')
+IA_CONFIG_FILE = os.path.join(DATA_DIR, 'ia_config.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -496,6 +498,256 @@ def load_ia_prompts():
 
 def save_ia_prompts(data):
     _save_json_file(IA_PROMPTS_FILE, data)
+
+def load_ia_analises():
+    return _load_json_file(IA_ANALISES_FILE, [])
+
+def save_ia_analises(data):
+    _save_json_file(IA_ANALISES_FILE, data)
+
+def load_ia_config():
+    return _load_json_file(IA_CONFIG_FILE, {
+        'api_key': 'AIzaSyA_0eAcL_ZbJ_HgLBThYaS_YqvWD07vmEs',
+        'modelo': 'gemini-2.0-flash',
+        'temperatura': 0.4,
+        'auto_analise': False,
+        'idioma': 'pt-BR'
+    })
+
+def save_ia_config(data):
+    _save_json_file(IA_CONFIG_FILE, data)
+
+
+def _executar_pre_analise_ia(pac_id):
+    """Execute AI pre-analysis for a patient using Google Gemini API"""
+    # 1. Load patient data
+    pacientes = load_pacientes()
+    pac = next((p for p in pacientes if p.get('id') == pac_id), None)
+    if not pac:
+        return None
+
+    # 2. Load ficha de atendimento
+    fichas = load_fichas()
+    ficha = fichas.get(pac_id, {})
+
+    # 3. Load prontuario (exams, laudos, etc)
+    prontuarios = load_prontuarios()
+    registros = [r for r in prontuarios if r.get('paciente_id') == pac_id]
+    exames = [r for r in registros if r.get('tipo') == 'exame']
+    laudos_existentes = [r for r in registros if r.get('tipo') == 'laudo']
+    receituarios = [r for r in registros if r.get('tipo') == 'receituario']
+
+    # 4. Load IA config
+    ia_config = load_ia_config()
+    api_key = ia_config.get('api_key', '')
+    modelo = ia_config.get('modelo', 'gemini-2.0-flash')
+    temperatura = ia_config.get('temperatura', 0.4)
+
+    if not api_key:
+        return {'error': 'API Key do Google AI não configurada'}
+
+    # 5. Build comprehensive patient context
+    dados_paciente = f"""=== DADOS DO PACIENTE ===
+Nome: {pac.get('nome', 'N/A')}
+Idade: {pac.get('idade', 'N/A')}
+Sexo: {pac.get('sexo', 'N/A')}
+Peso: {pac.get('peso', 'N/A')}
+Data de Nascimento: {pac.get('data_nascimento', 'N/A')}
+
+=== DADOS CLÍNICOS (ANAMNESE) ===
+Queixa Principal: {ficha.get('queixa_principal', pac.get('objetivo_consulta', 'N/A'))}
+História da Doença Atual (HDA): {ficha.get('hda', pac.get('sintomas', 'N/A'))}
+Sintomas: {pac.get('sintomas', 'N/A')}
+Diagnóstico Atual: {pac.get('diagnostico_atual', ficha.get('diagnostico', 'N/A'))}
+Doenças Prévias: {ficha.get('doencas_previas', pac.get('diagnosticos_previos', 'N/A'))}
+Histórico Familiar: {ficha.get('historico_familiar', pac.get('historico_familiar', 'N/A'))}
+Alergias: {ficha.get('alergias', pac.get('alergias', 'N/A'))}
+Medicações em Uso: {ficha.get('medicacoes', pac.get('medicacoes', 'N/A'))}
+Cirurgias Anteriores: {ficha.get('cirurgias', pac.get('cirurgias', 'N/A'))}
+Hábitos: {ficha.get('habitos', 'N/A')}
+Exame Físico: {ficha.get('exame_fisico', 'N/A')}
+Estadiamento: {ficha.get('estadiamento', 'N/A')}
+Conduta Atual: {ficha.get('conduta', 'N/A')}
+Exames Recentes (anotações): {pac.get('exames_recentes', 'N/A')}"""
+
+    # Add exam details
+    if exames:
+        dados_paciente += "\n\n=== EXAMES ANEXADOS ==="
+        for ex in exames:
+            dados_paciente += f"\n- {ex.get('titulo', 'Exame')}: {ex.get('descricao', 'Sem descrição')} (Data: {ex.get('data', 'N/A')})"
+            if ex.get('conteudo'):
+                dados_paciente += f"\n  Conteúdo: {ex['conteudo']}"
+
+    # Add existing prescriptions
+    if receituarios:
+        dados_paciente += "\n\n=== RECEITUÁRIOS ==="
+        for rec in receituarios:
+            dados_paciente += f"\n- {rec.get('titulo', 'Receita')}: {rec.get('descricao', '')} (Data: {rec.get('data', 'N/A')})"
+
+    # Load prescriptions
+    prescricoes = _load_json_file(PRESCRICOES_FILE, [])
+    presc_pac = [pr for pr in prescricoes if pr.get('paciente_id') == pac_id]
+    if presc_pac:
+        dados_paciente += "\n\n=== PRESCRIÇÕES CADASTRADAS ==="
+        for pr in presc_pac:
+            meds = pr.get('medicamentos', [])
+            med_names = ', '.join([m.get('nome', '') for m in meds]) if meds else 'N/A'
+            dados_paciente += f"\n- Prescrição {pr.get('id','')}: {med_names} (Status: {pr.get('status','N/A')})"
+
+    # 6. Build the AI prompt
+    prompt_sistema = """Você é um assistente médico especializado em medicina canabinoide e tratamentos com cannabis medicinal da clínica ON Medicina Internacional. 
+Sua função é realizar uma PRÉ-ANÁLISE completa do paciente com base nos dados clínicos fornecidos.
+
+Você DEVE gerar uma análise estruturada com as seguintes seções:
+
+1. **RESUMO CLÍNICO**: Síntese objetiva do caso clínico do paciente, incluindo condição principal, comorbidades e histórico relevante.
+
+2. **ANÁLISE DE EXAMES**: Interpretação dos exames disponíveis, destacando valores alterados ou achados significativos. Se não houver exames, indicar quais seriam recomendados.
+
+3. **AVALIAÇÃO DE ELEGIBILIDADE**: Avaliar se o paciente é elegível para tratamento com cannabis medicinal, considerando:
+   - Indicação terapêutica com base científica
+   - Contraindicações potenciais
+   - Interações medicamentosas com medicações atuais
+   - Classificação de risco (Baixo / Moderado / Alto)
+
+4. **RECOMENDAÇÕES TERAPÊUTICAS**: Sugestões de:
+   - Perfil canabinoide recomendado (CBD, THC, razão CBD:THC)
+   - Via de administração sugerida
+   - Faixa de dosagem inicial sugerida
+   - Exames complementares necessários
+   - Acompanhamento sugerido
+
+5. **PONTOS DE ATENÇÃO**: Alertas e precauções que o médico deve considerar.
+
+6. **CLASSIFICAÇÃO DE PRIORIDADE**: Urgente / Alta / Normal / Eletiva
+
+IMPORTANTE:
+- Esta é uma PRÉ-ANÁLISE para auxiliar o médico. NÃO substitui a avaliação médica.
+- Baseie-se em evidências científicas e diretrizes clínicas atualizadas.
+- Seja objetivo e clínico na linguagem.
+- Se dados estiverem faltando, indique quais informações adicionais são necessárias.
+- Responda SEMPRE em português brasileiro."""
+
+    # 7. Call Google Gemini API
+    try:
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}'
+        payload = {
+            'contents': [{
+                'parts': [
+                    {'text': prompt_sistema + "\n\n" + dados_paciente + "\n\nGere a pré-análise completa deste paciente:"}
+                ]
+            }],
+            'generationConfig': {
+                'temperature': temperatura,
+                'maxOutputTokens': 4096,
+                'topP': 0.95
+            }
+        }
+
+        resp = http_requests.post(url, json=payload, timeout=60)
+        if resp.status_code != 200:
+            error_detail = resp.text[:500] if resp.text else 'Sem detalhes'
+            logger.error(f'Gemini API error {resp.status_code}: {error_detail}')
+            return {'error': f'Erro na API Gemini ({resp.status_code}): {error_detail}'}
+
+        result = resp.json()
+        candidates = result.get('candidates', [])
+        if not candidates:
+            return {'error': 'IA não retornou resposta. Verifique os dados do paciente.'}
+
+        texto_analise = candidates[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+        if not texto_analise:
+            return {'error': 'Resposta da IA veio vazia'}
+
+        # 8. Parse sections from the response
+        secoes = {
+            'resumo_clinico': '',
+            'analise_exames': '',
+            'elegibilidade': '',
+            'recomendacoes': '',
+            'pontos_atencao': '',
+            'prioridade': 'Normal'
+        }
+
+        # Try to extract sections
+        import re
+        section_patterns = [
+            ('resumo_clinico', r'(?:1\.?\s*\*{0,2}RESUMO CL[ÍI]NICO\*{0,2}|RESUMO CL[ÍI]NICO)[:\s]*(.+?)(?=\n\s*(?:2\.?\s*\*{0,2}|AN[ÁA]LISE)|$)'),
+            ('analise_exames', r'(?:2\.?\s*\*{0,2}AN[ÁA]LISE DE EXAMES\*{0,2}|AN[ÁA]LISE DE EXAMES)[:\s]*(.+?)(?=\n\s*(?:3\.?\s*\*{0,2}|AVALIA[ÇC][ÃA]O)|$)'),
+            ('elegibilidade', r'(?:3\.?\s*\*{0,2}AVALIA[ÇC][ÃA]O DE ELEGIBILIDADE\*{0,2}|AVALIA[ÇC][ÃA]O DE ELEGIBILIDADE)[:\s]*(.+?)(?=\n\s*(?:4\.?\s*\*{0,2}|RECOMENDA)|$)'),
+            ('recomendacoes', r'(?:4\.?\s*\*{0,2}RECOMENDA[ÇC][ÕO]ES TERAP[ÊE]UTICAS\*{0,2}|RECOMENDA[ÇC][ÕO]ES TERAP[ÊE]UTICAS)[:\s]*(.+?)(?=\n\s*(?:5\.?\s*\*{0,2}|PONTOS)|$)'),
+            ('pontos_atencao', r'(?:5\.?\s*\*{0,2}PONTOS DE ATEN[ÇC][ÃA]O\*{0,2}|PONTOS DE ATEN[ÇC][ÃA]O)[:\s]*(.+?)(?=\n\s*(?:6\.?\s*\*{0,2}|CLASSIFICA)|$)'),
+            ('prioridade', r'(?:6\.?\s*\*{0,2}CLASSIFICA[ÇC][ÃA]O DE PRIORIDADE\*{0,2}|CLASSIFICA[ÇC][ÃA]O DE PRIORIDADE)[:\s]*(.+?)$'),
+        ]
+
+        for key, pattern in section_patterns:
+            match = re.search(pattern, texto_analise, re.DOTALL | re.IGNORECASE)
+            if match:
+                secoes[key] = match.group(1).strip()
+
+        # Detect priority
+        prio_text = secoes['prioridade'].lower()
+        if 'urgente' in prio_text:
+            secoes['prioridade'] = 'Urgente'
+        elif 'alta' in prio_text:
+            secoes['prioridade'] = 'Alta'
+        elif 'eletiva' in prio_text:
+            secoes['prioridade'] = 'Eletiva'
+        else:
+            secoes['prioridade'] = 'Normal'
+
+        # Detect eligibility
+        eleg_text = secoes.get('elegibilidade', '').lower()
+        elegivel = True
+        risco = 'Moderado'
+        if 'não elegível' in eleg_text or 'nao elegivel' in eleg_text or 'contraindicado' in eleg_text:
+            elegivel = False
+        if 'baixo' in eleg_text and 'risco' in eleg_text:
+            risco = 'Baixo'
+        elif 'alto' in eleg_text and 'risco' in eleg_text:
+            risco = 'Alto'
+
+        # 9. Save the analysis
+        analises = load_ia_analises()
+        analise_id = f'ANALISE{len(analises)+1:05d}'
+        analise = {
+            'id': analise_id,
+            'paciente_id': pac_id,
+            'paciente_nome': pac.get('nome', ''),
+            'tipo': 'pre_analise',
+            'modelo_ia': modelo,
+            'temperatura': temperatura,
+            'texto_completo': texto_analise,
+            'resumo_clinico': secoes['resumo_clinico'],
+            'analise_exames': secoes['analise_exames'],
+            'elegibilidade': secoes['elegibilidade'],
+            'elegivel': elegivel,
+            'risco': risco,
+            'recomendacoes': secoes['recomendacoes'],
+            'pontos_atencao': secoes['pontos_atencao'],
+            'prioridade': secoes['prioridade'],
+            'dados_entrada': dados_paciente[:2000],
+            'status': 'concluida',
+            'revisada_medico': False,
+            'notas_medico': '',
+            'created_at': datetime.now(timezone.utc).isoformat()
+        }
+        analises.append(analise)
+        save_ia_analises(analises)
+
+        # 10. Add timeline event
+        add_timeline_event(pac_id, 'ia', 'Pré-análise IA realizada',
+            f'Análise {analise_id} gerada por {modelo}. Prioridade: {secoes["prioridade"]}. Elegível: {"Sim" if elegivel else "Não"}. Risco: {risco}.')
+
+        logger.info(f"✅ IA Pré-análise {analise_id} concluída para paciente {pac_id}")
+        return analise
+
+    except http_requests.exceptions.Timeout:
+        return {'error': 'Timeout na chamada à API Gemini. Tente novamente.'}
+    except Exception as e:
+        logger.error(f'Erro na pré-análise IA: {str(e)}')
+        return {'error': f'Erro interno: {str(e)}'}
+
 
 def load_webhooks_config():
     return _load_json_file(WEBHOOKS_CONFIG_FILE, {'prescricao_url': '', 'prescricao_ativo': False})
@@ -1496,6 +1748,114 @@ def duplicar_ia_prompt(prompt_id):
     prompts.append(novo)
     save_ia_prompts(prompts)
     return jsonify(novo), 201
+
+
+# ===== IA CONFIG & PRÉ-ANÁLISE API =====
+
+@app.route('/api/ia/config', methods=['GET'])
+def get_ia_config():
+    """Get IA configuration"""
+    config = load_ia_config()
+    # Mask API key for security
+    safe = dict(config)
+    key = safe.get('api_key', '')
+    if key and len(key) > 8:
+        safe['api_key_masked'] = key[:8] + '...' + key[-4:]
+    else:
+        safe['api_key_masked'] = '(não configurada)'
+    safe['api_key'] = key  # Send full key to frontend for config
+    return jsonify(safe)
+
+@app.route('/api/ia/config', methods=['PUT'])
+def update_ia_config():
+    """Update IA configuration"""
+    data = request.get_json(silent=True) or {}
+    config = load_ia_config()
+    for k, v in data.items():
+        config[k] = v
+    save_ia_config(config)
+    return jsonify({'ok': True, 'message': 'Configuração da IA atualizada'})
+
+@app.route('/api/ia/testar-conexao', methods=['POST'])
+def testar_conexao_ia():
+    """Test connection to Google Gemini API"""
+    config = load_ia_config()
+    api_key = config.get('api_key', '')
+    modelo = config.get('modelo', 'gemini-2.0-flash')
+    if not api_key:
+        return jsonify({'ok': False, 'error': 'API Key não configurada'}), 400
+    try:
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}'
+        payload = {
+            'contents': [{'parts': [{'text': 'Responda apenas: OK'}]}],
+            'generationConfig': {'temperature': 0.1, 'maxOutputTokens': 10}
+        }
+        resp = http_requests.post(url, json=payload, timeout=15)
+        if resp.status_code == 200:
+            return jsonify({'ok': True, 'message': f'Conexão com {modelo} estabelecida com sucesso!', 'modelo': modelo})
+        else:
+            return jsonify({'ok': False, 'error': f'Erro {resp.status_code}: {resp.text[:200]}'}), 400
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/pacientes/<pac_id>/ia-pre-analise', methods=['POST'])
+def executar_pre_analise(pac_id):
+    """Execute AI pre-analysis for a patient"""
+    resultado = _executar_pre_analise_ia(pac_id)
+    if not resultado:
+        return jsonify({'error': 'Paciente não encontrado'}), 404
+    if 'error' in resultado:
+        return jsonify(resultado), 400
+    return jsonify(resultado), 201
+
+@app.route('/api/pacientes/<pac_id>/ia-pre-analise', methods=['GET'])
+def get_pre_analises(pac_id):
+    """Get all AI pre-analyses for a patient"""
+    analises = load_ia_analises()
+    pac_analises = [a for a in analises if a.get('paciente_id') == pac_id]
+    pac_analises.sort(key=lambda a: a.get('created_at', ''), reverse=True)
+    return jsonify(pac_analises)
+
+@app.route('/api/ia/analises/<analise_id>', methods=['GET'])
+def get_analise_detail(analise_id):
+    """Get a specific AI analysis"""
+    analises = load_ia_analises()
+    analise = next((a for a in analises if a.get('id') == analise_id), None)
+    if not analise:
+        return jsonify({'error': 'Análise não encontrada'}), 404
+    return jsonify(analise)
+
+@app.route('/api/ia/analises/<analise_id>/revisar', methods=['PUT'])
+def revisar_analise(analise_id):
+    """Doctor reviews an AI analysis"""
+    analises = load_ia_analises()
+    analise = next((a for a in analises if a.get('id') == analise_id), None)
+    if not analise:
+        return jsonify({'error': 'Análise não encontrada'}), 404
+    data = request.get_json(silent=True) or {}
+    analise['revisada_medico'] = True
+    analise['notas_medico'] = data.get('notas_medico', '')
+    analise['medico_revisor'] = data.get('medico_nome', '')
+    analise['data_revisao'] = datetime.now(timezone.utc).isoformat()
+    save_ia_analises(analises)
+    add_timeline_event(analise['paciente_id'], 'ia', 'Pré-análise IA revisada pelo médico',
+        f'Dr(a). {analise.get("medico_revisor", "")} revisou a análise {analise_id}.')
+    return jsonify(analise)
+
+@app.route('/api/ia/analises/<analise_id>', methods=['DELETE'])
+def delete_analise(analise_id):
+    """Delete an AI analysis"""
+    analises = load_ia_analises()
+    analises = [a for a in analises if a.get('id') != analise_id]
+    save_ia_analises(analises)
+    return jsonify({'ok': True})
+
+@app.route('/api/ia/analises', methods=['GET'])
+def list_all_analises():
+    """List all AI analyses (for IA dashboard)"""
+    analises = load_ia_analises()
+    analises.sort(key=lambda a: a.get('created_at', ''), reverse=True)
+    return jsonify(analises)
 
 
 # ===== LEADS (Pacientes) API =====
@@ -3601,6 +3961,16 @@ def save_ficha(pac_id):
         'atualizado_em': datetime.now().isoformat()
     }
     save_fichas(fichas)
+
+    # Auto-trigger IA pre-analysis if enabled
+    ia_config = load_ia_config()
+    if ia_config.get('auto_analise'):
+        try:
+            _executar_pre_analise_ia(pac_id)
+            logger.info(f'IA auto-analise disparada ao salvar ficha do paciente {pac_id}')
+        except Exception as e:
+            logger.error(f'Erro na auto-analise IA: {e}')
+
     return jsonify({'success': True, 'message': 'Ficha salva com sucesso'})
 
 @app.route('/api/pacientes/<pac_id>/ficha/evolucao', methods=['POST'])
@@ -3712,6 +4082,17 @@ def upload_prontuario(pac_id):
         prontuarios.append(record)
         save_prontuarios(prontuarios)
         add_timeline_event(pac_id, 'upload', f'Arquivo enviado: {titulo}', descricao)
+
+        # Auto-trigger IA pre-analysis on exam upload if enabled
+        if tipo == 'exame':
+            ia_config = load_ia_config()
+            if ia_config.get('auto_analise'):
+                try:
+                    _executar_pre_analise_ia(pac_id)
+                    logger.info(f'IA auto-analise disparada ao anexar exame do paciente {pac_id}')
+                except Exception as e:
+                    logger.error(f'Erro na auto-analise IA: {e}')
+
         return jsonify(record), 201
     return jsonify({'error': 'Arquivo invalido'}), 400
 

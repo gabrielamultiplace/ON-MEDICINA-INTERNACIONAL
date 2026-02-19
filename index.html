@@ -1480,6 +1480,7 @@
         .doc-viewer-overlay.active { display:flex; }
         .doc-viewer { background:#fff; border-radius:4px; max-width:800px; width:95%; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:docSlideIn .3s ease; }
         @keyframes docSlideIn { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         .doc-viewer-toolbar { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #e5e7eb; background:#f9fafb; border-radius:4px 4px 0 0; }
         .doc-viewer-toolbar-left { display:flex; align-items:center; gap:12px; }
         .doc-viewer-toolbar-right { display:flex; align-items:center; gap:6px; }
@@ -2744,6 +2745,47 @@
 
                 <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
 
+                <!-- ===== PRÉ-ANÁLISES IA (DASHBOARD) ===== -->
+                <div style="margin-bottom:24px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-brain" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <h4 style="margin:0;color:#333;font-size:16px;">Pré-Análises de Pacientes</h4>
+                                <p style="margin:0;color:#6b7280;font-size:12px;">Análises geradas pelo Google Gemini integrado à plataforma</p>
+                            </div>
+                        </div>
+                        <button onclick="configurarIA()" style="background:#7c3aed;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-cog" style="margin-right:4px;"></i> Configurar IA</button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;" id="ia-analises-stats">
+                        <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-analises-total">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Total Análises</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#059669,#10b981);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-elegiveis">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Elegíveis</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-pendentes-revisao">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Pendentes Revisão</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#dc2626,#f87171);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-urgentes">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Urgentes/Alta</div>
+                        </div>
+                    </div>
+
+                    <!-- Lista recente de análises -->
+                    <div id="ia-analises-dashboard-lista" style="display:grid;gap:8px;">
+                        <div style="padding:30px;text-align:center;color:#9ca3af;"><i class="fas fa-brain" style="font-size:30px;opacity:0.3;"></i><div style="margin-top:8px;font-size:13px;">Nenhuma pré-análise realizada ainda</div></div>
+                    </div>
+                </div>
+
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
+
                 <!-- Kanban IA abaixo -->
                 <div class="kanban-board" id="kanban-ia">
                     <!-- Coluna: Desenvolvimento -->
@@ -3306,6 +3348,9 @@
                         <div class="perfil-pac-tab" data-pactab="prontuario" onclick="switchPacTab(this)">
                             <i class="fas fa-file-medical-alt"></i> PRONTUÁRIO ELETRÔNICO
                         </div>
+                        <div class="perfil-pac-tab" data-pactab="ia-analise" onclick="switchPacTab(this)" style="color:#7c3aed;">
+                            <i class="fas fa-robot"></i> PRÉ-ANÁLISE IA
+                        </div>
                     </div>
 
                     <!-- Barra de ações -->
@@ -3548,10 +3593,129 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ===== Tab: Pré-Análise IA ===== -->
+                    <div class="pac-tab-content" id="pactab-ia-analise" style="display:none;">
+                        <!-- Header com botão de executar -->
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h3 style="margin:0;color:#333;font-size:16px;"><i class="fas fa-robot" style="color:#7c3aed;"></i> Pré-Análise por Inteligência Artificial</h3>
+                                <p style="margin:4px 0 0;font-size:12px;color:#888;">A IA analisa anamnese, exames e dados clínicos para gerar uma pré-avaliação completa</p>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button onclick="configurarIA()" style="padding:8px 16px;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">
+                                    <i class="fas fa-cog"></i> Configurar
+                                </button>
+                                <button onclick="executarPreAnaliseIA()" id="btn-executar-ia" style="padding:8px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(124,58,237,0.3);">
+                                    <i class="fas fa-brain"></i> Executar Pré-Análise
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Info Banner -->
+                        <div id="ia-analise-info" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff);border:1px solid #c4b5fd;border-radius:12px;padding:16px;margin-bottom:16px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:40px;height:40px;background:#7c3aed;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-info-circle" style="color:#fff;font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <p style="margin:0;font-size:13px;color:#4c1d95;font-weight:600;">Google Gemini integrado</p>
+                                    <p style="margin:2px 0 0;font-size:11px;color:#6d28d9;">A IA gera: resumo clínico, análise de exames, avaliação de elegibilidade para cannabis medicinal, recomendações terapêuticas e classificação de prioridade.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loading state -->
+                        <div id="ia-analise-loading" style="display:none;text-align:center;padding:40px;">
+                            <div style="width:60px;height:60px;border:4px solid #e5e7eb;border-top:4px solid #7c3aed;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
+                            <p style="font-size:14px;color:#7c3aed;font-weight:600;">Analisando dados do paciente...</p>
+                            <p style="font-size:12px;color:#888;">A IA está processando anamnese, exames e histórico clínico. Isso pode levar alguns segundos.</p>
+                        </div>
+
+                        <!-- Analysis Result -->
+                        <div id="ia-analise-resultado" style="display:none;">
+                            <!-- Priority + Status Header -->
+                            <div id="ia-resultado-header" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;"></div>
+
+                            <!-- Analysis Sections -->
+                            <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+                                <!-- Resumo Clínico -->
+                                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+                                    <div style="background:linear-gradient(135deg,#1e40af,#3b82f6);padding:12px 16px;display:flex;align-items:center;gap:8px;">
+                                        <i class="fas fa-file-medical" style="color:#fff;"></i>
+                                        <span style="color:#fff;font-weight:700;font-size:13px;text-transform:uppercase;">Resumo Clínico</span>
+                                    </div>
+                                    <div id="ia-sec-resumo" style="padding:16px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-wrap;"></div>
+                                </div>
+
+                                <!-- Análise de Exames -->
+                                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+                                    <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);padding:12px 16px;display:flex;align-items:center;gap:8px;">
+                                        <i class="fas fa-flask" style="color:#fff;"></i>
+                                        <span style="color:#fff;font-weight:700;font-size:13px;text-transform:uppercase;">Análise de Exames</span>
+                                    </div>
+                                    <div id="ia-sec-exames" style="padding:16px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-wrap;"></div>
+                                </div>
+
+                                <!-- Elegibilidade -->
+                                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+                                    <div style="background:linear-gradient(135deg,#059669,#10b981);padding:12px 16px;display:flex;align-items:center;gap:8px;">
+                                        <i class="fas fa-check-double" style="color:#fff;"></i>
+                                        <span style="color:#fff;font-weight:700;font-size:13px;text-transform:uppercase;">Avaliação de Elegibilidade</span>
+                                    </div>
+                                    <div id="ia-sec-elegibilidade" style="padding:16px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-wrap;"></div>
+                                </div>
+
+                                <!-- Recomendações -->
+                                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+                                    <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:12px 16px;display:flex;align-items:center;gap:8px;">
+                                        <i class="fas fa-prescription-bottle-alt" style="color:#fff;"></i>
+                                        <span style="color:#fff;font-weight:700;font-size:13px;text-transform:uppercase;">Recomendações Terapêuticas</span>
+                                    </div>
+                                    <div id="ia-sec-recomendacoes" style="padding:16px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-wrap;"></div>
+                                </div>
+
+                                <!-- Pontos de Atenção -->
+                                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+                                    <div style="background:linear-gradient(135deg,#dc2626,#f87171);padding:12px 16px;display:flex;align-items:center;gap:8px;">
+                                        <i class="fas fa-exclamation-triangle" style="color:#fff;"></i>
+                                        <span style="color:#fff;font-weight:700;font-size:13px;text-transform:uppercase;">Pontos de Atenção</span>
+                                    </div>
+                                    <div id="ia-sec-atencao" style="padding:16px;font-size:13px;color:#374151;line-height:1.6;white-space:pre-wrap;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Doctor Review Section -->
+                            <div style="margin-top:16px;background:#fffbeb;border:1px solid #fbbf24;border-radius:12px;padding:16px;">
+                                <h4 style="margin:0 0 8px;font-size:13px;color:#92400e;"><i class="fas fa-user-md" style="margin-right:6px;"></i> Revisão do Médico</h4>
+                                <div id="ia-revisao-status" style="margin-bottom:8px;font-size:12px;color:#78716c;"></div>
+                                <textarea id="ia-notas-medico" placeholder="Notas do médico sobre a pré-análise da IA..." style="width:100%;min-height:80px;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;"></textarea>
+                                <div style="display:flex;gap:8px;margin-top:8px;">
+                                    <button onclick="revisarAnaliseIA()" style="padding:8px 16px;background:#f59e0b;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">
+                                        <i class="fas fa-check"></i> Aprovar e Salvar Revisão
+                                    </button>
+                                    <button onclick="imprimirAnaliseIA()" style="padding:8px 16px;background:#6b7280;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">
+                                        <i class="fas fa-print"></i> Imprimir
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Disclaimer -->
+                            <div style="margin-top:12px;padding:10px;background:#f3f4f6;border-radius:8px;text-align:center;">
+                                <p style="margin:0;font-size:11px;color:#9ca3af;"><i class="fas fa-info-circle"></i> Esta pré-análise foi gerada por IA e NÃO substitui a avaliação médica. O médico deve revisar e validar todas as informações antes de tomar decisões clínicas.</p>
+                            </div>
+                        </div>
+
+                        <!-- History of analyses -->
+                        <div style="margin-top:20px;">
+                            <h4 style="margin:0 0 12px;color:#333;font-size:14px;"><i class="fas fa-history" style="color:#7c3aed;"></i> Histórico de Análises</h4>
+                            <div id="ia-analises-historico" style="font-size:13px;color:#888;">Nenhuma análise realizada ainda.</div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>
-
         <!-- Modal: Novo Paciente -->
         <div id="modal-novo-paciente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:none;align-items:center;justify-content:center;">
             <div style="background:#fff;border-radius:16px;max-width:600px;width:95%;max-height:85vh;overflow-y:auto;padding:24px;">
@@ -4306,6 +4470,7 @@
                 }
                 if (pageId === 'ia' && typeof carregarIaPrompts === 'function') {
                     carregarIaPrompts();
+                    if (typeof carregarDashboardAnalises === 'function') carregarDashboardAnalises();
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch(err) {
@@ -7985,6 +8150,374 @@
             // Init: load prompts when IA section opens
             document.getElementById('btn-back-ia')?.closest('.page-content')?.addEventListener('transitionend', () => { if (document.getElementById('ia')?.classList.contains('active')) carregarIaPrompts(); });
 
+            // ========== IA PRÉ-ANÁLISE (GEMINI) ==========
+            let analiseAtualIA = null;
+
+            async function executarPreAnaliseIA() {
+                if (!pacienteAtual || !pacienteAtual.id) { alert('Nenhum paciente selecionado'); return; }
+                const btn = document.getElementById('btn-executar-ia');
+                const loading = document.getElementById('ia-analise-loading');
+                const resultado = document.getElementById('ia-analise-resultado');
+                const info = document.getElementById('ia-analise-info');
+
+                if (!confirm(`Executar pré-análise por IA para ${pacienteAtual.nome || 'este paciente'}?\n\nA IA irá analisar anamnese, exames e dados clínicos.`)) return;
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+                loading.style.display = 'block';
+                resultado.style.display = 'none';
+                info.style.display = 'none';
+
+                try {
+                    const res = await apiRequest(`/api/pacientes/${pacienteAtual.id}/ia-pre-analise`, 'POST');
+                    if (res.error) {
+                        alert('Erro na pré-análise: ' + res.error);
+                        info.style.display = 'block';
+                    } else {
+                        analiseAtualIA = res;
+                        renderAnaliseIA(res);
+                        resultado.style.display = 'block';
+                        carregarHistoricoAnalises(pacienteAtual.id);
+                    }
+                } catch(e) {
+                    alert('Erro ao executar pré-análise: ' + (e.message || e));
+                    info.style.display = 'block';
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-brain"></i> Executar Pré-Análise';
+                    loading.style.display = 'none';
+                }
+            }
+
+            function renderAnaliseIA(analise) {
+                // Header with priority and status badges
+                const prioColors = { 'Urgente': '#dc2626', 'Alta': '#f59e0b', 'Normal': '#3b82f6', 'Eletiva': '#10b981' };
+                const riscoColors = { 'Baixo': '#10b981', 'Moderado': '#f59e0b', 'Alto': '#dc2626' };
+                const prioColor = prioColors[analise.prioridade] || '#3b82f6';
+                const riscoColor = riscoColors[analise.risco] || '#f59e0b';
+                const dt = analise.created_at ? new Date(analise.created_at) : new Date();
+
+                document.getElementById('ia-resultado-header').innerHTML = `
+                    <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-flag" style="color:${prioColor};font-size:16px;"></i>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Prioridade</div>
+                            <div style="font-size:14px;font-weight:700;color:${prioColor};">${analise.prioridade || 'Normal'}</div>
+                        </div>
+                    </div>
+                    <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-cannabis" style="color:${analise.elegivel ? '#10b981' : '#dc2626'};font-size:16px;"></i>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Elegibilidade</div>
+                            <div style="font-size:14px;font-weight:700;color:${analise.elegivel ? '#10b981' : '#dc2626'};">${analise.elegivel ? 'Elegível' : 'Não Elegível'}</div>
+                        </div>
+                    </div>
+                    <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-shield-alt" style="color:${riscoColor};font-size:16px;"></i>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Risco</div>
+                            <div style="font-size:14px;font-weight:700;color:${riscoColor};">${analise.risco || 'Moderado'}</div>
+                        </div>
+                    </div>
+                    <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-robot" style="color:#7c3aed;font-size:16px;"></i>
+                        <div>
+                            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Modelo</div>
+                            <div style="font-size:12px;font-weight:600;color:#374151;">${analise.modelo_ia || 'Gemini'}</div>
+                            <div style="font-size:10px;color:#9ca3af;">${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+                        </div>
+                    </div>
+                `;
+
+                // Clean markdown bold syntax for display
+                const cleanMd = (txt) => (txt || 'Dados insuficientes para análise desta seção.').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/^[-•]\s/gm, '▸ ');
+
+                document.getElementById('ia-sec-resumo').innerHTML = cleanMd(analise.resumo_clinico);
+                document.getElementById('ia-sec-exames').innerHTML = cleanMd(analise.analise_exames);
+                document.getElementById('ia-sec-elegibilidade').innerHTML = cleanMd(analise.elegibilidade);
+                document.getElementById('ia-sec-recomendacoes').innerHTML = cleanMd(analise.recomendacoes);
+                document.getElementById('ia-sec-atencao').innerHTML = cleanMd(analise.pontos_atencao);
+
+                // Doctor review section
+                const revisaoEl = document.getElementById('ia-revisao-status');
+                if (analise.revisada_medico) {
+                    revisaoEl.innerHTML = `<span style="color:#16a34a;"><i class="fas fa-check-circle"></i> Revisada por ${analise.medico_revisor || 'médico'} em ${analise.data_revisao ? new Date(analise.data_revisao).toLocaleDateString('pt-BR') : ''}</span>`;
+                    document.getElementById('ia-notas-medico').value = analise.notas_medico || '';
+                } else {
+                    revisaoEl.innerHTML = '<span style="color:#f59e0b;"><i class="fas fa-clock"></i> Aguardando revisão do médico</span>';
+                    document.getElementById('ia-notas-medico').value = '';
+                }
+            }
+
+            async function carregarHistoricoAnalises(pacId) {
+                try {
+                    const analises = await apiRequest(`/api/pacientes/${pacId}/ia-pre-analise`);
+                    const container = document.getElementById('ia-analises-historico');
+                    if (!analises || analises.length === 0) {
+                        container.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:20px;"><i class="fas fa-robot" style="font-size:24px;"></i><p style="margin:8px 0 0;">Nenhuma análise realizada ainda.</p></div>';
+                        return;
+                    }
+                    container.innerHTML = analises.map(a => {
+                        const dt = a.created_at ? new Date(a.created_at) : new Date();
+                        const prioColors = { 'Urgente': '#dc2626', 'Alta': '#f59e0b', 'Normal': '#3b82f6', 'Eletiva': '#10b981' };
+                        const prioColor = prioColors[a.prioridade] || '#3b82f6';
+                        return `<div onclick="carregarAnaliseEspecifica('${a.id}')" style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .2s;background:${analiseAtualIA?.id === a.id ? '#ede9fe' : '#fff'};" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='${analiseAtualIA?.id === a.id ? '#ede9fe' : '#fff'}'">
+                            <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-brain" style="color:#fff;font-size:14px;"></i>
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:13px;font-weight:600;color:#1f2937;">${a.id} <span style="font-size:11px;color:${prioColor};font-weight:700;margin-left:8px;">${a.prioridade}</span></div>
+                                <div style="font-size:11px;color:#6b7280;">${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${a.modelo_ia||'Gemini'}</div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                                ${a.elegivel ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;">ELEGÍVEL</span>' : '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;">NÃO ELEGÍVEL</span>'}
+                                ${a.revisada_medico ? '<span style="color:#16a34a;font-size:10px;"><i class="fas fa-check-circle"></i> Revisada</span>' : '<span style="color:#f59e0b;font-size:10px;"><i class="fas fa-clock"></i> Pendente</span>'}
+                            </div>
+                        </div>`;
+                    }).join('');
+                } catch(e) {
+                    console.error('Erro ao carregar histórico:', e);
+                }
+            }
+
+            async function carregarAnaliseEspecifica(analiseId) {
+                try {
+                    const analise = await apiRequest(`/api/ia/analises/${analiseId}`);
+                    if (analise && !analise.error) {
+                        analiseAtualIA = analise;
+                        renderAnaliseIA(analise);
+                        document.getElementById('ia-analise-resultado').style.display = 'block';
+                        document.getElementById('ia-analise-info').style.display = 'none';
+                        if (pacienteAtual) carregarHistoricoAnalises(pacienteAtual.id);
+                    }
+                } catch(e) {
+                    console.error('Erro ao carregar análise:', e);
+                }
+            }
+
+            async function revisarAnaliseIA() {
+                if (!analiseAtualIA) { alert('Nenhuma análise para revisar'); return; }
+                const notas = document.getElementById('ia-notas-medico').value;
+                try {
+                    const res = await apiRequest(`/api/ia/analises/${analiseAtualIA.id}/revisar`, 'PUT', {
+                        notas_medico: notas,
+                        medico_nome: currentUser?.nome || 'Médico'
+                    });
+                    if (res && !res.error) {
+                        analiseAtualIA = res;
+                        renderAnaliseIA(res);
+                        if (pacienteAtual) carregarHistoricoAnalises(pacienteAtual.id);
+                        alert('Revisão salva com sucesso!');
+                    }
+                } catch(e) {
+                    alert('Erro ao salvar revisão: ' + (e.message || e));
+                }
+            }
+
+            function imprimirAnaliseIA() {
+                if (!analiseAtualIA) { alert('Nenhuma análise para imprimir'); return; }
+                const a = analiseAtualIA;
+                const dt = a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR') : '';
+                const win = window.open('', '_blank');
+                win.document.write(`<!DOCTYPE html><html><head><title>Pré-Análise IA - ${pacienteAtual?.nome||''}</title>
+                    <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;line-height:1.6;font-size:13px;}
+                    h1{font-size:18px;color:#7c3aed;border-bottom:2px solid #7c3aed;padding-bottom:8px;}
+                    h2{font-size:14px;color:#1e40af;margin-top:20px;border-bottom:1px solid #e5e7eb;padding-bottom:4px;}
+                    .header{display:flex;justify-content:space-between;margin-bottom:20px;}
+                    .badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:bold;}
+                    .disclaimer{margin-top:30px;padding:10px;background:#f3f4f6;border-radius:8px;font-size:11px;color:#6b7280;text-align:center;}
+                    @media print{body{padding:20px;}}</style></head><body>
+                    <h1><i>🤖</i> Pré-Análise por Inteligência Artificial</h1>
+                    <div class="header"><div><strong>Paciente:</strong> ${pacienteAtual?.nome||'N/A'}<br><strong>ID:</strong> ${pacienteAtual?.id||''} | <strong>Data:</strong> ${dt}</div>
+                    <div><span class="badge" style="background:#ede9fe;color:#7c3aed;">Prioridade: ${a.prioridade}</span>
+                    <span class="badge" style="background:${a.elegivel?'#d1fae5':'#fee2e2'};color:${a.elegivel?'#065f46':'#991b1b'};">${a.elegivel?'Elegível':'Não Elegível'}</span>
+                    <span class="badge" style="background:#fef3c7;color:#92400e;">Risco: ${a.risco}</span></div></div>
+                    <h2>1. Resumo Clínico</h2><p>${(a.resumo_clinico||'N/A').replace(/\n/g,'<br>')}</p>
+                    <h2>2. Análise de Exames</h2><p>${(a.analise_exames||'N/A').replace(/\n/g,'<br>')}</p>
+                    <h2>3. Avaliação de Elegibilidade</h2><p>${(a.elegibilidade||'N/A').replace(/\n/g,'<br>')}</p>
+                    <h2>4. Recomendações Terapêuticas</h2><p>${(a.recomendacoes||'N/A').replace(/\n/g,'<br>')}</p>
+                    <h2>5. Pontos de Atenção</h2><p>${(a.pontos_atencao||'N/A').replace(/\n/g,'<br>')}</p>
+                    ${a.revisada_medico ? `<h2>Revisão Médica</h2><p><strong>Revisada por:</strong> ${a.medico_revisor||''}<br><strong>Notas:</strong> ${a.notas_medico||'Sem notas'}</p>`: ''}
+                    <div class="disclaimer">Esta pré-análise foi gerada por IA (${a.modelo_ia}) e NÃO substitui a avaliação médica. Documento gerado em ${new Date().toLocaleDateString('pt-BR')}.</div>
+                    </body></html>`);
+                win.document.close();
+                setTimeout(() => win.print(), 500);
+            }
+
+            function configurarIA() {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.id = 'modal-ia-config';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:550px;max-height:85vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;">
+                            <h2><i class="fas fa-cog"></i> Configuração da IA</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">API Key (Google Cloud)</label>
+                                <input type="password" id="ia-cfg-apikey" placeholder="AIzaSy..." style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:monospace;">
+                                <p style="font-size:10px;color:#9ca3af;margin:4px 0 0;">Chave de API do projeto on-medicina no Google Cloud</p>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">Modelo</label>
+                                <select id="ia-cfg-modelo" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px;font-size:12px;">
+                                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Rápido)</option>
+                                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite (Mais rápido)</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Avançado)</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px;">Temperatura: <span id="ia-cfg-temp-val">0.4</span></label>
+                                <input type="range" id="ia-cfg-temperatura" min="0" max="1" step="0.1" value="0.4" style="width:100%;" oninput="document.getElementById('ia-cfg-temp-val').textContent=this.value">
+                                <div style="display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;"><span>Mais preciso</span><span>Mais criativo</span></div>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                    <input type="checkbox" id="ia-cfg-auto" style="width:16px;height:16px;">
+                                    <span style="font-size:12px;font-weight:600;color:#374151;">Análise automática</span>
+                                </label>
+                                <p style="font-size:10px;color:#9ca3af;margin:4px 0 0 24px;">Executar pré-análise automaticamente quando anamnese for preenchida e exames anexados</p>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-top:20px;">
+                                <button onclick="salvarConfigIA()" style="flex:1;padding:10px;background:#7c3aed;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
+                                    <i class="fas fa-save"></i> Salvar
+                                </button>
+                                <button onclick="testarConexaoIA()" style="flex:1;padding:10px;background:#059669;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
+                                    <i class="fas fa-plug"></i> Testar Conexão
+                                </button>
+                            </div>
+                            <div id="ia-cfg-status" style="margin-top:12px;display:none;padding:10px;border-radius:8px;font-size:12px;"></div>
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+
+                // Load current config
+                apiRequest('/api/ia/config').then(cfg => {
+                    if (cfg) {
+                        document.getElementById('ia-cfg-apikey').value = cfg.api_key || '';
+                        document.getElementById('ia-cfg-modelo').value = cfg.modelo || 'gemini-2.0-flash';
+                        document.getElementById('ia-cfg-temperatura').value = cfg.temperatura || 0.4;
+                        document.getElementById('ia-cfg-temp-val').textContent = cfg.temperatura || 0.4;
+                        document.getElementById('ia-cfg-auto').checked = cfg.auto_analise || false;
+                    }
+                });
+            }
+
+            async function salvarConfigIA() {
+                const data = {
+                    api_key: document.getElementById('ia-cfg-apikey').value,
+                    modelo: document.getElementById('ia-cfg-modelo').value,
+                    temperatura: parseFloat(document.getElementById('ia-cfg-temperatura').value),
+                    auto_analise: document.getElementById('ia-cfg-auto').checked
+                };
+                try {
+                    const res = await apiRequest('/api/ia/config', 'PUT', data);
+                    const st = document.getElementById('ia-cfg-status');
+                    st.style.display = 'block';
+                    st.style.background = '#d1fae5';
+                    st.style.color = '#065f46';
+                    st.innerHTML = '<i class="fas fa-check-circle"></i> Configuração salva com sucesso!';
+                    setTimeout(() => st.style.display = 'none', 3000);
+                } catch(e) {
+                    alert('Erro ao salvar: ' + e.message);
+                }
+            }
+
+            async function testarConexaoIA() {
+                const st = document.getElementById('ia-cfg-status');
+                st.style.display = 'block';
+                st.style.background = '#ede9fe';
+                st.style.color = '#7c3aed';
+                st.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando conexão...';
+
+                // Save config first
+                await salvarConfigIA();
+
+                try {
+                    const res = await apiRequest('/api/ia/testar-conexao', 'POST');
+                    if (res.ok) {
+                        st.style.background = '#d1fae5';
+                        st.style.color = '#065f46';
+                        st.innerHTML = `<i class="fas fa-check-circle"></i> ${res.message}`;
+                    } else {
+                        st.style.background = '#fee2e2';
+                        st.style.color = '#991b1b';
+                        st.innerHTML = `<i class="fas fa-times-circle"></i> ${res.error}`;
+                    }
+                } catch(e) {
+                    st.style.background = '#fee2e2';
+                    st.style.color = '#991b1b';
+                    st.innerHTML = '<i class="fas fa-times-circle"></i> Erro de conexão: ' + e.message;
+                }
+            }
+
+            function carregarTabIA(pacId) {
+                // Load analysis history when IA tab is opened
+                const resultado = document.getElementById('ia-analise-resultado');
+                const info = document.getElementById('ia-analise-info');
+                resultado.style.display = 'none';
+                info.style.display = 'block';
+                analiseAtualIA = null;
+
+                // Load most recent analysis if exists
+                apiRequest(`/api/pacientes/${pacId}/ia-pre-analise`).then(analises => {
+                    if (analises && analises.length > 0) {
+                        analiseAtualIA = analises[0];
+                        renderAnaliseIA(analises[0]);
+                        resultado.style.display = 'block';
+                        info.style.display = 'none';
+                    }
+                    carregarHistoricoAnalises(pacId);
+                }).catch(e => console.error(e));
+            }
+
+            async function carregarDashboardAnalises() {
+                try {
+                    const analises = await apiRequest('/api/ia/analises');
+                    // Stats
+                    const total = analises.length;
+                    const elegiveis = analises.filter(a => a.elegivel).length;
+                    const pendentes = analises.filter(a => !a.revisada_medico).length;
+                    const urgentes = analises.filter(a => a.prioridade === 'Urgente' || a.prioridade === 'Alta').length;
+                    document.getElementById('ia-stat-analises-total').textContent = total;
+                    document.getElementById('ia-stat-elegiveis').textContent = elegiveis;
+                    document.getElementById('ia-stat-pendentes-revisao').textContent = pendentes;
+                    document.getElementById('ia-stat-urgentes').textContent = urgentes;
+
+                    // List (last 10)
+                    const container = document.getElementById('ia-analises-dashboard-lista');
+                    if (total === 0) {
+                        container.innerHTML = '<div style="padding:30px;text-align:center;color:#9ca3af;"><i class="fas fa-brain" style="font-size:30px;opacity:0.3;"></i><div style="margin-top:8px;font-size:13px;">Nenhuma pré-análise realizada ainda</div></div>';
+                        return;
+                    }
+                    const recentes = analises.slice(0, 10);
+                    container.innerHTML = recentes.map(a => {
+                        const dt = a.created_at ? new Date(a.created_at) : new Date();
+                        const prioColors = { 'Urgente': '#dc2626', 'Alta': '#f59e0b', 'Normal': '#3b82f6', 'Eletiva': '#10b981' };
+                        const prioColor = prioColors[a.prioridade] || '#3b82f6';
+                        return `<div onclick="if(typeof abrirPerfilPaciente==='function') abrirPerfilPaciente('${a.paciente_id}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#f5f3ff';this.style.borderColor='#c4b5fd'" onmouseout="this.style.background='#fff';this.style.borderColor='#e5e7eb'">
+                            <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c3aed,#a855f7);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-user" style="color:#fff;font-size:14px;"></i>
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:13px;font-weight:600;color:#1f2937;">${a.paciente_nome || a.paciente_id}</div>
+                                <div style="font-size:11px;color:#6b7280;">${a.id} · ${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})} · ${a.modelo_ia||'Gemini'}</div>
+                            </div>
+                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                <span style="padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;background:${a.elegivel?'#d1fae5':'#fee2e2'};color:${a.elegivel?'#065f46':'#991b1b'};">${a.elegivel?'Elegível':'Não Elegível'}</span>
+                                <span style="padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;background:${prioColor}22;color:${prioColor};">${a.prioridade}</span>
+                                ${a.revisada_medico ? '<span style="color:#16a34a;font-size:11px;" title="Revisada"><i class="fas fa-check-circle"></i></span>' : '<span style="color:#f59e0b;font-size:11px;" title="Pendente revisão"><i class="fas fa-clock"></i></span>'}
+                            </div>
+                        </div>`;
+                    }).join('');
+                } catch(e) {
+                    console.error('Erro ao carregar dashboard IA:', e);
+                }
+            }
+
             // ========== INTELIGÊNCIA ARTIFICIAL KANBAN ==========
             let draggedIaCard = null;
 
@@ -11356,6 +11889,10 @@
                 tabEl.classList.add('active');
                 const content = document.getElementById('pactab-' + tabName);
                 if (content) { content.classList.add('active'); content.style.display = 'block'; }
+                // Load IA tab data when switching to it
+                if (tabName === 'ia-analise' && pacienteAtual) {
+                    carregarTabIA(pacienteAtual.id);
+                }
             }
 
             function togglePronAccordion(headerEl) {
@@ -14756,6 +15293,19 @@
             window.duplicarPrompt = duplicarPrompt;
             window.excluirPrompt = excluirPrompt;
             window.abrirPromptDetalhe = abrirPromptDetalhe;
+
+            // IA Pre-Analysis exports
+            window.executarPreAnaliseIA = executarPreAnaliseIA;
+            window.renderAnaliseIA = renderAnaliseIA;
+            window.carregarHistoricoAnalises = carregarHistoricoAnalises;
+            window.carregarAnaliseEspecifica = carregarAnaliseEspecifica;
+            window.revisarAnaliseIA = revisarAnaliseIA;
+            window.imprimirAnaliseIA = imprimirAnaliseIA;
+            window.configurarIA = configurarIA;
+            window.salvarConfigIA = salvarConfigIA;
+            window.testarConexaoIA = testarConexaoIA;
+            window.carregarTabIA = carregarTabIA;
+            window.carregarDashboardAnalises = carregarDashboardAnalises;
 
             window.onEventoTipoChange = onEventoTipoChange;
             window.excluirEventoTimeline = excluirEventoTimeline;
