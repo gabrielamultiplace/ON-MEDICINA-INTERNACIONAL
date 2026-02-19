@@ -8239,6 +8239,10 @@
                         renderAnaliseIA(res);
                         resultado.style.display = 'block';
                         carregarHistoricoAnalises(pacienteAtual.id);
+                        // Refresh ficha observações to show IA note
+                        if (typeof carregarFichaAtendimento === 'function') {
+                            carregarFichaAtendimento(pacienteAtual.id, null);
+                        }
                     }
                 } catch(e) {
                     alert('Erro ao executar pré-análise: ' + (e.message || e));

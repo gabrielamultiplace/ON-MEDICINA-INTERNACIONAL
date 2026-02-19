@@ -772,6 +772,49 @@ IMPORTANTE:
         add_timeline_event(pac_id, 'ia', 'Pré-análise IA realizada',
             f'Análise {analise_id} gerada por {modelo}. Prioridade: {secoes["prioridade"]}. Elegível: {"Sim" if elegivel else "Não"}. Risco: {risco}.')
 
+        # 11. Save result as observation in ficha de atendimento
+        try:
+            fichas = load_fichas()
+            ficha = fichas.get(pac_id, {})
+            evolucoes = ficha.get('evolucoes', [])
+
+            nota_ia = f"""🤖 PRÉ-ANÁLISE POR INTELIGÊNCIA ARTIFICIAL ({analise_id})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Data: {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M')} UTC
+🔬 Modelo: {modelo} | Prioridade: {secoes['prioridade']} | Elegível: {'Sim' if elegivel else 'Não'} | Risco: {risco}
+
+📋 RESUMO CLÍNICO:
+{secoes['resumo_clinico'] or 'N/A'}
+
+🔬 ANÁLISE DE EXAMES:
+{secoes['analise_exames'] or 'N/A'}
+
+✅ AVALIAÇÃO DE ELEGIBILIDADE:
+{secoes['elegibilidade'] or 'N/A'}
+
+💊 RECOMENDAÇÕES TERAPÊUTICAS:
+{secoes['recomendacoes'] or 'N/A'}
+
+⚠️ PONTOS DE ATENÇÃO:
+{secoes['pontos_atencao'] or 'N/A'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚕️ Esta pré-análise foi gerada por IA e NÃO substitui a avaliação médica."""
+
+            evolucoes.append({
+                'id': f'ia-{analise_id.lower()}',
+                'texto': nota_ia,
+                'data': datetime.now(timezone.utc).isoformat(),
+                'tipo': 'ia_analise',
+                'analise_id': analise_id
+            })
+            ficha['evolucoes'] = evolucoes
+            fichas[pac_id] = ficha
+            save_fichas(fichas)
+            logger.info(f"✅ Resultado IA salvo nas observações da ficha do paciente {pac_id}")
+        except Exception as e:
+            logger.error(f"Erro ao salvar resultado IA na ficha: {e}")
+
         logger.info(f"✅ IA Pré-análise {analise_id} concluída para paciente {pac_id}")
         return analise
 
