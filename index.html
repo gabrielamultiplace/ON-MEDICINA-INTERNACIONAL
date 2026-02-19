@@ -3866,6 +3866,7 @@
                 </div>
                 <div class="settings-tabs">
                     <button class="settings-tab active" data-tab="users">Usuários e permissões</button>
+                    <button class="settings-tab" data-tab="cadastros"><i class="fas fa-address-card" style="margin-right:4px;"></i> Cadastros</button>
                     <button class="settings-tab" data-tab="parameters">Parâmetros do sistema</button>
                     <button class="settings-tab" data-tab="integrations">Integrações API</button>
                     <button class="settings-tab" data-tab="assinatura"><i class="fas fa-file-signature" style="margin-right:4px;"></i> Assinatura Digital</button>
@@ -3909,15 +3910,24 @@
                             </div>
                         </div>
                     </div>
-                    <div class="settings-panel" data-panel="parameters">
+                    <!-- ===== ABA: CADASTROS ===== -->
+                    <div class="settings-panel" data-panel="cadastros">
+                        <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                            <div style="background:linear-gradient(135deg,#667eea,#764ba2);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-address-card" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <h4 style="margin:0;font-size:15px;color:#333;">Links de Cadastro</h4>
+                                <p style="margin:2px 0 0;font-size:12px;color:#6b7280;">Compartilhe os links abaixo para que médicos, pacientes e advogados se cadastrem na plataforma.</p>
+                            </div>
+                        </div>
+
                         <div style="margin-bottom:20px;padding:16px;background:#f0f7ff;border-radius:8px;border:1px solid #667eea;">
-                            <h4 style="margin:0 0 8px;color:#667eea;"><i class="fas fa-user-md"></i> Link de Cadastro Medico</h4>
-                            <p style="margin:0 0 8px;color:#555;font-size:13px;">Envie este link para os medicos que desejam se cadastrar na plataforma:</p>
+                            <h4 style="margin:0 0 8px;color:#667eea;"><i class="fas fa-user-md"></i> Link de Cadastro Médico</h4>
+                            <p style="margin:0 0 8px;color:#555;font-size:13px;">Envie este link para os médicos que desejam se cadastrar na plataforma:</p>
                             <div style="display:flex;gap:8px;align-items:center;">
                                 <input type="text" id="link-cadastro-medico" readonly style="flex:1;padding:8px 12px;border:1px solid #ccc;border-radius:6px;font-size:13px;background:#fff;" value="">
                                 <button onclick="navigator.clipboard.writeText(document.getElementById('link-cadastro-medico').value);this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar',2000);" style="padding:8px 16px;background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Copiar</button>
                             </div>
-                            <p style="margin:8px 0 0;color:#888;font-size:11px;">O medico preenche o formulario e, apos aprovacao pelo admin, podera acessar o Portal Medico.</p>
+                            <p style="margin:8px 0 0;color:#888;font-size:11px;">O médico preenche o formulário e, após aprovação pelo admin, poderá acessar o Portal Médico.</p>
                         </div>
 
                         <div style="margin-bottom:20px;padding:16px;background:#f0fdf4;border-radius:8px;border:1px solid #059669;">
@@ -3939,7 +3949,8 @@
                             </div>
                             <p style="margin:8px 0 0;color:#888;font-size:11px;">O advogado preenche dados profissionais, OAB, especialidades. Após cadastro, pode ser vinculado a processos judiciais.</p>
                         </div>
-
+                    </div>
+                    <div class="settings-panel" data-panel="parameters">
                         <ul class="admin-list">
                             <li><i class="fas fa-check-circle"></i> Parametros gerais da plataforma</li>
                             <li><i class="fas fa-check-circle"></i> Padroes de atendimento</li>
