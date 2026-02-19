@@ -2745,6 +2745,66 @@
 
                 <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
 
+                <!-- ===== BASE DE CONHECIMENTO IA ===== -->
+                <div style="margin-bottom:24px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="background:linear-gradient(135deg,#0e7490,#06b6d4);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-book-medical" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <h4 style="margin:0;color:#333;font-size:16px;">Base de Conhecimento da IA</h4>
+                                <p style="margin:0;color:#6b7280;font-size:12px;">Dados, estudos, protocolos e informações que a IA usará como referência nas análises</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="previewBaseConhecimento()" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-eye" style="margin-right:4px;"></i> Preview</button>
+                            <button onclick="salvarBaseConhecimento()" style="background:#0e7490;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-save" style="margin-right:4px;"></i> Salvar Base</button>
+                        </div>
+                    </div>
+
+                    <!-- Info Banner -->
+                    <div style="background:linear-gradient(135deg,#ecfeff,#e0f2fe);border:1px solid #67e8f9;border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+                        <p style="margin:0;font-size:12px;color:#0e7490;"><i class="fas fa-lightbulb" style="margin-right:6px;color:#06b6d4;"></i> <strong>Como funciona:</strong> Todo conteúdo inserido aqui será enviado automaticamente ao Google Gemini como contexto de referência em cada pré-análise de paciente. Quanto mais completa a base, mais precisa a análise da IA.</p>
+                    </div>
+
+                    <!-- Token counter -->
+                    <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+                        <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 16px;flex:1;min-width:120px;text-align:center;">
+                            <div style="font-size:18px;font-weight:700;color:#0d9488;" id="kb-char-count">0</div>
+                            <div style="font-size:10px;color:#6b7280;">Caracteres</div>
+                        </div>
+                        <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 16px;flex:1;min-width:120px;text-align:center;">
+                            <div style="font-size:18px;font-weight:700;color:#0d9488;" id="kb-token-estimate">0</div>
+                            <div style="font-size:10px;color:#6b7280;">Tokens (estimado)</div>
+                        </div>
+                        <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 16px;flex:1;min-width:120px;text-align:center;">
+                            <div style="font-size:18px;font-weight:700;color:#0d9488;" id="kb-cat-count">0</div>
+                            <div style="font-size:10px;color:#6b7280;">Categorias Ativas</div>
+                        </div>
+                        <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:8px 16px;flex:1;min-width:120px;text-align:center;">
+                            <div style="font-size:18px;font-weight:700;" id="kb-status-badge" style="color:#0d9488;">-</div>
+                            <div style="font-size:10px;color:#6b7280;">Última Atualização</div>
+                        </div>
+                    </div>
+
+                    <!-- Base Principal -->
+                    <div style="margin-bottom:16px;">
+                        <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:6px;"><i class="fas fa-database" style="color:#0e7490;margin-right:4px;"></i> Conhecimento Geral (enviado em todas as análises)</label>
+                        <textarea id="kb-base-principal" placeholder="Insira aqui o conhecimento geral sobre cannabis medicinal que a IA deve usar como referência em todas as análises...&#10;&#10;Exemplo:&#10;- A cannabis medicinal é regulamentada pela ANVISA sob a RDC 327/2019...&#10;- Principais canabinoides: CBD (canabidiol) e THC (tetrahidrocanabinol)...&#10;- Indicações terapêuticas com evidência: epilepsia, dor crônica, espasticidade..." style="width:100%;min-height:160px;padding:12px;border:2px solid #e0e0e0;border-radius:10px;font-size:13px;line-height:1.6;resize:vertical;font-family:inherit;" oninput="atualizarContadorKB()"></textarea>
+                    </div>
+
+                    <!-- Categorias -->
+                    <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+                        <label style="font-size:12px;font-weight:700;color:#374151;"><i class="fas fa-folder-open" style="color:#0e7490;margin-right:4px;"></i> Categorias de Conhecimento</label>
+                        <button onclick="adicionarCategoriaKB()" style="background:#0e7490;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;"><i class="fas fa-plus" style="margin-right:3px;"></i> Nova Categoria</button>
+                    </div>
+
+                    <div id="kb-categorias-lista" style="display:grid;gap:10px;">
+                        <!-- Categories rendered by JS -->
+                    </div>
+                </div>
+
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
+
                 <!-- ===== PRÉ-ANÁLISES IA (DASHBOARD) ===== -->
                 <div style="margin-bottom:24px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
@@ -4470,6 +4530,7 @@
                 }
                 if (pageId === 'ia' && typeof carregarIaPrompts === 'function') {
                     carregarIaPrompts();
+                    if (typeof carregarBaseConhecimento === 'function') carregarBaseConhecimento();
                     if (typeof carregarDashboardAnalises === 'function') carregarDashboardAnalises();
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -8472,6 +8533,173 @@
                     }
                     carregarHistoricoAnalises(pacId);
                 }).catch(e => console.error(e));
+            }
+
+            // ========== BASE DE CONHECIMENTO IA ==========
+            let kbData = null;
+
+            async function carregarBaseConhecimento() {
+                try {
+                    kbData = await apiRequest('/api/ia/knowledge-base');
+                    if (!kbData) return;
+
+                    // Fill main textarea
+                    document.getElementById('kb-base-principal').value = kbData.base_conhecimento || '';
+
+                    // Render categories
+                    renderCategoriasKB(kbData.categorias || []);
+
+                    // Update counters
+                    atualizarContadorKB();
+
+                    // Last update
+                    const badge = document.getElementById('kb-status-badge');
+                    if (kbData.updated_at) {
+                        const dt = new Date(kbData.updated_at);
+                        badge.textContent = dt.toLocaleDateString('pt-BR');
+                        badge.style.color = '#0d9488';
+                    } else {
+                        badge.textContent = 'Nunca';
+                        badge.style.color = '#f59e0b';
+                    }
+                } catch(e) {
+                    console.error('Erro ao carregar base de conhecimento:', e);
+                }
+            }
+
+            function renderCategoriasKB(categorias) {
+                const container = document.getElementById('kb-categorias-lista');
+                if (!categorias || categorias.length === 0) {
+                    container.innerHTML = '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;"><i class="fas fa-folder-open" style="font-size:24px;opacity:0.3;"></i><p style="margin:8px 0 0;">Nenhuma categoria criada</p></div>';
+                    return;
+                }
+                container.innerHTML = categorias.map((cat, idx) => {
+                    const iconColor = cat.ativo ? '#0e7490' : '#9ca3af';
+                    return `<div style="border:1px solid ${cat.ativo ? '#99f6e4' : '#e5e7eb'};border-radius:10px;overflow:hidden;background:${cat.ativo ? '#fff' : '#f9fafb'};">
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${cat.ativo ? 'linear-gradient(135deg,#f0fdfa,#ecfeff)' : '#f3f4f6'};border-bottom:1px solid ${cat.ativo ? '#99f6e4' : '#e5e7eb'};">
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;">
+                                <input type="checkbox" ${cat.ativo ? 'checked' : ''} onchange="toggleCategoriaKB(${idx}, this.checked)" style="width:14px;height:14px;">
+                                <i class="fas fa-folder" style="color:${iconColor};"></i>
+                                <input type="text" value="${(cat.nome||'').replace(/"/g,'&quot;')}" onchange="renomearCategoriaKB(${idx}, this.value)" style="border:none;background:transparent;font-size:13px;font-weight:600;color:#1f2937;flex:1;outline:none;">
+                            </label>
+                            <button onclick="excluirCategoriaKB(${idx})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:12px;padding:4px;" title="Excluir categoria"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                        <div style="padding:10px 14px;">
+                            <textarea id="kb-cat-${idx}" placeholder="Insira aqui o conteúdo desta categoria...&#10;&#10;Ex: Estudos científicos, protocolos de dosagem, dados de referência..." oninput="atualizarContadorKB()" style="width:100%;min-height:100px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;line-height:1.5;resize:vertical;font-family:inherit;${cat.ativo ? '' : 'opacity:0.5;'}">${(cat.conteudo||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            function atualizarContadorKB() {
+                const principal = document.getElementById('kb-base-principal')?.value || '';
+                let totalChars = principal.length;
+                let catAtivas = 0;
+                const cats = document.querySelectorAll('[id^="kb-cat-"]');
+                cats.forEach(ta => { totalChars += (ta.value || '').length; });
+
+                // Count active checkboxes
+                const checkboxes = document.querySelectorAll('#kb-categorias-lista input[type="checkbox"]');
+                checkboxes.forEach(cb => { if (cb.checked) catAtivas++; });
+
+                document.getElementById('kb-char-count').textContent = totalChars.toLocaleString('pt-BR');
+                document.getElementById('kb-token-estimate').textContent = Math.ceil(totalChars / 4).toLocaleString('pt-BR');
+                document.getElementById('kb-cat-count').textContent = catAtivas;
+            }
+
+            function toggleCategoriaKB(idx, ativo) {
+                if (kbData && kbData.categorias && kbData.categorias[idx]) {
+                    kbData.categorias[idx].ativo = ativo;
+                    atualizarContadorKB();
+                }
+            }
+
+            function renomearCategoriaKB(idx, nome) {
+                if (kbData && kbData.categorias && kbData.categorias[idx]) {
+                    kbData.categorias[idx].nome = nome;
+                }
+            }
+
+            async function salvarBaseConhecimento() {
+                // Collect all data
+                const base = document.getElementById('kb-base-principal').value;
+                const categorias = [];
+                if (kbData && kbData.categorias) {
+                    kbData.categorias.forEach((cat, idx) => {
+                        const ta = document.getElementById('kb-cat-' + idx);
+                        categorias.push({
+                            nome: cat.nome,
+                            conteudo: ta ? ta.value : cat.conteudo,
+                            ativo: cat.ativo
+                        });
+                    });
+                }
+                try {
+                    const res = await apiRequest('/api/ia/knowledge-base', 'PUT', {
+                        base_conhecimento: base,
+                        categorias: categorias
+                    });
+                    if (res.ok) {
+                        alert('✅ Base de conhecimento salva com sucesso!\nEste conteúdo será usado em todas as próximas pré-análises de IA.');
+                        carregarBaseConhecimento();
+                    }
+                } catch(e) {
+                    alert('Erro ao salvar: ' + (e.message || e));
+                }
+            }
+
+            async function adicionarCategoriaKB() {
+                const nome = prompt('Nome da nova categoria:');
+                if (!nome || !nome.trim()) return;
+                try {
+                    const res = await apiRequest('/api/ia/knowledge-base/categoria', 'POST', { nome: nome.trim() });
+                    if (res.ok) {
+                        carregarBaseConhecimento();
+                    }
+                } catch(e) {
+                    alert('Erro: ' + (e.message || e));
+                }
+            }
+
+            async function excluirCategoriaKB(idx) {
+                const cat = kbData?.categorias?.[idx];
+                if (!confirm(`Excluir a categoria "${cat?.nome || ''}"?`)) return;
+                // Save current content first
+                await salvarBaseConhecimento();
+                try {
+                    await apiRequest('/api/ia/knowledge-base/categoria/' + idx, 'DELETE');
+                    carregarBaseConhecimento();
+                } catch(e) {
+                    alert('Erro: ' + (e.message || e));
+                }
+            }
+
+            async function previewBaseConhecimento() {
+                // Save first so preview reflects latest changes
+                await salvarBaseConhecimento();
+                try {
+                    const res = await apiRequest('/api/ia/knowledge-base/preview');
+                    const modal = document.createElement('div');
+                    modal.className = 'modal-overlay';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width:750px;max-height:90vh;overflow-y:auto;">
+                            <div class="modal-header" style="background:linear-gradient(135deg,#0e7490,#06b6d4);color:#fff;">
+                                <h2><i class="fas fa-eye"></i> Preview da Base de Conhecimento</h2>
+                                <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="modal-body" style="padding:20px;">
+                                <div style="display:flex;gap:12px;margin-bottom:14px;">
+                                    <span style="background:#ecfeff;color:#0e7490;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;"><i class="fas fa-text-width"></i> ${(res.chars||0).toLocaleString()} caracteres</span>
+                                    <span style="background:#f0fdf4;color:#16a34a;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;"><i class="fas fa-microchip"></i> ~${(res.tokens_estimados||0).toLocaleString()} tokens</span>
+                                </div>
+                                <p style="font-size:11px;color:#6b7280;margin-bottom:10px;">Este é o texto completo que será injetado como contexto em cada chamada ao Gemini:</p>
+                                <pre style="background:#1a1a2e;color:#00ff88;padding:16px;border-radius:10px;font-size:11px;line-height:1.6;white-space:pre-wrap;max-height:500px;overflow-y:auto;font-family:'Courier New',monospace;">${(res.texto||'(vazio)').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+                            </div>
+                        </div>`;
+                    document.body.appendChild(modal);
+                } catch(e) {
+                    alert('Erro ao gerar preview: ' + (e.message || e));
+                }
             }
 
             async function carregarDashboardAnalises() {
@@ -15306,6 +15534,16 @@
             window.testarConexaoIA = testarConexaoIA;
             window.carregarTabIA = carregarTabIA;
             window.carregarDashboardAnalises = carregarDashboardAnalises;
+
+            // IA Knowledge Base exports
+            window.carregarBaseConhecimento = carregarBaseConhecimento;
+            window.salvarBaseConhecimento = salvarBaseConhecimento;
+            window.adicionarCategoriaKB = adicionarCategoriaKB;
+            window.excluirCategoriaKB = excluirCategoriaKB;
+            window.toggleCategoriaKB = toggleCategoriaKB;
+            window.renomearCategoriaKB = renomearCategoriaKB;
+            window.previewBaseConhecimento = previewBaseConhecimento;
+            window.atualizarContadorKB = atualizarContadorKB;
 
             window.onEventoTipoChange = onEventoTipoChange;
             window.excluirEventoTimeline = excluirEventoTimeline;

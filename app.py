@@ -88,6 +88,7 @@ SNGPC_ENVIOS_FILE = os.path.join(DATA_DIR, 'sngpc_envios.json')
 IA_PROMPTS_FILE = os.path.join(DATA_DIR, 'ia_prompts.json')
 IA_ANALISES_FILE = os.path.join(DATA_DIR, 'ia_analises.json')
 IA_CONFIG_FILE = os.path.join(DATA_DIR, 'ia_config.json')
+IA_KNOWLEDGE_BASE_FILE = os.path.join(DATA_DIR, 'ia_knowledge_base.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -517,6 +518,23 @@ def load_ia_config():
 def save_ia_config(data):
     _save_json_file(IA_CONFIG_FILE, data)
 
+def load_ia_knowledge_base():
+    return _load_json_file(IA_KNOWLEDGE_BASE_FILE, {
+        'base_conhecimento': '',
+        'categorias': [
+            {'nome': 'Cannabis Medicinal - Geral', 'conteudo': '', 'ativo': True},
+            {'nome': 'Dosagens e Protocolos', 'conteudo': '', 'ativo': True},
+            {'nome': 'Estudos Científicos', 'conteudo': '', 'ativo': True},
+            {'nome': 'Legislação e ANVISA', 'conteudo': '', 'ativo': True},
+            {'nome': 'Interações Medicamentosas', 'conteudo': '', 'ativo': True},
+            {'nome': 'Indicações Terapêuticas', 'conteudo': '', 'ativo': True}
+        ],
+        'updated_at': ''
+    })
+
+def save_ia_knowledge_base(data):
+    _save_json_file(IA_KNOWLEDGE_BASE_FILE, data)
+
 
 def _executar_pre_analise_ia(pac_id):
     """Execute AI pre-analysis for a patient using Google Gemini API"""
@@ -594,7 +612,18 @@ Exames Recentes (anotações): {pac.get('exames_recentes', 'N/A')}"""
             med_names = ', '.join([m.get('nome', '') for m in meds]) if meds else 'N/A'
             dados_paciente += f"\n- Prescrição {pr.get('id','')}: {med_names} (Status: {pr.get('status','N/A')})"
 
-    # 6. Build the AI prompt
+    # 6. Load knowledge base
+    kb = load_ia_knowledge_base()
+    conhecimento_extra = ''
+    # Add main knowledge base
+    if kb.get('base_conhecimento', '').strip():
+        conhecimento_extra += kb['base_conhecimento'].strip() + '\n\n'
+    # Add active category knowledge
+    for cat in kb.get('categorias', []):
+        if cat.get('ativo') and cat.get('conteudo', '').strip():
+            conhecimento_extra += f"=== {cat['nome'].upper()} ===\n{cat['conteudo'].strip()}\n\n"
+
+    # 7. Build the AI prompt
     prompt_sistema = """Você é um assistente médico especializado em medicina canabinoide e tratamentos com cannabis medicinal da clínica ON Medicina Internacional. 
 Sua função é realizar uma PRÉ-ANÁLISE completa do paciente com base nos dados clínicos fornecidos.
 
@@ -628,7 +657,11 @@ IMPORTANTE:
 - Se dados estiverem faltando, indique quais informações adicionais são necessárias.
 - Responda SEMPRE em português brasileiro."""
 
-    # 7. Call Google Gemini API
+    # Inject knowledge base into prompt
+    if conhecimento_extra:
+        prompt_sistema += f"\n\n=== BASE DE CONHECIMENTO (use como referência para sua análise) ===\n{conhecimento_extra}"
+
+    # 8. Call Google Gemini API
     try:
         url = f'https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}'
         payload = {
@@ -1856,6 +1889,72 @@ def list_all_analises():
     analises = load_ia_analises()
     analises.sort(key=lambda a: a.get('created_at', ''), reverse=True)
     return jsonify(analises)
+
+
+# ===== IA KNOWLEDGE BASE API =====
+
+@app.route('/api/ia/knowledge-base', methods=['GET'])
+def get_knowledge_base():
+    """Get the AI knowledge base"""
+    kb = load_ia_knowledge_base()
+    return jsonify(kb)
+
+@app.route('/api/ia/knowledge-base', methods=['PUT'])
+def update_knowledge_base():
+    """Update the AI knowledge base"""
+    data = request.get_json(silent=True) or {}
+    kb = load_ia_knowledge_base()
+    if 'base_conhecimento' in data:
+        kb['base_conhecimento'] = data['base_conhecimento']
+    if 'categorias' in data:
+        kb['categorias'] = data['categorias']
+    kb['updated_at'] = datetime.now(timezone.utc).isoformat()
+    save_ia_knowledge_base(kb)
+    return jsonify({'ok': True, 'message': 'Base de conhecimento atualizada com sucesso'})
+
+@app.route('/api/ia/knowledge-base/categoria', methods=['POST'])
+def add_kb_categoria():
+    """Add a new category to the knowledge base"""
+    data = request.get_json(silent=True) or {}
+    nome = data.get('nome', '').strip()
+    if not nome:
+        return jsonify({'error': 'Nome da categoria é obrigatório'}), 400
+    kb = load_ia_knowledge_base()
+    kb['categorias'].append({
+        'nome': nome,
+        'conteudo': data.get('conteudo', ''),
+        'ativo': True
+    })
+    kb['updated_at'] = datetime.now(timezone.utc).isoformat()
+    save_ia_knowledge_base(kb)
+    return jsonify({'ok': True, 'categorias': kb['categorias']}), 201
+
+@app.route('/api/ia/knowledge-base/categoria/<int:idx>', methods=['DELETE'])
+def delete_kb_categoria(idx):
+    """Delete a category from the knowledge base"""
+    kb = load_ia_knowledge_base()
+    if 0 <= idx < len(kb.get('categorias', [])):
+        kb['categorias'].pop(idx)
+        kb['updated_at'] = datetime.now(timezone.utc).isoformat()
+        save_ia_knowledge_base(kb)
+    return jsonify({'ok': True, 'categorias': kb.get('categorias', [])})
+
+@app.route('/api/ia/knowledge-base/preview', methods=['GET'])
+def preview_knowledge_base():
+    """Preview the full knowledge base text that will be sent to the AI"""
+    kb = load_ia_knowledge_base()
+    texto = ''
+    if kb.get('base_conhecimento', '').strip():
+        texto += '=== BASE DE CONHECIMENTO PRINCIPAL ===\n' + kb['base_conhecimento'].strip() + '\n\n'
+    for cat in kb.get('categorias', []):
+        status = '✅' if cat.get('ativo') else '❌'
+        texto += f'{status} === {cat["nome"].upper()} ===\n'
+        if cat.get('conteudo', '').strip():
+            texto += cat['conteudo'].strip() + '\n\n'
+        else:
+            texto += '(vazio)\n\n'
+    char_count = len(texto)
+    return jsonify({'texto': texto, 'chars': char_count, 'tokens_estimados': char_count // 4})
 
 
 # ===== LEADS (Pacientes) API =====
