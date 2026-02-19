@@ -655,7 +655,7 @@ IMPORTANTE:
 - Baseie-se em evidências científicas e diretrizes clínicas atualizadas.
 - Seja objetivo e clínico na linguagem.
 - Se dados estiverem faltando, indique quais informações adicionais são necessárias.
-- OBRIGATÓRIO: Responda INTEIRAMENTE em português brasileiro (pt-BR). Todos os títulos, subtítulos, termos técnicos, recomendações, explicações e qualquer texto devem estar em português. NUNCA use inglês na resposta."""
+- Responda SEMPRE em português brasileiro."""
 
     # Inject knowledge base into prompt
     if conhecimento_extra:
