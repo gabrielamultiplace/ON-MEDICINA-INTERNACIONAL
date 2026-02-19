@@ -85,6 +85,7 @@ ANVISA_FILE = os.path.join(DATA_DIR, 'anvisa_solicitacoes.json')
 ANVISA_PRODUTOS_FILE = os.path.join(DATA_DIR, 'anvisa_produtos_cannabis.json')
 SNGPC_CONFIG_FILE = os.path.join(DATA_DIR, 'sngpc_config.json')
 SNGPC_ENVIOS_FILE = os.path.join(DATA_DIR, 'sngpc_envios.json')
+IA_PROMPTS_FILE = os.path.join(DATA_DIR, 'ia_prompts.json')
 WEBHOOKS_CONFIG_FILE = os.path.join(DATA_DIR, 'webhooks_config.json')
 UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -489,6 +490,12 @@ def load_sngpc_envios():
 
 def save_sngpc_envios(data):
     _save_json_file(SNGPC_ENVIOS_FILE, data)
+
+def load_ia_prompts():
+    return _load_json_file(IA_PROMPTS_FILE, [])
+
+def save_ia_prompts(data):
+    _save_json_file(IA_PROMPTS_FILE, data)
 
 def load_webhooks_config():
     return _load_json_file(WEBHOOKS_CONFIG_FILE, {'prescricao_url': '', 'prescricao_ativo': False})
@@ -1405,6 +1412,90 @@ def sngpc_get_envio(envio_id):
     if not envio:
         return jsonify({'error': 'Envio não encontrado'}), 404
     return jsonify(envio)
+
+
+# ===== IA PROMPTS API =====
+
+@app.route('/api/ia/prompts', methods=['GET'])
+def list_ia_prompts():
+    """List all IA prompts/templates"""
+    prompts = load_ia_prompts()
+    categoria = request.args.get('categoria', '')
+    if categoria:
+        prompts = [p for p in prompts if p.get('categoria') == categoria]
+    return jsonify(prompts)
+
+@app.route('/api/ia/prompts', methods=['POST'])
+def create_ia_prompt():
+    """Create a new IA prompt/template"""
+    prompts = load_ia_prompts()
+    data = request.get_json(silent=True) or {}
+    prompt_id = f'PROMPT{len(prompts)+1:05d}'
+    prompt = {
+        'id': prompt_id,
+        'nome': data.get('nome', ''),
+        'categoria': data.get('categoria', 'laudo'),
+        'descricao': data.get('descricao', ''),
+        'prompt_texto': data.get('prompt_texto', ''),
+        'variaveis': data.get('variaveis', []),
+        'modelo_ia': data.get('modelo_ia', 'GPT-4'),
+        'temperatura': data.get('temperatura', 0.7),
+        'exemplo_saida': data.get('exemplo_saida', ''),
+        'ativo': data.get('ativo', True),
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    prompts.append(prompt)
+    save_ia_prompts(prompts)
+    return jsonify(prompt), 201
+
+@app.route('/api/ia/prompts/<prompt_id>', methods=['GET'])
+def get_ia_prompt(prompt_id):
+    """Get a specific IA prompt"""
+    prompts = load_ia_prompts()
+    prompt = next((p for p in prompts if p.get('id') == prompt_id), None)
+    if not prompt:
+        return jsonify({'error': 'Prompt não encontrado'}), 404
+    return jsonify(prompt)
+
+@app.route('/api/ia/prompts/<prompt_id>', methods=['PUT'])
+def update_ia_prompt(prompt_id):
+    """Update an IA prompt"""
+    prompts = load_ia_prompts()
+    prompt = next((p for p in prompts if p.get('id') == prompt_id), None)
+    if not prompt:
+        return jsonify({'error': 'Prompt não encontrado'}), 404
+    data = request.get_json(silent=True) or {}
+    for k, v in data.items():
+        if k not in ('id', 'created_at'):
+            prompt[k] = v
+    prompt['updated_at'] = datetime.now(timezone.utc).isoformat()
+    save_ia_prompts(prompts)
+    return jsonify(prompt)
+
+@app.route('/api/ia/prompts/<prompt_id>', methods=['DELETE'])
+def delete_ia_prompt(prompt_id):
+    """Delete an IA prompt"""
+    prompts = load_ia_prompts()
+    prompts = [p for p in prompts if p.get('id') != prompt_id]
+    save_ia_prompts(prompts)
+    return jsonify({'ok': True})
+
+@app.route('/api/ia/prompts/<prompt_id>/duplicar', methods=['POST'])
+def duplicar_ia_prompt(prompt_id):
+    """Duplicate an IA prompt"""
+    prompts = load_ia_prompts()
+    original = next((p for p in prompts if p.get('id') == prompt_id), None)
+    if not original:
+        return jsonify({'error': 'Prompt não encontrado'}), 404
+    novo = dict(original)
+    novo['id'] = f'PROMPT{len(prompts)+1:05d}'
+    novo['nome'] = f"{original.get('nome', '')} (cópia)"
+    novo['created_at'] = datetime.now(timezone.utc).isoformat()
+    novo['updated_at'] = datetime.now(timezone.utc).isoformat()
+    prompts.append(novo)
+    save_ia_prompts(prompts)
+    return jsonify(novo), 201
 
 
 # ===== LEADS (Pacientes) API =====

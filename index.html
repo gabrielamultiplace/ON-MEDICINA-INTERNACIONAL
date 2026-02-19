@@ -2691,6 +2691,60 @@
                 </div>
             </div>
             <div class="page-body">
+                <!-- ===== PROMPTS & DADOS IA ===== -->
+                <div style="margin-bottom:24px;">
+                    <!-- Header -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="background:linear-gradient(135deg,#6A1B9A,#AB47BC);width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-robot" style="color:#fff;font-size:18px;"></i></div>
+                            <div>
+                                <h4 style="margin:0;color:#333;font-size:16px;">Prompts & Dados de IA</h4>
+                                <p style="margin:0;color:#6b7280;font-size:12px;">Gerencie os prompts utilizados para gerar laudos, avaliações de receitas e análises médicas</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <select id="ia-filtro-categoria" onchange="renderIaPrompts()" style="padding:6px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;">
+                                <option value="">Todas categorias</option>
+                                <option value="laudo">Laudos</option>
+                                <option value="receita">Avaliação de Receita</option>
+                                <option value="anamnese">Anamnese</option>
+                                <option value="relatorio">Relatórios</option>
+                                <option value="orientacao">Orientações</option>
+                                <option value="outro">Outros</option>
+                            </select>
+                            <button onclick="abrirModalNovoPrompt()" style="background:#6A1B9A;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-plus-circle" style="margin-right:4px;"></i> Novo Prompt</button>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;" id="ia-prompts-stats">
+                        <div style="background:linear-gradient(135deg,#6A1B9A,#AB47BC);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-total">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Total Prompts</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#1565C0,#42A5F5);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-laudos">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Laudos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#2E7D32,#66BB6A);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-receitas">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Receitas</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#E65100,#FF9800);border-radius:10px;padding:12px;color:#fff;text-align:center;">
+                            <div style="font-size:22px;font-weight:700;" id="ia-stat-ativos">0</div>
+                            <div style="font-size:10px;opacity:0.85;">Ativos</div>
+                        </div>
+                    </div>
+
+                    <!-- Lista Prompts -->
+                    <div id="ia-prompts-lista" style="display:grid;gap:10px;">
+                        <div style="padding:40px;text-align:center;color:#9ca3af;"><i class="fas fa-robot" style="font-size:36px;opacity:0.3;"></i><div style="margin-top:10px;">Carregando prompts...</div></div>
+                    </div>
+                </div>
+
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
+
+                <!-- Kanban IA abaixo -->
                 <div class="kanban-board" id="kanban-ia">
                     <!-- Coluna: Desenvolvimento -->
                     <div class="kanban-column kanban-comercial" data-column-title="Desenvolvimento">
@@ -4249,6 +4303,9 @@
                 }
                 if (pageId === 'judicial' && typeof loadJudicialProcessos === 'function') {
                     loadJudicialProcessos();
+                }
+                if (pageId === 'ia' && typeof carregarIaPrompts === 'function') {
+                    carregarIaPrompts();
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch(err) {
@@ -7696,6 +7753,237 @@
 
             // Load medicamentos on page init
             loadMedicamentosGrid();
+
+            // ========== IA PROMPTS MANAGEMENT ==========
+            let iaPrompts = [];
+
+            async function carregarIaPrompts() {
+                try {
+                    const resp = await fetch('/api/ia/prompts');
+                    iaPrompts = await resp.json();
+                    renderIaPromptsStats();
+                    renderIaPrompts();
+                } catch(e) { console.error('Erro ao carregar prompts IA:', e); }
+            }
+
+            function renderIaPromptsStats() {
+                document.getElementById('ia-stat-total').textContent = iaPrompts.length;
+                document.getElementById('ia-stat-laudos').textContent = iaPrompts.filter(p => p.categoria === 'laudo').length;
+                document.getElementById('ia-stat-receitas').textContent = iaPrompts.filter(p => p.categoria === 'receita').length;
+                document.getElementById('ia-stat-ativos').textContent = iaPrompts.filter(p => p.ativo).length;
+            }
+
+            function renderIaPrompts() {
+                const container = document.getElementById('ia-prompts-lista');
+                const filtro = document.getElementById('ia-filtro-categoria')?.value || '';
+                let lista = [...iaPrompts];
+                if (filtro) lista = lista.filter(p => p.categoria === filtro);
+                lista.sort((a,b) => (b.updated_at||b.created_at||'').localeCompare(a.updated_at||a.created_at||''));
+
+                if (!lista.length) {
+                    container.innerHTML = `<div style="padding:40px;text-align:center;color:#9ca3af;">
+                        <i class="fas fa-robot" style="font-size:36px;opacity:0.3;"></i>
+                        <div style="margin-top:10px;">Nenhum prompt encontrado</div>
+                        <button onclick="abrirModalNovoPrompt()" style="margin-top:12px;background:#6A1B9A;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-plus-circle" style="margin-right:4px;"></i> Criar primeiro prompt</button>
+                    </div>`;
+                    return;
+                }
+
+                const catIcons = { laudo:'fa-file-medical', receita:'fa-prescription', anamnese:'fa-notes-medical', relatorio:'fa-chart-bar', orientacao:'fa-info-circle', outro:'fa-cog' };
+                const catColors = { laudo:'#1565C0', receita:'#2E7D32', anamnese:'#E65100', relatorio:'#6A1B9A', orientacao:'#00695C', outro:'#6b7280' };
+                const catLabels = { laudo:'Laudo', receita:'Avaliação Receita', anamnese:'Anamnese', relatorio:'Relatório', orientacao:'Orientação', outro:'Outro' };
+
+                container.innerHTML = lista.map(p => {
+                    const cat = p.categoria || 'outro';
+                    const color = catColors[cat] || '#6b7280';
+                    const icon = catIcons[cat] || 'fa-cog';
+                    const label = catLabels[cat] || cat;
+                    const dt = p.updated_at ? new Date(p.updated_at).toLocaleString('pt-BR') : '-';
+                    const previewTexto = (p.prompt_texto||'').substring(0, 120) + ((p.prompt_texto||'').length > 120 ? '...' : '');
+                    const varsCount = (p.variaveis||[]).length;
+                    return `<div style="background:#fff;border:1px solid #e5e7eb;border-left:4px solid ${color};border-radius:10px;padding:16px 18px;transition:transform 0.15s;cursor:pointer;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'" onclick="abrirPromptDetalhe('${p.id}')">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                            <div style="flex:1;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                                    <div style="background:${color}18;color:${color};padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;"><i class="fas ${icon}" style="margin-right:3px;"></i> ${label}</div>
+                                    <span style="font-size:10px;color:${p.ativo ? '#2E7D32' : '#C62828'};font-weight:600;">${p.ativo ? '● Ativo' : '○ Inativo'}</span>
+                                    ${varsCount ? `<span style="font-size:9px;background:#EDE7F6;color:#6A1B9A;padding:2px 8px;border-radius:10px;">${varsCount} variáve${varsCount>1?'is':'l'}</span>` : ''}
+                                </div>
+                                <h4 style="margin:0 0 4px;font-size:14px;color:#1a1a1a;">${p.nome||'Sem nome'}</h4>
+                                <p style="margin:0 0 6px;font-size:11px;color:#6b7280;">${p.descricao||''}</p>
+                                <div style="background:#f8f9fa;border-radius:6px;padding:8px 10px;font-family:monospace;font-size:10px;color:#4a5568;line-height:1.5;white-space:pre-wrap;">${previewTexto || '<i>Prompt vazio</i>'}</div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;" onclick="event.stopPropagation()">
+                                <button onclick="editarPrompt('${p.id}')" style="background:#6A1B9A;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;" title="Editar"><i class="fas fa-edit"></i></button>
+                                <button onclick="duplicarPrompt('${p.id}')" style="background:#1565C0;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;" title="Duplicar"><i class="fas fa-copy"></i></button>
+                                <button onclick="excluirPrompt('${p.id}')" style="background:#C62828;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;" title="Excluir"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:#9ca3af;">
+                            <span><i class="fas fa-microchip" style="margin-right:2px;"></i> ${p.modelo_ia||'GPT-4'}</span>
+                            <span><i class="fas fa-thermometer-half" style="margin-right:2px;"></i> Temp: ${p.temperatura||0.7}</span>
+                            <span><i class="fas fa-clock" style="margin-right:2px;"></i> ${dt}</span>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            function abrirModalNovoPrompt(editData) {
+                const isEdit = !!editData;
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:750px;max-height:92vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#6A1B9A,#AB47BC);color:#fff;">
+                            <h2><i class="fas fa-robot"></i> ${isEdit ? 'Editar' : 'Novo'} Prompt de IA</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">Nome do Prompt <span style="color:red;">*</span></label><input id="iap-nome" value="${editData?.nome||''}" placeholder="Ex: Gerar Laudo Cannabis" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">Categoria</label>
+                                    <select id="iap-categoria" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                        <option value="laudo" ${editData?.categoria==='laudo'?'selected':''}>Laudo Médico</option>
+                                        <option value="receita" ${editData?.categoria==='receita'?'selected':''}>Avaliação de Receita</option>
+                                        <option value="anamnese" ${editData?.categoria==='anamnese'?'selected':''}>Anamnese</option>
+                                        <option value="relatorio" ${editData?.categoria==='relatorio'?'selected':''}>Relatório</option>
+                                        <option value="orientacao" ${editData?.categoria==='orientacao'?'selected':''}>Orientação ao Paciente</option>
+                                        <option value="outro" ${editData?.categoria==='outro'?'selected':''}>Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:14px;"><label style="font-size:11px;font-weight:600;color:#333;">Descrição</label><input id="iap-descricao" value="${editData?.descricao||''}" placeholder="Breve descrição do propósito deste prompt" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:11px;font-weight:600;color:#333;">Prompt (Texto da instrução para a IA) <span style="color:red;">*</span></label>
+                                <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">Use variáveis entre chaves: <code style="background:#EDE7F6;padding:1px 4px;border-radius:3px;">{nome_paciente}</code>, <code style="background:#EDE7F6;padding:1px 4px;border-radius:3px;">{medicamentos}</code>, <code style="background:#EDE7F6;padding:1px 4px;border-radius:3px;">{diagnostico}</code>, etc.</div>
+                                <textarea id="iap-prompt" rows="10" placeholder="Você é um médico especialista em cannabis medicinal. Gere um laudo detalhado para o paciente {nome_paciente} com diagnóstico de {diagnostico}..." style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:monospace;line-height:1.6;resize:vertical;">${editData?.prompt_texto||''}</textarea>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:11px;font-weight:600;color:#333;">Variáveis disponíveis (separadas por vírgula)</label>
+                                <input id="iap-variaveis" value="${(editData?.variaveis||[]).join(', ')}" placeholder="nome_paciente, cpf, diagnostico, medicamentos, medico_nome, crm" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">Modelo de IA</label>
+                                    <select id="iap-modelo" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                                        <option value="GPT-4" ${editData?.modelo_ia==='GPT-4'?'selected':''}>GPT-4</option>
+                                        <option value="GPT-4o" ${editData?.modelo_ia==='GPT-4o'?'selected':''}>GPT-4o</option>
+                                        <option value="GPT-3.5" ${editData?.modelo_ia==='GPT-3.5'?'selected':''}>GPT-3.5</option>
+                                        <option value="Claude" ${editData?.modelo_ia==='Claude'?'selected':''}>Claude</option>
+                                        <option value="Gemini" ${editData?.modelo_ia==='Gemini'?'selected':''}>Gemini</option>
+                                        <option value="Outro" ${editData?.modelo_ia==='Outro'?'selected':''}>Outro</option>
+                                    </select>
+                                </div>
+                                <div><label style="font-size:11px;font-weight:600;color:#333;">Temperatura</label><input id="iap-temperatura" type="number" min="0" max="2" step="0.1" value="${editData?.temperatura??0.7}" style="width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;"></div>
+                                <div style="display:flex;align-items:flex-end;">
+                                    <label style="font-size:11px;font-weight:600;color:#333;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                                        <input type="checkbox" id="iap-ativo" ${(editData?.ativo !== false)?'checked':''} style="width:16px;height:16px;">
+                                        Ativo
+                                    </label>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:11px;font-weight:600;color:#333;">Exemplo de Saída (opcional)</label>
+                                <textarea id="iap-exemplo" rows="4" placeholder="Exemplo de resultado esperado quando o prompt é executado..." style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;line-height:1.5;resize:vertical;">${editData?.exemplo_saida||''}</textarea>
+                            </div>
+                            <div style="display:flex;justify-content:flex-end;gap:10px;">
+                                <button onclick="this.closest('.modal-overlay').remove()" style="background:#6b7280;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:12px;">Cancelar</button>
+                                <button onclick="salvarPromptIA('${editData?.id||''}')" style="background:#6A1B9A;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-save" style="margin-right:4px;"></i> ${isEdit ? 'Atualizar' : 'Salvar'}</button>
+                            </div>
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+            }
+
+            async function salvarPromptIA(editId) {
+                const vars = document.getElementById('iap-variaveis').value.split(',').map(v => v.trim()).filter(v => v);
+                const payload = {
+                    nome: document.getElementById('iap-nome').value.trim(),
+                    categoria: document.getElementById('iap-categoria').value,
+                    descricao: document.getElementById('iap-descricao').value.trim(),
+                    prompt_texto: document.getElementById('iap-prompt').value,
+                    variaveis: vars,
+                    modelo_ia: document.getElementById('iap-modelo').value,
+                    temperatura: parseFloat(document.getElementById('iap-temperatura').value) || 0.7,
+                    exemplo_saida: document.getElementById('iap-exemplo').value,
+                    ativo: document.getElementById('iap-ativo').checked
+                };
+                if (!payload.nome || !payload.prompt_texto) return alert('Nome e Prompt são obrigatórios');
+                try {
+                    const url = editId ? `/api/ia/prompts/${editId}` : '/api/ia/prompts';
+                    const method = editId ? 'PUT' : 'POST';
+                    const resp = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+                    if (resp.ok) {
+                        document.querySelector('.modal-overlay')?.remove();
+                        carregarIaPrompts();
+                    } else {
+                        const err = await resp.json();
+                        alert('Erro: ' + (err.error || 'Falha ao salvar'));
+                    }
+                } catch(e) { alert('Erro: ' + e.message); }
+            }
+
+            function editarPrompt(id) {
+                const p = iaPrompts.find(x => x.id === id);
+                if (p) abrirModalNovoPrompt(p);
+            }
+
+            async function duplicarPrompt(id) {
+                try {
+                    const resp = await fetch(`/api/ia/prompts/${id}/duplicar`, { method: 'POST' });
+                    if (resp.ok) carregarIaPrompts();
+                } catch(e) { alert('Erro: ' + e.message); }
+            }
+
+            async function excluirPrompt(id) {
+                if (!confirm('Excluir este prompt?')) return;
+                try {
+                    await fetch(`/api/ia/prompts/${id}`, { method: 'DELETE' });
+                    carregarIaPrompts();
+                } catch(e) { alert('Erro: ' + e.message); }
+            }
+
+            function abrirPromptDetalhe(id) {
+                const p = iaPrompts.find(x => x.id === id);
+                if (!p) return;
+                const catLabels = { laudo:'Laudo Médico', receita:'Avaliação de Receita', anamnese:'Anamnese', relatorio:'Relatório', orientacao:'Orientação', outro:'Outro' };
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width:700px;max-height:92vh;overflow-y:auto;">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#6A1B9A,#AB47BC);color:#fff;">
+                            <h2><i class="fas fa-robot"></i> ${p.nome||'Prompt'}</h2>
+                            <button class="btn-close-modal" style="color:#fff;" onclick="this.closest('.modal-overlay').remove()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body" style="padding:20px;">
+                            <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+                                <span style="background:#EDE7F6;color:#6A1B9A;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;">${catLabels[p.categoria]||p.categoria}</span>
+                                <span style="color:${p.ativo?'#2E7D32':'#C62828'};font-size:11px;font-weight:600;">${p.ativo?'● Ativo':'○ Inativo'}</span>
+                                <span style="font-size:11px;color:#6b7280;"><i class="fas fa-microchip"></i> ${p.modelo_ia||'GPT-4'} | Temp: ${p.temperatura||0.7}</span>
+                            </div>
+                            ${p.descricao ? `<p style="color:#4a5568;font-size:12px;margin-bottom:14px;">${p.descricao}</p>` : ''}
+                            <div style="margin-bottom:14px;">
+                                <label style="font-size:11px;font-weight:700;color:#333;margin-bottom:6px;display:block;">Prompt:</label>
+                                <pre style="background:#1a1a2e;color:#00ff88;padding:16px;border-radius:8px;font-size:11px;line-height:1.6;white-space:pre-wrap;max-height:300px;overflow-y:auto;">${(p.prompt_texto||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+                            </div>
+                            ${(p.variaveis||[]).length ? `<div style="margin-bottom:14px;">
+                                <label style="font-size:11px;font-weight:700;color:#333;margin-bottom:6px;display:block;">Variáveis:</label>
+                                <div style="display:flex;flex-wrap:wrap;gap:6px;">${p.variaveis.map(v => `<code style="background:#EDE7F6;color:#6A1B9A;padding:3px 10px;border-radius:12px;font-size:11px;">{${v}}</code>`).join('')}</div>
+                            </div>` : ''}
+                            ${p.exemplo_saida ? `<div style="margin-bottom:14px;">
+                                <label style="font-size:11px;font-weight:700;color:#333;margin-bottom:6px;display:block;">Exemplo de Saída:</label>
+                                <div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:11px;line-height:1.5;white-space:pre-wrap;max-height:200px;overflow-y:auto;">${p.exemplo_saida.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                            </div>` : ''}
+                            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+                                <button onclick="navigator.clipboard.writeText(iaPrompts.find(x=>x.id==='${p.id}')?.prompt_texto||'');alert('Prompt copiado!')" style="background:#00695C;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:11px;"><i class="fas fa-copy" style="margin-right:3px;"></i> Copiar Prompt</button>
+                                <button onclick="this.closest('.modal-overlay').remove();editarPrompt('${p.id}')" style="background:#6A1B9A;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;"><i class="fas fa-edit" style="margin-right:3px;"></i> Editar</button>
+                            </div>
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+            }
+
+            // Init: load prompts when IA section opens
+            document.getElementById('btn-back-ia')?.closest('.page-content')?.addEventListener('transitionend', () => { if (document.getElementById('ia')?.classList.contains('active')) carregarIaPrompts(); });
 
             // ========== INTELIGÊNCIA ARTIFICIAL KANBAN ==========
             let draggedIaCard = null;
@@ -14458,6 +14746,16 @@
             window.consultarEnvioSngpc = consultarEnvioSngpc;
             window.enviarSngpcManual = enviarSngpcManual;
             window.previewXmlSngpc = previewXmlSngpc;
+
+            // IA Prompts exports
+            window.carregarIaPrompts = carregarIaPrompts;
+            window.renderIaPrompts = renderIaPrompts;
+            window.abrirModalNovoPrompt = abrirModalNovoPrompt;
+            window.salvarPromptIA = salvarPromptIA;
+            window.editarPrompt = editarPrompt;
+            window.duplicarPrompt = duplicarPrompt;
+            window.excluirPrompt = excluirPrompt;
+            window.abrirPromptDetalhe = abrirPromptDetalhe;
 
             window.onEventoTipoChange = onEventoTipoChange;
             window.excluirEventoTimeline = excluirEventoTimeline;
